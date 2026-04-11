@@ -27,10 +27,7 @@ export default function SignInPage() {
     setError('')
     setIsLoading(true)
 
-    // Simulate slight delay for UX
-    await new Promise(r => setTimeout(r, 600))
-
-    const result = signIn({ email: formData.email, password: formData.password })
+    const result = await signIn({ email: formData.email, password: formData.password })
 
     if (!result.success) {
       setError(result.error || 'Sign in failed.')
@@ -164,9 +161,9 @@ export default function SignInPage() {
                 <label className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                   Password
                 </label>
-                <a href="#" className="text-xs text-sky-500 hover:text-sky-400 font-medium">
+                <Link href="/forgot-password" className="text-xs text-sky-500 hover:text-sky-400 font-medium">
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <div className="relative">
                 <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />

@@ -10,82 +10,8 @@ export interface AuthUser {
 }
 
 const USER_KEY = 'atlasaura-user'
-const USERS_DB_KEY = 'atlasaura-users-db'
 
-// ── Helpers ──────────────────────────────────────────────
-function getUsersDB(): Record<string, AuthUser & { passwordHash: string }> {
-  if (typeof window === 'undefined') return {}
-  try {
-    return JSON.parse(localStorage.getItem(USERS_DB_KEY) || '{}')
-  } catch {
-    return {}
-  }
-}
-
-function saveUsersDB(db: Record<string, AuthUser & { passwordHash: string }>) {
-  localStorage.setItem(USERS_DB_KEY, JSON.stringify(db))
-}
-
-// Simple hash — good enough for a frontend demo
-function simpleHash(str: string): string {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i)
-    hash |= 0
-  }
-  return hash.toString(36)
-}
-
-// ── Public API ────────────────────────────────────────────
-export function signUp(data: {
-  name: string
-  email: string
-  phone: string
-  password: string
-}): { success: boolean; error?: string; user?: AuthUser } {
-  const db = getUsersDB()
-  const emailKey = data.email.toLowerCase()
-
-  if (db[emailKey]) {
-    return { success: false, error: 'An account with this email already exists.' }
-  }
-
-  const user: AuthUser = {
-    id: crypto.randomUUID(),
-    name: data.name.trim(),
-    email: emailKey,
-    phone: data.phone,
-    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.name)}`,
-    joinedAt: new Date().toISOString(),
-  }
-
-  db[emailKey] = { ...user, passwordHash: simpleHash(data.password) }
-  saveUsersDB(db)
-  setCurrentUser(user)
-  return { success: true, user }
-}
-
-export function signIn(data: {
-  email: string
-  password: string
-}): { success: boolean; error?: string; user?: AuthUser } {
-  const db = getUsersDB()
-  const emailKey = data.email.toLowerCase()
-  const record = db[emailKey]
-
-  if (!record) {
-    return { success: false, error: 'No account found with this email.' }
-  }
-
-  if (record.passwordHash !== simpleHash(data.password)) {
-    return { success: false, error: 'Incorrect password.' }
-  }
-
-  const { passwordHash: _, ...user } = record
-  setCurrentUser(user)
-  return { success: true, user }
-}
-
+// ── Session helpers (client-side only) ───────────────────
 export function setCurrentUser(user: AuthUser) {
   localStorage.setItem(USER_KEY, JSON.stringify(user))
 }
@@ -102,18 +28,76 @@ export function getCurrentUser(): AuthUser | null {
 
 export function signOut() {
   localStorage.removeItem(USER_KEY)
+  fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
 }
 
 export function updateUserPreferences(prefs: Partial<AuthUser>) {
   const user = getCurrentUser()
   if (!user) return
-  const updated = { ...user, ...prefs }
-  setCurrentUser(updated)
+  setCurrentUser({ ...user, ...prefs })
+}
 
-  // Also update in DB
-  const db = getUsersDB()
-  if (db[user.email]) {
-    db[user.email] = { ...db[user.email], ...prefs }
-    saveUsersDB(db)
+// ── API calls ─────────────────────────────────────────────
+export async function signUp(data: {
+  name: string
+  email: string
+  phone: string
+  password: string
+}): Promise<{ success: boolean; error?: string; user?: AuthUser }> {
+  try {
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) return { success: false, error: json.message }
+    const user: AuthUser = {
+      ...json.user,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.name)}`,
+      joinedAt: new Date().toISOString(),
+    }
+    setCurrentUser(user)
+    return { success: true, user }
+  } catch {
+    return { success: false, error: 'Network error. Please try again.' }
+  }
+}
+
+export async function signIn(data: {
+  email: string
+  password: string
+}): Promise<{ success: boolean; error?: string; user?: AuthUser }> {
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) return { success: false, error: json.message }
+    const user: AuthUser = {
+      ...json.user,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(json.user.name)}`,
+      joinedAt: new Date().toISOString(),
+    }
+    setCurrentUser(user)
+    return { success: true, user }
+  } catch {
+    return { success: false, error: 'Network error. Please try again.' }
+  }
+}
+
+export async function forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    const json = await res.json()
+    return { success: res.ok, message: json.message }
+  } catch {
+    return { success: false, message: 'Network error. Please try again.' }
   }
 }

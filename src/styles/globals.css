@@ -200,6 +200,13 @@
 }
 .animate-rotate-slow { animation: rotate-slow 20s linear infinite; }
 
+@keyframes meteor {
+  0% { transform: rotate(var(--angle)) translateX(0); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: rotate(var(--angle)) translateX(-500px); opacity: 0; }
+}
+.animate-meteor { animation: meteor linear infinite; }
+
 .card-hover {
   transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }

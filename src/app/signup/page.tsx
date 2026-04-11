@@ -84,9 +84,7 @@ export default function SignUpPage() {
     setError('')
     setIsLoading(true)
 
-    await new Promise(r => setTimeout(r, 700))
-
-    const result = signUp({
+    const result = await signUp({
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
