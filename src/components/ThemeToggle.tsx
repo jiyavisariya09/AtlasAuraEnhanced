@@ -97,9 +97,10 @@ export default function ThemeToggle({ scrolledLight = false }: ThemeToggleProps)
 
       {/* ── Sun / Moon Sliding Knob (Pure GPU CSS Acceleration) ── */}
       <div
-        className={`relative z-10 w-[26px] h-[26px] rounded-full shadow-md flex items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)] transform-gpu ${
+        className={`relative z-10 w-[26px] h-[26px] rounded-full shadow-md flex items-center justify-center transition-transform duration-300 transform-gpu ${
           isDark ? 'bg-slate-100 translate-x-[30px] rotate-180' : 'bg-amber-400 translate-x-0 rotate-0'
         }`}
+        style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.4, 0.64, 1)' }}
       >
         {/* Sun Light Rays Glow */}
         <div
