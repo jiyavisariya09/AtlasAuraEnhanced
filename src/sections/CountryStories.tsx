@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, MapPin, DollarSign, Users, X, Star, Compass } from 'lucide-react';
 import { countries } from '@/data/mockData';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from '@/context/ThemeContext';
 
 export default function CountryStories() {
+  const router = useRouter();
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -216,7 +218,7 @@ export default function CountryStories() {
                 </div>
 
                 {/* CTAs */}
-                <div className="flex gap-3 pt-1">
+                <div className="flex flex-col sm:flex-row gap-3 pt-1">
                   <Button
                     className="flex-1 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white font-semibold"
                     onClick={() => {
@@ -242,10 +244,14 @@ export default function CountryStories() {
                   >
                     <MapPin className="w-4 h-4 mr-2" />View on Map
                   </Button>
-                  <Button variant="outline" className={`flex-1 font-semibold ${
-                    isDark ? 'border-white/15 text-slate-200 hover:bg-white/5' : 'border-sky-300 text-sky-700 hover:bg-sky-50'
-                  }`}>
-                    <BookOpen className="w-4 h-4 mr-2" />Save
+                  <Button
+                    variant="outline"
+                    className="flex-1 font-semibold border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+                    onClick={() => {
+                      router.push(`/destinations/${selectedCountry.id}`);
+                    }}
+                  >
+                    <Compass className="w-4 h-4 mr-2" />Full Guide
                   </Button>
                 </div>
               </div>

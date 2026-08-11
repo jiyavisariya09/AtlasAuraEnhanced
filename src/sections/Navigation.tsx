@@ -65,10 +65,11 @@ export default function Navigation({ isLoggedIn, onLoginToggle }: NavigationProp
   };
 
   const navLinks = [
-    { name: 'Explore', href: '#explore' },
-    { name: 'World Map', href: '#world-map' },
-    { name: 'Stories', href: '#stories' },
-    { name: 'Curiosity', href: '#curiosity' },
+    { name: 'Explore', href: '/#explore' },
+    { name: 'Trip Planner', href: '/trip-planner' },
+    { name: 'World Map', href: '/#world-map' },
+    { name: 'Stories', href: '/#stories' },
+    { name: 'Curiosity', href: '/#curiosity' },
   ];
 
   const scrolledLight = isScrolled && !isDark;
