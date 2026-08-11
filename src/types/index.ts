@@ -19,6 +19,7 @@ export interface MemoryPin {
   country: string;
   note: string;
   emoji: string;
+  image?: string;
   mood: 'solo' | 'calm' | 'adventure' | 'honeymoon' | 'culture';
   author: string;
   date: string;
@@ -53,6 +54,13 @@ export interface HiddenGem {
   image: string;
   description: string;
   type: 'nature' | 'culture' | 'adventure';
+  fullDescription?: string;
+  images?: string[];
+  bestTime?: string;
+  tips?: string[];
+  rating?: number;
+  visitors?: string;
+  coordinates?: string;
 }
 
 export interface User {

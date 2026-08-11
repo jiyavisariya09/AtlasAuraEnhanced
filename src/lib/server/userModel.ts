@@ -7,6 +7,19 @@ export interface IUser extends Document {
   phone?: string
   password: string
   avatar?: string
+  bio?: string
+  travelStyle?: string[]
+  dreamDestinations?: string
+  pins?: {
+    id: string
+    lat: number
+    lng: number
+    country: string
+    note: string
+    emoji: string
+    mood: string
+    date: string
+  }[]
   joinedAt: Date
   comparePassword(candidate: string): Promise<boolean>
 }
@@ -17,6 +30,19 @@ const UserSchema = new Schema<IUser>({
   phone: { type: String },
   password: { type: String, required: true, select: false },
   avatar: { type: String },
+  bio: { type: String },
+  travelStyle: [{ type: String }],
+  dreamDestinations: { type: String },
+  pins: [{
+    id: String,
+    lat: Number,
+    lng: Number,
+    country: String,
+    note: String,
+    emoji: String,
+    mood: String,
+    date: String,
+  }],
   joinedAt: { type: Date, default: Date.now },
 })
 

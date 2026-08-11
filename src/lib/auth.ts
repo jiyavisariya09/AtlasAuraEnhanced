@@ -54,7 +54,7 @@ export async function signUp(data: {
     if (!res.ok) return { success: false, error: json.message }
     const user: AuthUser = {
       ...json.user,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.name)}`,
+      avatar: '/avatars/avatar-default.jpg',
       joinedAt: new Date().toISOString(),
     }
     setCurrentUser(user)
@@ -78,7 +78,7 @@ export async function signIn(data: {
     if (!res.ok) return { success: false, error: json.message }
     const user: AuthUser = {
       ...json.user,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(json.user.name)}`,
+      avatar: '/avatars/avatar-default.jpg',
       joinedAt: new Date().toISOString(),
     }
     setCurrentUser(user)

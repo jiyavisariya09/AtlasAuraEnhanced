@@ -17,7 +17,7 @@ const WorldMap = dynamic(() => import('@/sections/WorldMap'), { ssr: false });
 
 function LoadingScreen({ onComplete }: { onComplete: () => void }) {
   useEffect(() => {
-    const timer = setTimeout(onComplete, 2000);
+    const timer = setTimeout(onComplete, 2200);
     return () => clearTimeout(timer);
   }, [onComplete]);
 
@@ -25,63 +25,72 @@ function LoadingScreen({ onComplete }: { onComplete: () => void }) {
     <motion.div
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-      className="fixed inset-0 z-[100] bg-gradient-to-br from-sky-50 via-white to-blue-50 flex items-center justify-center"
+      transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
+      className="fixed inset-0 z-[100] bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 flex items-center justify-center"
     >
       <div className="flex flex-col items-center gap-8">
         {/* Animated Globe Icon */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
           className="relative"
         >
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
             className="w-16 h-16 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center"
           >
             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </motion.div>
           <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             className="absolute inset-0 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 blur-xl -z-10"
           />
         </motion.div>
 
         {/* Brand Name */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3, duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
           className="text-center"
         >
           <h1 className="text-3xl font-bold">
-            <span className="text-slate-800">Atlas</span>
+            <span className="text-white">Atlas</span>
             <span className="text-gradient">Aura</span>
           </h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+            className="text-sm text-slate-500 mt-2 tracking-wider"
+          >
+            Purpose-driven travel
+          </motion.p>
         </motion.div>
 
-        {/* Spinner */}
+        {/* Loading dots */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="flex gap-1.5"
+          transition={{ delay: 0.5, duration: 0.4 }}
+          className="flex gap-2"
         >
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              animate={{ y: [0, -8, 0] }}
+              animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
               transition={{
-                duration: 0.6,
+                duration: 0.8,
                 repeat: Infinity,
                 delay: i * 0.15,
+                ease: "easeInOut",
               }}
-              className="w-2 h-2 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500"
+              className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-sky-400 to-indigo-400"
             />
           ))}
         </motion.div>
@@ -124,13 +133,13 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
         >
           <Navigation isLoggedIn={isLoggedIn} onLoginToggle={handleLoginToggle} />
           <main>
             <Hero />
             <MoodSearch />
-            <WorldMap key={mapKey} isLoggedIn={isLoggedIn} />
+            <WorldMap key={mapKey} />
             <CountryStories />
             <HiddenGems />
             <CuriosityFeed isLoggedIn={isLoggedIn} />
@@ -141,14 +150,15 @@ export default function Home() {
           <AnimatePresence>
             {isLoggedIn && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className={`fixed bottom-24 right-8 z-40 px-4 py-2 rounded-full glass border-amber-500/30`}
+                exit={{ opacity: 0, y: 16 }}
+                transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
+                className="fixed bottom-24 right-8 z-40 px-4 py-2 rounded-full glass border-sky-500/20"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-sm text-slate-600">Signed in as <span className="text-sky-500">{currentUser?.name || 'Traveler'}</span></span>
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-breathe" />
+                  <span className="text-sm text-slate-500">Signed in as <span className="text-sky-400 font-medium">{currentUser?.name || 'Traveler'}</span></span>
                 </div>
               </motion.div>
             )}

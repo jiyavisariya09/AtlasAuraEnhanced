@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Trophy, MapPin, MessageCircle, Globe, TrendingUp, Award, Star, Zap } from 'lucide-react';
 import { currentUser, badges } from '@/data/mockData';
 import { useTheme } from '@/context/ThemeContext';
+import { getAuthorAvatar } from '@/lib/utils';
 
 interface UserFeaturesProps {
   isLoggedIn: boolean;
@@ -36,20 +37,16 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
-            <Trophy className="w-4 h-4 text-amber-400" />
-            <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Your Journey</span>
-          </div>
           <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
             Track Your <span className="text-gradient">Adventure</span>
           </h2>
-          <p className={`text-lg max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
+          <p className={`text-lg max-w-2xl mx-auto leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
             Every exploration earns you recognition. Collect badges, track progress, 
             and celebrate your travel milestones.
           </p>
@@ -59,20 +56,22 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
           <>
             {/* User Dashboard Preview */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
               className="mb-16"
             >
               <div className="p-8 rounded-3xl glass">
                 {/* Profile Header */}
                 <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
                   <div className="relative">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 p-1">
-                      <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                        <span className="text-3xl">👤</span>
-                      </div>
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 p-1 shadow-xl">
+                      <img
+                        src={currentUser.avatar || getAuthorAvatar(currentUser.name)}
+                        alt={currentUser.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
                     </div>
                     <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center">
                       <Zap className="w-4 h-4 text-slate-900" />
@@ -94,11 +93,11 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
                   {stats.map((stat, index) => (
                     <motion.div
                       key={stat.label}
-                      initial={{ opacity: 0, scale: 0.9 }}
+                      initial={{ opacity: 0, scale: 0.95 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.4, delay: index * 0.1 }}
-                      className="p-4 rounded-xl bg-white/5"
+                      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 1, 0.5, 1] }}
+                      className="p-4 rounded-xl bg-white/5 transition-all duration-500 ease-smooth hover:bg-white/8 transform-gpu"
                     >
                       <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${stat.color} flex items-center justify-center mb-3`}>
                         <stat.icon className="w-5 h-5 text-white" />
@@ -131,9 +130,9 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: index * 0.05 }}
-                    className={`p-4 rounded-xl text-center transition-all ${
+                    className={`p-4 rounded-xl text-center transition-all duration-500 ease-smooth transform-gpu hover:-translate-y-0.5 ${
                       badge.earned
-                        ? 'glass hover:border-amber-500/30'
+                        ? 'glass hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5'
                         : 'bg-white/5 opacity-50'
                     }`}
                   >

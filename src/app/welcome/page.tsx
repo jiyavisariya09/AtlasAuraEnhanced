@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Sparkles, MapPin, Heart, Compass, ArrowRight, ChevronDown, User, Globe, Camera, BookOpen, Check } from 'lucide-react';
+import { Sparkles, MapPin, Heart, Compass, ArrowRight, ChevronDown, User, Globe, Camera, BookOpen, Check, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useRef } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 
 export default function WelcomePage() {
@@ -17,8 +18,19 @@ export default function WelcomePage() {
     name: '',
     travelStyle: [] as string[],
     dreamDestinations: '',
-    travelFrequency: ''
+    travelFrequency: '',
+    bio: '',
+    avatar: ''
   });
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPreferences(prev => ({ ...prev, avatar: reader.result as string }));
+    reader.readAsDataURL(file);
+  };
 
   const isDark = theme === 'dark';
 
@@ -70,12 +82,20 @@ export default function WelcomePage() {
     if (currentStep < storySlides.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      if (showPreferences) {
-        localStorage.setItem('atlasaura-preferences', JSON.stringify(preferences));
-        router.push('/dashboard');
-      } else {
-        router.push('/dashboard');
-      }
+      // Save to localStorage for immediate use
+      localStorage.setItem('atlasaura-preferences', JSON.stringify(preferences));
+      // Save to MongoDB
+      fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          avatar: preferences.avatar,
+          bio: preferences.bio,
+          travelStyle: preferences.travelStyle,
+          dreamDestinations: preferences.dreamDestinations,
+        }),
+      }).catch(() => {});
+      router.push('/dashboard');
     }
   };
 
@@ -237,16 +257,34 @@ export default function WelcomePage() {
                       exit={{ opacity: 0, height: 0 }}
                       className="mt-4 space-y-4"
                     >
-                      <div>
-                        <label className={`block text-sm mb-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                          What should we call you?
-                        </label>
-                        <Input
-                          placeholder="Your name"
-                          value={preferences.name}
-                          onChange={(e) => setPreferences(prev => ({ ...prev, name: e.target.value }))}
-                          className={`${isDark ? 'bg-white/10 border-white/10' : 'bg-white border-slate-200'} text-inherit`}
-                        />
+                      <div className="flex items-center gap-4">
+                        <div
+                          onClick={() => avatarInputRef.current?.click()}
+                          className={`relative w-20 h-20 rounded-full flex-shrink-0 cursor-pointer overflow-hidden border-2 border-dashed transition-all ${
+                            isDark ? 'border-amber-500/50 hover:border-amber-400' : 'border-amber-600/40 hover:border-amber-600'
+                          }`}
+                        >
+                          {preferences.avatar ? (
+                            <img src={preferences.avatar} alt="avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                              <Upload className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+                              <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Photo</span>
+                            </div>
+                          )}
+                        </div>
+                        <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                        <div className="flex-1">
+                          <label className={`block text-sm mb-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                            What should we call you?
+                          </label>
+                          <Input
+                            placeholder="Your name"
+                            value={preferences.name}
+                            onChange={(e) => setPreferences(prev => ({ ...prev, name: e.target.value }))}
+                            className={`${isDark ? 'bg-white/10 border-white/10' : 'bg-white border-slate-200'} text-inherit`}
+                          />
+                        </div>
                       </div>
 
                       <div>
@@ -287,6 +325,23 @@ export default function WelcomePage() {
                           value={preferences.dreamDestinations}
                           onChange={(e) => setPreferences(prev => ({ ...prev, dreamDestinations: e.target.value }))}
                           className={`${isDark ? 'bg-white/10 border-white/10' : 'bg-white border-slate-200'} text-inherit`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className={`block text-sm mb-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                          Tell us about yourself
+                        </label>
+                        <textarea
+                          rows={3}
+                          placeholder="I'm a passionate traveler who loves sunsets, street food, and getting lost in old cities..."
+                          value={preferences.bio}
+                          onChange={(e) => setPreferences(prev => ({ ...prev, bio: e.target.value }))}
+                          className={`w-full px-3 py-2 rounded-md text-sm resize-none border outline-none transition-colors ${
+                            isDark
+                              ? 'bg-white/10 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-500/50'
+                              : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-amber-500'
+                          }`}
                         />
                       </div>
                     </motion.div>

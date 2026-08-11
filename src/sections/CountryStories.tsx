@@ -32,16 +32,12 @@ export default function CountryStories() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-16"
         >
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 border ${isDark ? 'bg-white/5 border-white/10 text-slate-300' : 'bg-white border-sky-200 text-slate-600'}`}>
-            <BookOpen className="w-4 h-4 text-sky-500" />
-            <span className="text-sm font-medium">Country Story Cards</span>
-          </div>
           <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
             Stories That <span className="text-gradient">Inspire</span>
           </h2>
@@ -55,24 +51,24 @@ export default function CountryStories() {
           {countries.map((country, index) => (
             <motion.div
               key={country.id}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
+              viewport={{ once: true, amount: 0.1 }}
+              transition={{ duration: 0.8, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
               className="group cursor-pointer"
               onClick={() => setSelectedCountry(country)}
             >
-              <div className={`relative h-full rounded-2xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 ${
+              <div className={`relative h-full rounded-2xl overflow-hidden border transition-all duration-500 ease-smooth group-hover:-translate-y-2 transform-gpu ${
                 isDark
-                  ? 'bg-slate-800/60 border-white/8 hover:border-sky-500/40 hover:shadow-lg hover:shadow-sky-500/10'
-                  : 'bg-white border-slate-200 hover:border-sky-300 hover:shadow-xl hover:shadow-sky-100'
+                  ? 'bg-slate-800/60 border-white/8 group-hover:border-sky-500/30 group-hover:shadow-xl group-hover:shadow-sky-500/8'
+                  : 'bg-white border-slate-200/80 group-hover:border-sky-300 group-hover:shadow-xl group-hover:shadow-sky-200/40'
               }`}>
                 {/* Image */}
                 <div className="relative h-52 overflow-hidden">
                   <img
                     src={country.image}
                     alt={country.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-[1.06] will-change-transform"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                   <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm">
@@ -93,7 +89,7 @@ export default function CountryStories() {
                     <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{country.region}</span>
                   </div>
 
-                  <h3 className={`text-xl font-bold mb-2 transition-colors group-hover:text-sky-500 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <h3 className={`text-xl font-bold mb-2 transition-colors duration-500 ease-smooth group-hover:text-sky-500 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {country.name}
                   </h3>
 
@@ -112,7 +108,7 @@ export default function CountryStories() {
 
                   <div className={`flex items-center justify-between pt-3 border-t ${isDark ? 'border-white/8' : 'border-slate-100'}`}>
                     <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{country.vibe}</span>
-                    <span className="text-xs font-semibold text-sky-500 group-hover:translate-x-1 transition-transform inline-block">
+                    <span className="text-xs font-semibold text-sky-500 group-hover:translate-x-1 transition-transform duration-500 ease-smooth inline-block">
                       Read Story →
                     </span>
                   </div>
@@ -134,10 +130,10 @@ export default function CountryStories() {
             onClick={() => setSelectedCountry(null)}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              initial={{ scale: 0.96, opacity: 0, y: 16 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              exit={{ scale: 0.96, opacity: 0, y: 16 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
               className={`relative max-w-3xl w-full rounded-3xl overflow-hidden border shadow-2xl ${
                 isDark
                   ? 'bg-slate-900 border-white/10'
@@ -221,7 +217,29 @@ export default function CountryStories() {
 
                 {/* CTAs */}
                 <div className="flex gap-3 pt-1">
-                  <Button className="flex-1 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white font-semibold">
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white font-semibold"
+                    onClick={() => {
+                      setSelectedCountry(null);
+                      setTimeout(() => {
+                        const el = document.getElementById('world-map');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        // Store target country so WorldMap can zoom to it
+                        const coords: Record<string, [number, number]> = {
+                          Japan: [36.2048, 138.2529],
+                          Morocco: [31.7917, -7.0926],
+                          Norway: [60.472, 8.4689],
+                          Indonesia: [-0.7893, 113.9213],
+                          Greece: [39.0742, 21.8243],
+                        };
+                        const coord = coords[selectedCountry!.name];
+                        if (coord) {
+                          sessionStorage.setItem('atlasaura-map-focus', JSON.stringify({ lat: coord[0], lng: coord[1], name: selectedCountry!.name }));
+                          window.dispatchEvent(new CustomEvent('atlasaura-focus-map', { detail: { lat: coord[0], lng: coord[1] } }));
+                        }
+                      }, 300);
+                    }}
+                  >
                     <MapPin className="w-4 h-4 mr-2" />View on Map
                   </Button>
                   <Button variant="outline" className={`flex-1 font-semibold ${

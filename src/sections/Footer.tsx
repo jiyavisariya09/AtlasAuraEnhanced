@@ -72,9 +72,10 @@ export default function Footer() {
                 <motion.a
                   key={i}
                   href={social.href}
-                  className="w-10 h-10 rounded-full glass flex items-center justify-center text-slate-400 hover:text-amber-400 hover:border-amber-400/30 transition-colors"
-                  whileHover={{ scale: 1.1 }}
+                  className={`w-10 h-10 rounded-full glass flex items-center justify-center transition-all duration-500 ease-smooth transform-gpu ${isDark ? 'text-slate-400 hover:text-sky-400 hover:border-sky-400/30' : 'text-slate-500 hover:text-sky-500 hover:border-sky-300'}`}
+                  whileHover={{ scale: 1.08, y: -2 }}
                   whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
                 >
                   <social.icon className="w-5 h-5" />
                 </motion.a>
@@ -90,7 +91,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className={`transition-colors ${isDark ? 'text-slate-400 hover:text-amber-400' : 'text-slate-700 hover:text-amber-500'}`}
+                    className={`transition-colors duration-300 ease-smooth ${isDark ? 'text-slate-400 hover:text-sky-400' : 'text-slate-600 hover:text-sky-500'}`}
                   >
                     {link.name}
                   </a>
@@ -106,7 +107,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className={`transition-colors ${isDark ? 'text-slate-400 hover:text-amber-400' : 'text-slate-700 hover:text-amber-500'}`}
+                    className={`transition-colors duration-300 ease-smooth ${isDark ? 'text-slate-400 hover:text-sky-400' : 'text-slate-600 hover:text-sky-500'}`}
                   >
                     {link.name}
                   </a>
@@ -122,7 +123,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className={`transition-colors ${isDark ? 'text-slate-400 hover:text-amber-400' : 'text-slate-700 hover:text-amber-500'}`}
+                    className={`transition-colors duration-300 ease-smooth ${isDark ? 'text-slate-400 hover:text-sky-400' : 'text-slate-600 hover:text-sky-500'}`}
                   >
                     {link.name}
                   </a>
@@ -158,7 +159,7 @@ export default function Footer() {
                     : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'
                 }`}
               />
-              <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 font-medium hover:from-amber-400 hover:to-orange-400 transition-colors">
+              <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 text-white font-medium hover:from-sky-400 hover:to-indigo-400 transition-all duration-500 ease-smooth transform-gpu hover:shadow-lg hover:shadow-sky-500/20 active:scale-[0.97]">
                 Subscribe
               </button>
             </div>
@@ -171,18 +172,18 @@ export default function Footer() {
             Made with <Heart className="w-4 h-4 text-rose-500 fill-rose-500" /> for travelers everywhere
           </p>
           <div className={`flex items-center gap-6 text-sm ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
-            <a href="#" className="hover:text-amber-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-amber-400 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-amber-400 transition-colors">Cookies</a>
+            <a href="#" className="hover:text-sky-400 transition-colors duration-300 ease-smooth">Privacy Policy</a>
+            <a href="#" className="hover:text-sky-400 transition-colors duration-300 ease-smooth">Terms of Service</a>
+            <a href="#" className="hover:text-sky-400 transition-colors duration-300 ease-smooth">Cookies</a>
           </div>
         </div>
 
         {/* Scroll to Top */}
         <motion.button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center shadow-lg hover:shadow-amber-500/30 transition-shadow z-40"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+          className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 flex items-center justify-center shadow-lg hover:shadow-sky-500/30 transition-all duration-500 ease-smooth z-40"
+          whileHover={{ scale: 1.08, y: -2 }}
+          whileTap={{ scale: 0.93 }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >

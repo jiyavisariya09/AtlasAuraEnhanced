@@ -76,6 +76,7 @@ export const memoryPins: MemoryPin[] = [
     country: 'Japan',
     note: 'First cherry blossom season - cried under a tree in Ueno Park',
     emoji: '🌸',
+    image: '/memories/japan.jpg',
     mood: 'culture',
     author: 'Sarah Chen',
     date: '2024-04-15',
@@ -88,6 +89,7 @@ export const memoryPins: MemoryPin[] = [
     country: 'Morocco',
     note: 'Lost in the medina for 3 hours, found the best mint tea of my life',
     emoji: '🍵',
+    image: '/memories/morocco.jpg',
     mood: 'adventure',
     author: 'Marco Rossi',
     date: '2024-03-20',
@@ -100,6 +102,7 @@ export const memoryPins: MemoryPin[] = [
     country: 'Norway',
     note: 'Saw the northern lights dance for the first time. Pure magic.',
     emoji: '✨',
+    image: '/memories/norway.jpg',
     mood: 'calm',
     author: 'Emma Wilson',
     date: '2024-02-10',
@@ -112,6 +115,7 @@ export const memoryPins: MemoryPin[] = [
     country: 'Indonesia',
     note: 'Sunrise at Borobudur - a spiritual awakening I will never forget',
     emoji: '🙏',
+    image: '/memories/indonesia.jpg',
     mood: 'culture',
     author: 'David Park',
     date: '2024-01-25',
@@ -124,6 +128,7 @@ export const memoryPins: MemoryPin[] = [
     country: 'Greece',
     note: 'Proposed to my love in Santorini. She said yes!',
     emoji: '💍',
+    image: '/memories/greece.jpg',
     mood: 'honeymoon',
     author: 'Alex Thompson',
     date: '2024-05-01',
@@ -136,6 +141,7 @@ export const memoryPins: MemoryPin[] = [
     country: 'Iceland',
     note: 'Solo road trip around the ring road. Found myself in the silence.',
     emoji: '🚗',
+    image: '/memories/iceland.jpg',
     mood: 'solo',
     author: 'Lisa Anderson',
     date: '2024-06-12',
@@ -221,7 +227,14 @@ export const hiddenGems: HiddenGem[] = [
     country: 'Costa Rica',
     image: '/hidden-gem-1.jpg',
     description: 'A magical turquoise waterfall hidden deep in the Tenorio Volcano National Park.',
-    type: 'nature'
+    type: 'nature',
+    fullDescription: 'Rio Celeste is one of Costa Rica\'s most breathtaking natural wonders. The river gets its striking sky-blue color from a chemical reaction between volcanic minerals and the water. Deep inside Tenorio Volcano National Park, the trail winds through lush rainforest before revealing the stunning 30-meter waterfall plunging into a turquoise pool.',
+    images: ['/hidden-gem-1.jpg', '/mood-adventure.jpg', '/mood-solo.jpg'],
+    bestTime: 'December – April (dry season)',
+    tips: ['Start hiking early to avoid crowds', 'Bring waterproof shoes — the trail gets muddy', 'Swimming is not allowed in the pool to protect the ecosystem', 'Hire a local guide for the best experience'],
+    rating: 4.9,
+    visitors: '12K/year',
+    coordinates: '10.7°N, 85.0°W'
   },
   {
     id: '2',
@@ -229,15 +242,29 @@ export const hiddenGems: HiddenGem[] = [
     country: 'Georgia',
     image: '/hidden-gem-2.jpg',
     description: 'An ancient cave monastery carved into a cliffside, with over 6000 chambers.',
-    type: 'culture'
+    type: 'culture',
+    fullDescription: 'Vardzia is a cave monastery site in southern Georgia, excavated from the slopes of the Erusheti Mountain on the left bank of the Kura River. The site was built in the 12th century under Queen Tamar and contains over 6,000 rooms spread across 13 levels, including churches, chapels, a throne room, and a pharmacy.',
+    images: ['/hidden-gem-2.jpg', '/mood-honeymoon.jpg', '/mood-adventure.jpg'],
+    bestTime: 'May – October',
+    tips: ['Wear comfortable walking shoes for the steep paths', 'Visit on weekdays to avoid tour groups', 'The frescoes inside the main church are remarkably preserved', 'Combine with a visit to nearby Khertvisi Fortress'],
+    rating: 4.7,
+    visitors: '8K/year',
+    coordinates: '41.4°N, 43.3°E'
   },
   {
     id: '3',
     name: 'Mosquito Bay',
     country: 'Puerto Rico',
     image: '/hidden-gem-3.jpg',
-    description: 'The world\'s brightest bioluminescent bay - paddle through glowing waters.',
-    type: 'adventure'
+    description: 'The world\'s brightest bioluminescent bay — paddle through glowing waters.',
+    type: 'adventure',
+    fullDescription: 'Mosquito Bay on Vieques Island holds the Guinness World Record for the brightest bioluminescent bay on Earth. Millions of microscopic dinoflagellates light up the water with an electric blue glow when disturbed. Kayaking through the bay at night feels like paddling through liquid stars — an experience unlike anything else on the planet.',
+    images: ['/hidden-gem-3.jpg', '/mood-solo.jpg', '/mood-honeymoon.jpg'],
+    bestTime: 'Year-round (best on moonless nights)',
+    tips: ['Book a guided kayak tour — no motorboats allowed', 'Go on a new moon night for maximum glow', 'Don\'t use sunscreen before entering — it harms the organisms', 'Arrive after 8 PM for the best bioluminescence'],
+    rating: 4.8,
+    visitors: '20K/year',
+    coordinates: '18.1°N, 65.4°W'
   }
 ];
 
@@ -293,7 +320,7 @@ export const badges: Badge[] = [
 export const currentUser: User = {
   id: '1',
   name: 'Alex Wanderer',
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
+  avatar: '/avatars/avatar-default.jpg',
   countriesExplored: 12,
   memoryPins: 24,
   questionsAnswered: 8,

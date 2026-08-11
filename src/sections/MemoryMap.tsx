@@ -5,6 +5,7 @@ import { memoryPins } from '@/data/mockData';
 import type { MemoryPin } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/context/ThemeContext';
+import { getAuthorAvatar, getPinImage } from '@/lib/utils';
 
 interface MemoryMapProps {
   isLoggedIn: boolean;
@@ -44,30 +45,26 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
           className="text-center mb-16"
         >
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 ${isDark ? 'glass' : 'bg-white shadow-md'}`}>
-            <MapPin className="w-4 h-4 text-amber-500" />
-            <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Social Memory Map</span>
-          </div>
           <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
             Memories Around the <span className="text-gradient">World</span>
           </h2>
-          <p className={`text-lg max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className={`text-lg max-w-2xl mx-auto leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
             Explore emotional travel experiences shared by our community.
             Each pin holds a story, a feeling, a moment in time.
           </p>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.97 }}
           whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
           className="relative"
         >
           <div className={`relative aspect-[2/1] rounded-3xl overflow-hidden ${isDark ? 'glass' : 'bg-white shadow-xl border border-slate-200'}`}>
@@ -218,8 +215,8 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
               </button>
 
               <div className="flex items-center gap-4 mb-4">
-                <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${getMoodColor(selectedPin.mood)} flex items-center justify-center text-2xl`}>
-                  {selectedPin.emoji}
+                <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-md border border-amber-500/30">
+                  <img src={getPinImage(selectedPin)} alt={selectedPin.country} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{selectedPin.country}</h3>
@@ -231,7 +228,7 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500" />
+                  <img src={getAuthorAvatar(selectedPin.author)} alt={selectedPin.author} className="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" />
                   <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{selectedPin.author}</span>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs bg-gradient-to-r ${getMoodColor(selectedPin.mood)} text-white`}>
