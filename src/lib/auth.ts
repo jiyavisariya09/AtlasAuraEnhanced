@@ -4,15 +4,35 @@ export interface AuthUser {
   email: string
   phone?: string
   avatar?: string
-  joinedAt: string
+  bio?: string
+  joinedAt?: string
   travelStyle?: string[]
   dreamDestinations?: string
+  countriesExplored?: number
+  contributionScore?: number
+  streakDays?: number
+  badges?: Array<{
+    id?: string
+    badgeKey: string
+    name: string
+    icon: string
+    description: string
+    earned?: boolean
+  }>
+  counts?: {
+    pins: number
+    gems: number
+    tripPlans: number
+    journals: number
+    answers: number
+  }
 }
 
 const USER_KEY = 'atlasaura-user'
 
 // ── Session helpers (client-side only) ───────────────────
 export function setCurrentUser(user: AuthUser) {
+  if (typeof window === 'undefined') return
   localStorage.setItem(USER_KEY, JSON.stringify(user))
 }
 
@@ -26,22 +46,39 @@ export function getCurrentUser(): AuthUser | null {
   }
 }
 
+export async function fetchSession(): Promise<AuthUser | null> {
+  try {
+    const res = await fetch('/api/auth/me')
+    const json = await res.json()
+    if (res.ok && json.user) {
+      setCurrentUser(json.user)
+      return json.user
+    }
+    return null
+  } catch {
+    return getCurrentUser()
+  }
+}
+
 export function signOut() {
-  localStorage.removeItem(USER_KEY)
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(USER_KEY)
+  }
   fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
 }
 
 export function updateUserPreferences(prefs: Partial<AuthUser>) {
   const user = getCurrentUser()
   if (!user) return
-  setCurrentUser({ ...user, ...prefs })
+  const updated = { ...user, ...prefs }
+  setCurrentUser(updated)
 }
 
 // ── API calls ─────────────────────────────────────────────
 export async function signUp(data: {
   name: string
   email: string
-  phone: string
+  phone?: string
   password: string
 }): Promise<{ success: boolean; error?: string; user?: AuthUser }> {
   try {
@@ -54,8 +91,7 @@ export async function signUp(data: {
     if (!res.ok) return { success: false, error: json.message }
     const user: AuthUser = {
       ...json.user,
-      avatar: '/avatars/avatar-default.jpg',
-      joinedAt: new Date().toISOString(),
+      joinedAt: json.user.createdAt || new Date().toISOString(),
     }
     setCurrentUser(user)
     return { success: true, user }
@@ -78,8 +114,7 @@ export async function signIn(data: {
     if (!res.ok) return { success: false, error: json.message }
     const user: AuthUser = {
       ...json.user,
-      avatar: '/avatars/avatar-default.jpg',
-      joinedAt: new Date().toISOString(),
+      joinedAt: json.user.createdAt || new Date().toISOString(),
     }
     setCurrentUser(user)
     return { success: true, user }

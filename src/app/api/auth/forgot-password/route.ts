@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { connectDB } from '@/lib/server/db'
-import { User } from '@/lib/server/userModel'
+import { prisma } from '@/lib/prisma'
 import { signResetToken } from '@/lib/server/jwt'
 import { sendMail, resetHtml } from '@/lib/server/mailer'
 
@@ -11,18 +10,19 @@ export async function POST(req: NextRequest) {
     const { email } = await req.json()
     if (!email) return NextResponse.json({ message: 'Email is required.' }, { status: 400 })
 
-    await connectDB()
-
-    const user = await User.findOne({ email })
+    const cleanEmail = email.toLowerCase().trim()
+    const user = await prisma.user.findUnique({ where: { email: cleanEmail } })
     if (!user) return NextResponse.json(OK) // prevent email enumeration
 
-    const token = signResetToken({ id: user._id, purpose: 'reset' })
-    const url = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`
+    const token = signResetToken({ id: user.id, purpose: 'reset' })
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const url = `${appUrl}/reset-password?token=${token}`
 
     await sendMail(user.email, 'Reset your AtlasAura password', resetHtml(user.name, url))
 
     return NextResponse.json(OK)
-  } catch {
+  } catch (err) {
+    console.error('Forgot password error:', err)
     return NextResponse.json({ message: 'Failed to send reset email. Try again.' }, { status: 500 })
   }
 }

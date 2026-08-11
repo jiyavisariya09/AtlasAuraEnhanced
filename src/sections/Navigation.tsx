@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Globe, Menu, X, User, Search, MapPin, Compass } from 'lucide-react';
+import { Globe, Menu, X, User, Search, MapPin, Compass, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/context/ThemeContext';
 import ThemeToggle from '@/components/ThemeToggle';
+import CurrencySelector from '@/components/CurrencySelector';
+import AITravelAssistantModal from '@/components/AITravelAssistantModal';
 import { getCurrentUser, signOut, type AuthUser } from '@/lib/auth';
 import { countries } from '@/data/mockData';
 import { getAuthorAvatar } from '@/lib/utils';
@@ -21,6 +23,7 @@ export default function Navigation({ isLoggedIn, onLoginToggle }: NavigationProp
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPurpose, setSelectedPurpose] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -130,7 +133,20 @@ export default function Navigation({ isLoggedIn, onLoginToggle }: NavigationProp
               <Search className="w-4 h-4" />
               <span className="hidden lg:inline">Search</span>
             </motion.button>
+
+            {/* AI Assistant button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAIModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-orange-500/20 hover:from-amber-400 hover:to-orange-400 transition-all transform-gpu"
+              title="Open AI Travel Assistant"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>AI Trips</span>
+            </motion.button>
+
             <ThemeToggle scrolledLight={scrolledLight} />
+            <CurrencySelector />
             {isLoggedIn ? (
               <motion.div className="flex items-center gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <Link
@@ -337,6 +353,9 @@ export default function Navigation({ isLoggedIn, onLoginToggle }: NavigationProp
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* AI Travel Assistant Modal */}
+      <AITravelAssistantModal isOpen={showAIModal} onClose={() => setShowAIModal(false)} />
     </motion.header>
   );
 }

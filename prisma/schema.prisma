@@ -1,0 +1,289 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────
+
+enum TravelMood {
+  solo
+  calm
+  adventure
+  honeymoon
+  culture
+}
+
+enum CrowdLevel {
+  low
+  moderate
+  busy
+}
+
+enum GemType {
+  nature
+  culture
+  adventure
+  viewpoint
+  stay
+  food
+}
+
+// ─── User ─────────────────────────────────────────────────────────
+
+model User {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  email             String   @unique
+  passwordHash      String
+  name              String
+  phone             String?
+  avatar            String   @default("/avatars/avatar-default.jpg")
+  bio               String?
+  travelStyle       String[]
+  dreamDestinations String?
+  countriesExplored Int      @default(0)
+  contributionScore Int      @default(0)
+  streakDays        Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  pins       MemoryPin[]
+  gems       HiddenGem[]
+  questions  Question[]
+  answers    Answer[]
+  journals   Journal[]
+  posts      Post[]
+  comments   Comment[]
+  reviews    Review[]
+  tripPlans  TripPlan[]
+  preference UserPreference?
+  badges     UserBadge[]
+}
+
+// ─── Destination ──────────────────────────────────────────────────
+
+model Destination {
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  country         String
+  city            String?
+  region          String
+  description     String
+  image           String
+  images          String[]
+  latitude        Float
+  longitude       Float
+  bestTimeToVisit String
+  budgetUSD       Float
+  crowdLevel      CrowdLevel   @default(moderate)
+  rating          Float        @default(4.8)
+  purposes        TravelMood[]
+  safetyScore     Float        @default(4.5)
+  etiquette       String[]
+  mustVisit       String[]
+  foodTips        String[]
+  createdAt       DateTime     @default(now())
+
+  reviews      Review[]
+  culturalInfo CulturalInsight?
+}
+
+// ─── Hidden Gem ───────────────────────────────────────────────────
+
+model HiddenGem {
+  id               String       @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  country          String
+  region           String
+  description      String
+  fullDescription  String?
+  image            String
+  images           String[]
+  type             GemType
+  purposes         TravelMood[]
+  crowdLevel       CrowdLevel   @default(low)
+  cleanlinessScore Float        @default(5.0)
+  costUSD          Float        @default(0.0)
+  bestTime         String?
+  tips             String[]
+  rating           Float        @default(4.8)
+  latitude         Float
+  longitude        Float
+  keywords         String[]
+  createdAt        DateTime     @default(now())
+
+  authorId String @db.ObjectId
+  author   User   @relation(fields: [authorId], references: [id])
+}
+
+// ─── Cultural Insight ─────────────────────────────────────────────
+
+model CulturalInsight {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  destinationId String      @unique @db.ObjectId
+  destination   Destination @relation(fields: [destinationId], references: [id])
+  traditions    String[]
+  festivals     String[]
+  languages     String[]
+  dos           String[]
+  donts         String[]
+  facts         String[]
+}
+
+// ─── Memory Pin ───────────────────────────────────────────────────
+
+model MemoryPin {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  lat       Float
+  lng       Float
+  country   String
+  note      String
+  emoji     String     @default("📍")
+  image     String?
+  mood      TravelMood
+  author    String
+  date      String
+  isPublic  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+// ─── Journal ──────────────────────────────────────────────────────
+
+model Journal {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  content   String
+  country   String
+  images    String[]
+  createdAt DateTime @default(now())
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+// ─── Post ─────────────────────────────────────────────────────────
+
+model Post {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  content   String
+  image     String?
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  userId   String    @db.ObjectId
+  user     User      @relation(fields: [userId], references: [id])
+  comments Comment[]
+}
+
+// ─── Comment ──────────────────────────────────────────────────────
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  createdAt DateTime @default(now())
+
+  postId String @db.ObjectId
+  post   Post   @relation(fields: [postId], references: [id])
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+// ─── Review ───────────────────────────────────────────────────────
+
+model Review {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  rating       Float
+  content      String
+  helpfulVotes Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  destinationId String      @db.ObjectId
+  destination   Destination @relation(fields: [destinationId], references: [id])
+  userId        String      @db.ObjectId
+  user          User        @relation(fields: [userId], references: [id])
+}
+
+// ─── Trip Plan ────────────────────────────────────────────────────
+
+model TripPlan {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  destination   String
+  startDate     String?
+  endDate       String?
+  budgetUSD     Float
+  itineraryDays Json
+  checklist     Json
+  createdAt     DateTime @default(now())
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+// ─── Question ─────────────────────────────────────────────────────
+
+model Question {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  content   String
+  country   String?
+  tags      String[]
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  userId  String   @db.ObjectId
+  user    User     @relation(fields: [userId], references: [id])
+  answers Answer[]
+}
+
+// ─── Answer ───────────────────────────────────────────────────────
+
+model Answer {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  likes     Int      @default(0)
+  isHelpful Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  questionId String   @db.ObjectId
+  question   Question @relation(fields: [questionId], references: [id])
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+// ─── User Preference ─────────────────────────────────────────────
+
+model UserPreference {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String   @unique @db.ObjectId
+  user              User     @relation(fields: [userId], references: [id])
+  preferredCurrency String   @default("USD")
+  savedDestinations String[]
+  wishlist          String[]
+  recentSearches    String[]
+  updatedAt         DateTime @updatedAt
+}
+
+// ─── User Badge ──────────────────────────────────────────────────
+
+model UserBadge {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  badgeKey    String
+  name        String
+  icon        String
+  description String
+  earnedAt    DateTime @default(now())
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+}
