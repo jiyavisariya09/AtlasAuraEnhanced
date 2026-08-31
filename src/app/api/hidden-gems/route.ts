@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyToken } from '@/lib/server/jwt'
-import { GemType, TravelMood, CrowdLevel } from '@prisma/client'
-
-function getUserId(req: NextRequest): string | null {
-  const token = req.cookies.get('token')?.value
-  if (!token) return null
-  try {
-    const payload = verifyToken(token)
-    return payload.id as string
-  } catch {
-    return null
-  }
-}
+import { GemType, TravelMood, CrowdLevel, Prisma } from '@prisma/client'
+import { getUserId, serverError, unauthorized } from '@/lib/server/session'
+import { parseBody, gemSchema } from '@/lib/server/validation'
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,7 +12,9 @@ export async function GET(req: NextRequest) {
     const country = searchParams.get('country')
     const search = searchParams.get('search')?.toLowerCase().trim()
 
-    const where: any = {}
+    /* Typed rather than `any`. With `any` there was nothing stopping a stray key
+       reaching Prisma's `where`, and nothing telling us if one was misspelt. */
+    const where: Prisma.HiddenGemWhereInput = {}
 
     if (type && Object.values(GemType).includes(type as GemType)) {
       where.type = type as GemType
@@ -60,28 +52,24 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ gems, count: gems.length })
-  } catch (err: any) {
-    console.error('Hidden Gems GET error:', err)
-    return NextResponse.json({ message: err.message || 'Failed to fetch hidden gems' }, { status: 500 })
+  } catch (err) {
+    return serverError('Hidden Gems GET error', err, 'Could not load hidden gems.')
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const userId = getUserId(req)
-    if (!userId) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    if (!userId) return unauthorized()
 
-    const body = await req.json()
-    const { name, country, region, description, fullDescription, image, type, purposes, costUSD, tips, latitude, longitude } = body
+    const parsed = await parseBody(req, gemSchema)
+    if (!parsed.ok) return parsed.response
+    const { name, country, region, description, fullDescription, image, type, purposes, costUSD, tips, latitude, longitude } = parsed.data
 
-    if (!name || !country || !description) {
-      return NextResponse.json({ message: 'Name, country, and description are required' }, { status: 400 })
-    }
-
-    const gemType = Object.values(GemType).includes(type) ? (type as GemType) : GemType.nature
-    const gemPurposes = Array.isArray(purposes)
-      ? purposes.filter((p) => Object.values(TravelMood).includes(p))
-      : [TravelMood.adventure]
+    const gemType = Object.values(GemType).includes(type as GemType) ? (type as GemType) : GemType.nature
+    const gemPurposes = (purposes ?? []).filter((p): p is TravelMood =>
+      Object.values(TravelMood).includes(p as TravelMood),
+    )
 
     const newGem = await prisma.hiddenGem.create({
       data: {
@@ -93,14 +81,18 @@ export async function POST(req: NextRequest) {
         image: image || '/hidden-gem-1.jpg',
         images: [image || '/hidden-gem-1.jpg'],
         type: gemType,
-        purposes: gemPurposes,
+        purposes: gemPurposes.length > 0 ? gemPurposes : [TravelMood.adventure],
         crowdLevel: CrowdLevel.low,
-        cleanlinessScore: 4.8,
-        costUSD: costUSD ? parseFloat(costUSD) : 0,
-        tips: Array.isArray(tips) ? tips : ['Visit early in the morning to avoid crowds'],
-        rating: 5.0,
-        latitude: latitude ? parseFloat(latitude) : 0,
-        longitude: longitude ? parseFloat(longitude) : 0,
+        /* Contributed content starts unrated. These were hard-coded to 4.8 and
+           5.0, which meant every new submission arrived as the highest-rated
+           gem in the database and went straight to the top of a list ordered by
+           rating — a free promotion for anything anyone posted. */
+        cleanlinessScore: 0,
+        rating: 0,
+        costUSD: costUSD ?? 0,
+        tips: tips && tips.length > 0 ? tips : ['Visit early in the morning to avoid crowds'],
+        latitude: latitude ?? 0,
+        longitude: longitude ?? 0,
         keywords: [country.toLowerCase(), name.toLowerCase()],
         authorId: userId,
       },
@@ -125,8 +117,7 @@ export async function POST(req: NextRequest) {
     }).catch(() => {})
 
     return NextResponse.json({ message: 'Hidden gem submitted successfully', gem: newGem }, { status: 201 })
-  } catch (err: any) {
-    console.error('Hidden Gems POST error:', err)
-    return NextResponse.json({ message: err.message || 'Failed to submit hidden gem' }, { status: 500 })
+  } catch (err) {
+    return serverError('Hidden Gems POST error', err, 'Could not submit that gem.')
   }
 }

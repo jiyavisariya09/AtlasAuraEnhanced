@@ -3,142 +3,83 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Globe, MapPin, MessageCircle, Trophy, Award, Star, 
   Zap, Settings, LogOut, Plus, Heart, Compass,
   Map, ChevronRight, Bell, Search, Filter, Plane,
-  Target, Sparkles, TrendingUp, Clock, PenLine, X, Camera, Check, Save
+  Target, Sparkles, TrendingUp, Clock, PenLine, X, Camera, Check, Save,
+  Luggage, IndianRupee, Calendar, ExternalLink, ShieldCheck, Calculator
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { currentUser, badges, memoryPins, countries } from '@/data/mockData';
-import { useTheme } from '@/context/ThemeContext';
+import { currentUser, badges as allBadges, memoryPins as initialPins, countries } from '@/data/mockData';
+import { DESTINATIONS, type DestinationItem } from '@/data/destinationsData';
 import ThemeToggle from '@/components/ThemeToggle';
+import DestinationGlobeModal from '@/components/DestinationGlobeModal';
+import AIBudgetEstimatorModal from '@/components/AIBudgetEstimatorModal';
 import { getCurrentUser, signOut, type AuthUser } from '@/lib/auth';
+import { BorderBeam } from '@/components/ui/border-beam';
 
-function AnimatedBackground({ isDark }: { isDark: boolean }) {
-  const [particles, setParticles] = useState<{ left: string; top: string; duration: number; delay: number }[]>([]);
+const EASE = [0.22, 1, 0.36, 1] as const;
 
-  useEffect(() => {
-    setParticles(
-      [...Array(20)].map(() => ({
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        duration: 3 + Math.random() * 2,
-        delay: Math.random() * 2,
-      }))
-    );
-  }, []);
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <motion.div
-        animate={{ x: [0, 100, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }}
-        transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-        className={`absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full blur-[120px] ${isDark ? 'bg-amber-500/10' : 'bg-amber-400/20'}`}
-      />
-      <motion.div
-        animate={{ x: [0, -80, 0], y: [0, 80, 0], scale: [1, 1.3, 1] }}
-        transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-        className={`absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full blur-[100px] ${isDark ? 'bg-cyan-500/10' : 'bg-cyan-400/15'}`}
-      />
-      <motion.div
-        animate={{ x: [0, 60, 0], y: [0, -30, 0] }}
-        transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full blur-[80px] ${isDark ? 'bg-purple-500/5' : 'bg-purple-400/10'}`}
-      />
-      {particles.map((p, i) => (
-        <motion.div
-          key={i}
-          className={`absolute w-1 h-1 rounded-full ${isDark ? 'bg-amber-400/30' : 'bg-amber-500/40'}`}
-          style={{ left: p.left, top: p.top }}
-          animate={{ y: [0, -30, 0], opacity: [0.2, 0.8, 0.2] }}
-          transition={{ duration: p.duration, repeat: Infinity, delay: p.delay }}
-        />
-      ))}
-      <div
-        className={`absolute inset-0 opacity-[0.02] ${isDark ? 'text-white' : 'text-slate-900'}`}
-        style={{
-          backgroundImage: `linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)`,
-          backgroundSize: '50px 50px'
-        }}
-      />
-    </div>
-  );
-}
-
-function CircularProgress({ value, max, size = 80, strokeWidth = 8, children }: { 
+function CircularProgress({ value, max, size = 88, strokeWidth = 6, children }: { 
   value: number; max: number; size?: number; strokeWidth?: number; children?: React.ReactNode;
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
-  const progress = (value / max) * 100;
+  const progress = Math.min(100, Math.max(0, (value / max) * 100));
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" className="text-slate-700/30" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="hsl(var(--border))"
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
         <motion.circle
-          cx={size / 2} cy={size / 2} r={radius} stroke="url(#gradient)" strokeWidth={strokeWidth} fill="none"
-          strokeLinecap="round" strokeDasharray={circumference}
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="hsl(var(--aurora))"
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset }}
-          transition={{ duration: 1.5, ease: 'easeOut' }}
+          transition={{ duration: 1.2, ease: EASE }}
         />
-        <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#fbbf24" />
-            <stop offset="100%" stopColor="#f97316" />
-          </linearGradient>
-        </defs>
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">{children}</div>
     </div>
   );
 }
 
-function StatCard({ stat, index, isDark }: { stat: any; index: number; isDark: boolean }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + index * 0.1 }}
-      whileHover={{ y: -5, scale: 1.02 }}
-      className={`relative p-6 rounded-2xl overflow-hidden group cursor-pointer ${isDark ? 'glass' : 'bg-white shadow-lg'}`}
-    >
-      <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-      <div className="relative z-10">
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${stat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-          <stat.icon className="w-6 h-6 text-white" />
-        </div>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 + index * 0.1 }}
-          className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}
-        >
-          {stat.value}
-        </motion.p>
-        <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{stat.label}</p>
-        <div className="flex items-center gap-1 mt-2">
-          <TrendingUp className="w-3 h-3 text-emerald-500" />
-          <span className="text-xs text-emerald-500">{stat.trend}</span>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 export default function UserDashboard() {
   const router = useRouter();
-  const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [greeting, setGreeting] = useState('');
+  const [activeTab, setActiveTab] = useState<'memories' | 'trips' | 'badges' | 'saved'>('memories');
+  const [greeting, setGreeting] = useState('Welcome back');
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
-  const [userPrefs, setUserPrefs] = useState<{ name: string; travelStyle: string[]; dreamDestinations: string; bio?: string; avatar?: string } | null>(null);
+  const [userPrefs, setUserPrefs] = useState<{
+    name: string;
+    travelStyle: string[];
+    dreamDestinations: string;
+    budgetTier?: string;
+    bio?: string;
+    avatar?: string;
+  } | null>(null);
   const [userPins, setUserPins] = useState<any[]>([]);
+  const [tripPlans, setTripPlans] = useState<any[]>([]);
+  const [favoriteDestinations, setFavoriteDestinations] = useState<DestinationItem[]>([]);
+  const [globeDestination, setGlobeDestination] = useState<DestinationItem | null>(null);
+  const [budgetDestination, setBudgetDestination] = useState<DestinationItem | null>(null);
+
   // Settings modal
   const [showSettings, setShowSettings] = useState(false);
   const [editName, setEditName] = useState('');
@@ -146,11 +87,13 @@ export default function UserDashboard() {
   const [editAvatar, setEditAvatar] = useState('');
   const [editTravelStyle, setEditTravelStyle] = useState<string[]>([]);
   const [editDestinations, setEditDestinations] = useState('');
+  const [editHomeLocation, setEditHomeLocation] = useState('Mumbai, India');
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  // Add memory form
-  const [showMemoryForm, setShowMemoryForm] = useState(false);
+
+  // Add memory modal
+  const [showMemoryModal, setShowMemoryModal] = useState(false);
   const [memoryText, setMemoryText] = useState('');
   const [placeInput, setPlaceInput] = useState('');
   const [formMood, setFormMood] = useState('adventure');
@@ -158,7 +101,6 @@ export default function UserDashboard() {
   const [geocoding, setGeocoding] = useState(false);
   const [geoError, setGeoError] = useState('');
   const [memorySuccess, setMemorySuccess] = useState(false);
-  const isDark = theme === 'dark';
 
   const TRAVEL_STYLES = [
     { id: 'solo', label: 'Solo Explorer' },
@@ -169,12 +111,93 @@ export default function UserDashboard() {
     { id: 'relaxed', label: 'Easy Going' },
   ];
 
+  const MOODS = [
+    { id: 'adventure', label: 'Adventure', emoji: '⛰️' },
+    { id: 'solo', label: 'Solo', emoji: '🎒' },
+    { id: 'honeymoon', label: 'Romance', emoji: '💕' },
+    { id: 'culture', label: 'Culture', emoji: '🏛️' },
+    { id: 'calm', label: 'Peace', emoji: '🧘' },
+  ];
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Good morning');
+    else if (hour < 18) setGreeting('Good afternoon');
+    else setGreeting('Good evening');
+
+    const user = getCurrentUser();
+    if (!user) {
+      router.push('/signin');
+      return;
+    }
+    setAuthUser(user);
+
+    // 1. Load profile
+    fetch('/api/user/profile')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.name) {
+          setUserPrefs({
+            name: data.name,
+            bio: data.bio ?? '',
+            avatar: data.avatar ?? '',
+            travelStyle: data.travelStyle ?? [],
+            dreamDestinations: data.dreamDestinations ?? '',
+            budgetTier: data.budgetTier ?? 'explorer',
+          });
+        }
+      })
+      .catch(() => {
+        const raw = localStorage.getItem('atlasaura-preferences');
+        if (raw) setUserPrefs(JSON.parse(raw));
+      });
+
+    // 2. Load pins
+    fetch('/api/user/pins')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.pins && data.pins.length > 0) {
+          setUserPins(data.pins);
+        } else {
+          setUserPins(initialPins.slice(0, 4));
+        }
+      })
+      .catch(() => {
+        const pins = localStorage.getItem('atlasaura-user-pins');
+        if (pins) setUserPins(JSON.parse(pins));
+        else setUserPins(initialPins.slice(0, 4));
+      });
+
+    // 4. Load favorite destinations
+    try {
+      const favIds = JSON.parse(localStorage.getItem('atlasaura-favorite-destinations') || '[]');
+      const matched = DESTINATIONS.filter((d) => favIds.includes(d.id));
+      setFavoriteDestinations(matched.length > 0 ? matched : DESTINATIONS.slice(0, 4));
+
+      const rawPrefs = localStorage.getItem('atlasaura-preferences');
+      if (rawPrefs) {
+        const parsed = JSON.parse(rawPrefs);
+        if (parsed.homeLocation) setEditHomeLocation(parsed.homeLocation);
+      }
+    } catch (err) {
+      console.error(err);
+      setFavoriteDestinations(DESTINATIONS.slice(0, 4));
+    }
+  }, [router]);
+
   const openSettings = () => {
-    setEditName(authUser?.name || '');
+    setEditName(userPrefs?.name || authUser?.name || '');
     setEditBio(userPrefs?.bio || '');
     setEditAvatar(userPrefs?.avatar || '');
     setEditTravelStyle(userPrefs?.travelStyle || []);
     setEditDestinations(userPrefs?.dreamDestinations || '');
+    try {
+      const rawPrefs = localStorage.getItem('atlasaura-preferences');
+      if (rawPrefs) {
+        const parsed = JSON.parse(rawPrefs);
+        if (parsed.homeLocation) setEditHomeLocation(parsed.homeLocation);
+      }
+    } catch (e) {}
     setSaveSuccess(false);
     setShowSettings(true);
   };
@@ -188,18 +211,20 @@ export default function UserDashboard() {
   };
 
   const toggleStyle = (id: string) => {
-    setEditTravelStyle(prev =>
-      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    setEditTravelStyle((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
   };
 
   const handleSaveSettings = async () => {
     setSaving(true);
     const updated = {
+      name: editName,
       avatar: editAvatar,
       bio: editBio,
       travelStyle: editTravelStyle,
       dreamDestinations: editDestinations,
+      homeLocation: editHomeLocation,
     };
     try {
       await fetch('/api/user/profile', {
@@ -208,28 +233,34 @@ export default function UserDashboard() {
         body: JSON.stringify(updated),
       });
     } catch {}
-    setUserPrefs(prev => ({ ...prev!, name: editName, ...updated }));
-    localStorage.setItem('atlasaura-preferences', JSON.stringify({ name: editName, ...updated }));
+    setUserPrefs((prev) => ({ ...prev!, ...updated }));
+    const rawPrev = JSON.parse(localStorage.getItem('atlasaura-preferences') || '{}');
+    localStorage.setItem('atlasaura-preferences', JSON.stringify({ ...rawPrev, ...updated }));
     setSaving(false);
     setSaveSuccess(true);
-    setTimeout(() => { setSaveSuccess(false); setShowSettings(false); }, 1200);
+    setTimeout(() => {
+      setSaveSuccess(false);
+      setShowSettings(false);
+    }, 1000);
   };
 
-  const MOODS = [
-    { id: 'solo', label: 'Solo', emoji: '🎒' },
-    { id: 'honeymoon', label: 'Romance', emoji: '💕' },
-    { id: 'adventure', label: 'Adventure', emoji: '⛰️' },
-    { id: 'culture', label: 'Culture', emoji: '🏛️' },
-    { id: 'calm', label: 'Peace', emoji: '🧘' },
-  ];
-
   const handleAddMemory = async () => {
-    if (!memoryText.trim() || !placeInput.trim()) { setGeoError('Please fill in both fields.'); return; }
-    setGeocoding(true); setGeoError('');
+    if (!memoryText.trim() || !placeInput.trim()) {
+      setGeoError('Please provide both the place name and your memory.');
+      return;
+    }
+    setGeocoding(true);
+    setGeoError('');
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(placeInput)}&format=json&limit=1`);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(placeInput)}&format=json&limit=1`
+      );
       const data = await res.json();
-      if (!data.length) { setGeoError('Place not found. Try a more specific name.'); setGeocoding(false); return; }
+      if (!data.length) {
+        setGeoError('Location could not be geocoded. Please try a major city or country.');
+        setGeocoding(false);
+        return;
+      }
       const newPin = {
         id: `user-${Date.now()}`,
         lat: parseFloat(data[0].lat),
@@ -238,422 +269,741 @@ export default function UserDashboard() {
         note: memoryText,
         emoji: formEmoji,
         mood: formMood,
-        author: authUser?.name || 'You',
+        author: userPrefs?.name || authUser?.name || 'You',
         date: new Date().toISOString().split('T')[0],
         isPublic: true,
       };
-      // Save to MongoDB
       const saveRes = await fetch('/api/user/pins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newPin),
       });
       const saveData = await saveRes.json();
-      setUserPins(saveData.pins ?? [...userPins, newPin]);
-      // Also keep localStorage in sync for WorldMap
-      localStorage.setItem('atlasaura-user-pins', JSON.stringify(saveData.pins ?? [...userPins, newPin]));
+      const nextPins = saveData.pins ?? [newPin, ...userPins];
+      setUserPins(nextPins);
+      localStorage.setItem('atlasaura-user-pins', JSON.stringify(nextPins));
       setMemorySuccess(true);
       setTimeout(() => {
-        setMemorySuccess(false); setShowMemoryForm(false);
-        setMemoryText(''); setPlaceInput(''); setFormEmoji('📍'); setFormMood('adventure');
-      }, 1500);
-    } catch { setGeoError('Network error. Please try again.'); }
-    setGeocoding(false);
+        setMemorySuccess(false);
+        setShowMemoryModal(false);
+        setMemoryText('');
+        setPlaceInput('');
+        setFormEmoji('📍');
+        setFormMood('adventure');
+      }, 1200);
+    } catch {
+      setGeoError('Network error. Please check your connection.');
+    } finally {
+      setGeocoding(false);
+    }
   };
-
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Good morning');
-    else if (hour < 18) setGreeting('Good afternoon');
-    else setGreeting('Good evening');
-
-    const user = getCurrentUser();
-    if (!user) { router.push('/signin'); return; }
-    setAuthUser(user);
-
-    // Load profile + pins from MongoDB
-    fetch('/api/user/profile')
-      .then(r => r.json())
-      .then(data => {
-        if (data.name) {
-          setUserPrefs({
-            name: data.name,
-            bio: data.bio ?? '',
-            avatar: data.avatar ?? '',
-            travelStyle: data.travelStyle ?? [],
-            dreamDestinations: data.dreamDestinations ?? '',
-          });
-        }
-      }).catch(() => {
-        // fallback to localStorage
-        const raw = localStorage.getItem('atlasaura-preferences');
-        if (raw) setUserPrefs(JSON.parse(raw));
-      });
-
-    fetch('/api/user/pins')
-      .then(r => r.json())
-      .then(data => { if (data.pins) setUserPins(data.pins); })
-      .catch(() => {
-        const pins = localStorage.getItem('atlasaura-user-pins');
-        if (pins) setUserPins(JSON.parse(pins));
-      });
-  }, [router]);
-
-  const stats = [
-    { icon: Globe, label: 'Countries', value: currentUser.countriesExplored, color: 'from-amber-500 to-orange-500', trend: '+2 this month' },
-    { icon: MapPin, label: 'Memories', value: currentUser.memoryPins, color: 'from-cyan-500 to-blue-500', trend: '+5 this week' },
-    { icon: MessageCircle, label: 'Answers', value: currentUser.questionsAnswered, color: 'from-emerald-500 to-teal-500', trend: '+3 today' },
-    { icon: Trophy, label: 'Score', value: currentUser.contributionScore, color: 'from-purple-500 to-indigo-500', trend: 'Top 5%' },
-  ];
-
-  const nextMilestones = [
-    { label: 'Hidden Gem Hunter', current: 1, target: 3, icon: Star, reward: 'Unlock secret locations', color: 'from-pink-500 to-rose-500' },
-    { label: 'Community Guide', current: 8, target: 10, icon: MessageCircle, reward: 'Expert badge', color: 'from-cyan-500 to-blue-500' },
-    { label: 'World Explorer', current: 12, target: 20, icon: Globe, reward: 'Legendary status', color: 'from-amber-500 to-orange-500' },
-  ];
-
-  const recentMemories = memoryPins.slice(0, 4);
-  const savedCountries = countries.slice(0, 4);
 
   const handleLogout = () => {
     signOut();
     router.push('/');
   };
 
+  const stats = [
+    { icon: Globe, label: 'Countries Explored', value: currentUser.countriesExplored, trend: '+2 this year' },
+    { icon: MapPin, label: 'Memories Pinned', value: userPins.length, trend: '+5 stories' },
+    { icon: Trophy, label: 'Traveler Score', value: `${currentUser.contributionScore} pts`, trend: 'Top 5%' },
+    { icon: MessageCircle, label: 'Community Answers', value: currentUser.questionsAnswered, trend: '+3 helpful' },
+  ];
+
   return (
-    <div className={`min-h-screen relative ${isDark ? 'bg-slate-950' : 'bg-slate-50'} overflow-hidden`}>
-      <AnimatedBackground isDark={isDark} />
-      <header className={`sticky top-0 z-50 ${isDark ? 'glass' : 'bg-white/80 backdrop-blur-xl border-b border-slate-200'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <motion.a href="/" className="flex items-center gap-2" whileHover={{ scale: 1.02 }}>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                <Globe className="w-4 h-4 text-white" />
-              </div>
-              <span className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                Atlas<span className="text-sky-500">Aura</span>
+    <div className="min-h-screen relative bg-background text-foreground overflow-x-hidden">
+      {/* ── Ambient Background Glows ───────────────────────────────────────── */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="aurora-wash absolute inset-0 opacity-30" />
+        <div className="graticule absolute inset-0 opacity-15" />
+      </div>
+
+      {/* ── Top Navigation Bar ─────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-40 border-b border-border/80 glass backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <svg viewBox="0 0 32 32" className="h-7 w-7 text-aurora" aria-hidden="true">
+                <circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.8" />
+                <ellipse cx="16" cy="16" rx="4.6" ry="11" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
+                <line x1="5" y1="16" x2="27" y2="16" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
+                <circle cx="21.2" cy="10.4" r="2.5" fill="currentColor" />
+              </svg>
+              <span className="font-sans font-bold text-lg text-foreground tracking-tight">
+                Atlas<span className="text-aurora">Aura</span>
               </span>
-            </motion.a>
-            <div className="hidden md:flex flex-1 max-w-md mx-8">
-              <div className="relative w-full">
-                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
-                <Input placeholder="Search memories, countries, questions..." className={`pl-10 ${isDark ? 'bg-white/5 border-white/10' : 'bg-slate-100 border-slate-200'}`} />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <button className={`relative p-2 rounded-full ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'} transition-colors`}>
-                <Bell className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-              </button>
-              <motion.div whileHover={{ scale: 1.05 }} className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 p-0.5 cursor-pointer">
-                <div className={`w-full h-full rounded-full flex items-center justify-center ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
-                  <span className="text-sm">👤</span>
-                </div>
-              </motion.div>
-            </div>
+            </Link>
+            <nav className="hidden md:flex items-center gap-1">
+              <Link href="/dashboard" className="px-3 py-1.5 rounded-full text-xs font-semibold bg-aurora/15 text-aurora border border-aurora/30">
+                Dashboard
+              </Link>
+              <Link href="/trip-planner" className="px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-card transition-colors">
+                Trip Planner
+              </Link>
+              <Link href="/destinations" className="px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-card transition-colors">
+                Explore Destinations
+              </Link>
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <ThemeToggle compact />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMemoryModal(true)}
+              className="hidden sm:flex items-center gap-1.5 text-xs font-semibold rounded-full border-aurora/40 text-aurora hover:bg-aurora/10"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Pin Memory
+            </Button>
+            <button
+              onClick={openSettings}
+              className="p-2 rounded-full border border-border bg-card/60 hover:bg-card text-muted-foreground hover:text-foreground transition-colors"
+              title="Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-full border border-border bg-card/60 hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`mb-8 p-8 rounded-3xl overflow-hidden relative ${isDark ? 'glass' : 'bg-white shadow-lg'}`}>
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-cyan-500/10 to-blue-500/10 rounded-full blur-2xl" />
-          <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-            <div className="relative">
-              <CircularProgress value={currentUser.contributionScore} max={2000} size={100} strokeWidth={6}>
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center overflow-hidden">
-                  {userPrefs?.avatar
-                    ? <img src={userPrefs.avatar} alt="avatar" className="w-full h-full object-cover" />
-                    : <span className="text-3xl">👤</span>
-                  }
+
+      {/* ── Main Dashboard Container ──────────────────────────────────────── */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* ── Hero Passport Banner ────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE }}
+          className="relative rounded-3xl p-6 sm:p-8 glass border border-border shadow-cast overflow-hidden"
+        >
+          <BorderBeam
+            size={180}
+            duration={12}
+            colorFrom="hsl(var(--aurora))"
+            colorTo="hsl(var(--violet))"
+            borderWidth={1.5}
+          />
+
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 sm:gap-8 relative z-10">
+            {/* Avatar with Progress Ring */}
+            <div className="relative group cursor-pointer" onClick={openSettings}>
+              <CircularProgress value={currentUser.contributionScore} max={2000}>
+                <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden border-2 border-background shadow-cast bg-card flex items-center justify-center">
+                  {userPrefs?.avatar ? (
+                    <img src={userPrefs.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl">🌍</span>
+                  )}
                 </div>
               </CircularProgress>
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: 'linear' }} className="absolute -top-1 -right-1 w-6 h-6">
-                <Sparkles className="w-5 h-5 text-amber-500" />
-              </motion.div>
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-sky-500 text-sm font-medium mb-1">
-                {greeting}, Traveler!
-              </motion.p>
-              <h1 className={`text-3xl font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>{authUser?.name || currentUser.name}</h1>
-              {userPrefs?.bio && (
-                <p className={`text-sm mb-2 max-w-md ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{userPrefs.bio}</p>
-              )}
-              <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3, type: 'spring' }} className="px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500 text-sm font-medium">
-                  <Zap className="w-3 h-3 inline mr-1" />Level 5 Wanderer
-                </motion.span>
-                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4, type: 'spring' }} className={`px-3 py-1 rounded-full text-sm ${isDark ? 'glass text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-                  <Award className="w-3 h-3 inline mr-1" />{currentUser.badges.length} Badges
-                </motion.span>
-                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5, type: 'spring' }} className={`px-3 py-1 rounded-full text-sm ${isDark ? 'glass text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-                  <Target className="w-3 h-3 inline mr-1" />Top 5%
-                </motion.span>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-aurora text-primary-foreground flex items-center justify-center shadow-md">
+                <Camera className="w-3 h-3" />
               </div>
-              {userPrefs && (
-                <div className="mt-3 flex flex-wrap justify-center md:justify-start gap-2">
+            </div>
+
+            {/* Profile Info */}
+            <div className="flex-1 text-center md:text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-center md:justify-start">
+                <span className="t-label text-aurora text-xs">{greeting},</span>
+                <span className="text-xs text-muted-foreground font-mono">Passport #AA-2026-904</span>
+              </div>
+              <h1 className="font-serif text-3xl sm:text-4xl font-normal text-foreground mt-1">
+                {userPrefs?.name || authUser?.name || 'Fellow Traveler'}
+              </h1>
+              {userPrefs?.bio ? (
+                <p className="text-sm text-muted-foreground mt-1 max-w-xl italic">
+                  &ldquo;{userPrefs.bio}&rdquo;
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Explorer of hidden trails, quiet coasts, and local street stories.
+                </p>
+              )}
+
+              {/* Badges & Tags */}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-aurora/15 border border-aurora/30 text-aurora">
+                  <Zap className="w-3.5 h-3.5" />
+                  Level 5 Wanderer
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card border border-border text-muted-foreground">
+                  <Award className="w-3.5 h-3.5 text-violet" />
+                  {currentUser.badges.length} Badges Earned
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card border border-border text-muted-foreground font-mono">
+                  <Target className="w-3.5 h-3.5 text-rose" />
+                  Rank #142 (Top 5%)
+                </span>
+              </div>
+
+              {/* User Selected Styles */}
+              {userPrefs?.travelStyle && userPrefs.travelStyle.length > 0 && (
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 mt-3">
                   {userPrefs.travelStyle.map((style) => (
-                    <span key={style} className="px-3 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-500 text-xs font-medium capitalize">
-                      <Compass className="w-3 h-3 inline mr-1" />{style}
+                    <span key={style} className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
+                      {style}
                     </span>
                   ))}
                   {userPrefs.dreamDestinations && (
-                    <span className={`px-3 py-1 rounded-full text-xs ${isDark ? 'glass text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-                      <MapPin className="w-3 h-3 inline mr-1" />{userPrefs.dreamDestinations}
+                    <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                      🎯 {userPrefs.dreamDestinations}
                     </span>
                   )}
                 </div>
               )}
             </div>
-            <div className="flex gap-3">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" onClick={openSettings} className={isDark ? 'border-white/20' : 'border-slate-200'}>
-                  <Settings className="w-4 h-4 mr-2" />Settings
+
+            {/* Quick Action Shortcuts */}
+            <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto shrink-0">
+              <Button
+                onClick={() => setShowMemoryModal(true)}
+                className="h-10 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-full shadow-cast text-xs px-5 flex items-center justify-center gap-2"
+              >
+                <PenLine className="w-3.5 h-3.5" />
+                Pin New Memory
+              </Button>
+              <Link href="/trip-planner" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full h-10 rounded-full border-border text-xs font-semibold flex items-center justify-center gap-2"
+                >
+                  <Luggage className="w-3.5 h-3.5 text-aurora" />
+                  Trip Planner (₹)
                 </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="ghost" onClick={handleLogout} className={isDark ? 'text-slate-400' : 'text-slate-500'}>
-                  <LogOut className="w-4 h-4 mr-2" />Sign Out
-                </Button>
-              </motion.div>
+              </Link>
             </div>
           </div>
         </motion.div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat, index) => (
-            <StatCard key={stat.label} stat={stat} index={index} isDark={isDark} />
-          ))}
-        </div>
 
-        {/* Add Memory Panel — logged in users only */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          className={`mb-8 rounded-2xl border overflow-hidden ${isDark ? 'bg-slate-800/60 border-white/8' : 'bg-white border-sky-100 shadow-lg'}`}
-        >
-          <button
-            onClick={() => setShowMemoryForm(v => !v)}
-            className={`w-full flex items-center justify-between px-6 py-4 transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-sky-50'}`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center">
-                <PenLine className="w-4 h-4 text-white" />
-              </div>
-              <div className="text-left">
-                <p className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>Pin a Memory to the Map</p>
-                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Share your travel story with the world</p>
-              </div>
-            </div>
-            <motion.div animate={{ rotate: showMemoryForm ? 45 : 0 }} transition={{ duration: 0.2 }}>
-              <Plus className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
-            </motion.div>
-          </button>
-
-          <AnimatePresence>
-            {showMemoryForm && (
+        {/* ── Key Metrics Grid ────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
               <motion.div
-                initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }}
-                className="overflow-hidden"
+                key={stat.label}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: i * 0.08, ease: EASE }}
+                className="lift rounded-2xl p-5 glass border border-border shadow-cast flex flex-col justify-between"
               >
-                <div className={`px-6 pb-6 pt-2 border-t ${isDark ? 'border-white/8' : 'border-sky-100'}`}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div className="md:col-span-2">
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Your Memory</label>
-                      <textarea
-                        value={memoryText} onChange={e => setMemoryText(e.target.value)}
-                        placeholder="Describe your travel memory..."
-                        rows={3}
-                        className={`w-full px-4 py-3 rounded-xl text-sm resize-none outline-none border transition-all ${
-                          isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-sky-500/50'
-                            : 'bg-sky-50 border-sky-100 text-slate-800 placeholder:text-slate-400 focus:border-sky-400'
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Place on Map</label>
-                      <div className="relative">
-                        <MapPin className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
-                        <input
-                          value={placeInput} onChange={e => { setPlaceInput(e.target.value); setGeoError(''); }}
-                          placeholder="e.g. Santorini, Greece"
-                          className={`w-full pl-9 pr-4 py-3 rounded-xl text-sm outline-none border transition-all ${
-                            isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-sky-500/50'
-                              : 'bg-sky-50 border-sky-100 text-slate-800 placeholder:text-slate-400 focus:border-sky-400'
-                          }`}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Pin Emoji</label>
-                      <div className="flex gap-2 flex-wrap">
-                        {['📍','🌸','🏔️','🌊','🍵','✨','🙏','💍','🚗','🎒','🏛️','🌅'].map(e => (
-                          <button key={e} onClick={() => setFormEmoji(e)}
-                            className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center transition-all ${
-                              formEmoji === e ? 'bg-gradient-to-br from-sky-500 to-indigo-500 scale-110 shadow-md'
-                                : isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-sky-50 hover:bg-sky-100 border border-sky-100'
-                            }`}>{e}</button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Travel Mood</label>
-                      <div className="flex flex-wrap gap-2">
-                        {MOODS.map(m => (
-                          <button key={m.id} onClick={() => setFormMood(m.id)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
-                              formMood === m.id ? 'bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-md'
-                                : isDark ? 'bg-white/5 text-slate-300 hover:bg-white/10' : 'bg-sky-50 text-slate-600 hover:bg-sky-100 border border-sky-100'
-                            }`}>
-                            <span>{m.emoji}</span>{m.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-aurora/15 border border-aurora/30 text-aurora flex items-center justify-center">
+                    <Icon className="w-5 h-5" />
                   </div>
-                  {geoError && <p className="mt-3 text-xs text-rose-500 flex items-center gap-1"><X className="w-3 h-3" />{geoError}</p>}
-                  <div className="flex items-center gap-3 mt-5">
-                    <Button
-                      onClick={handleAddMemory} disabled={geocoding || memorySuccess}
-                      className="bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white font-semibold px-6"
-                    >
-                      {memorySuccess ? '✓ Memory Pinned!' : geocoding ? 'Locating...' : <><MapPin className="w-4 h-4 mr-2" />Pin to Map</>}
-                    </Button>
-                    <button onClick={() => { setShowMemoryForm(false); setGeoError(''); }} className={`text-sm ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>
-                      Cancel
-                    </button>
+                  <span className="text-[11px] font-mono text-aurora bg-aurora/10 px-2 py-0.5 rounded-full">
+                    {stat.trend}
+                  </span>
+                </div>
+                <div>
+                  <div className="font-mono text-2xl font-bold text-foreground">
+                    {stat.value}
+                  </div>
+                  <div className="text-xs text-muted-foreground font-medium mt-0.5">
+                    {stat.label}
                   </div>
                 </div>
               </motion.div>
+            );
+          })}
+        </div>
+
+        {/* ── Interactive Multi-Tab Section ─────────────────────────────────── */}
+        <div className="space-y-6">
+          {/* Tab Navigation */}
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+              {[
+                { id: 'memories', label: 'My Pinned Memories', count: userPins.length, icon: MapPin },
+                { id: 'trips', label: 'Itineraries & Budgets', count: tripPlans.length, icon: Luggage },
+                { id: 'badges', label: 'Badges & Milestones', count: allBadges.length, icon: Award },
+                { id: 'saved', label: 'Saved Destinations', count: 4, icon: Star },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                      isActive
+                        ? 'bg-aurora/15 text-aurora border border-aurora/30 shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-card border border-transparent'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{tab.label}</span>
+                    <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${isActive ? 'bg-aurora/20 text-aurora' : 'bg-muted text-muted-foreground'}`}>
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {activeTab === 'memories' && (
+              <Button
+                size="sm"
+                onClick={() => setShowMemoryModal(true)}
+                className="hidden sm:flex items-center gap-1 text-xs rounded-full bg-primary hover:bg-primary-hover text-primary-foreground px-4 h-8"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Pin
+              </Button>
             )}
-          </AnimatePresence>
-        </motion.div>
-        {/* My Pinned Memories */}
-        {userPins.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-8">
-            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              My Pinned Memories
-              <span className={`ml-2 text-sm font-normal ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>({userPins.length})</span>
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          </div>
+
+          {/* ── Tab 1: Pinned Memories ─────────────────────────────────────── */}
+          {activeTab === 'memories' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {userPins.map((pin, i) => (
                 <motion.div
-                  key={pin.id}
-                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className={`p-4 rounded-xl border ${isDark ? 'glass border-white/8' : 'bg-white border-sky-100 shadow-sm'}`}
+                  key={pin.id || i}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: i * 0.06 }}
+                  className="lift rounded-2xl p-5 glass border border-border shadow-cast flex flex-col justify-between"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-lg flex-shrink-0">
-                      {pin.emoji}
-                    </div>
-                    <div className="flex-1 min-w-0">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-3 h-3 text-sky-500" />
-                        <span className="text-sm text-sky-500 truncate">{pin.country}</span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-600'}`}>You</span>
+                        <span className="text-xl">{pin.emoji || '📍'}</span>
+                        <div>
+                          <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-aurora" />
+                            {pin.country}
+                          </h2>
+                          <span className="text-[11px] font-mono text-muted-foreground">{pin.date}</span>
+                        </div>
                       </div>
-                      <p className={`text-sm mt-1 line-clamp-2 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>"{pin.note}"</p>
-                      <p className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{pin.date}</p>
+                      <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                        {pin.mood || 'travel'}
+                      </span>
                     </div>
+
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed italic line-clamp-3">
+                      &ldquo;{pin.note}&rdquo;
+                    </p>
+                  </div>
+
+                  <div className="pt-4 mt-4 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="font-mono text-[11px]">
+                      {pin.lat ? `${pin.lat.toFixed(2)}°, ${pin.lng.toFixed(2)}°` : 'Coordinates logged'}
+                    </span>
+                    <span className="text-aurora font-medium">Public Memory</span>
                   </div>
                 </motion.div>
               ))}
             </div>
-          </motion.div>
-        )}
-        {/* Tabs content continues... */}
-      </div>
+          )}
 
-      {/* Settings Modal */}
+          {/* ── Tab 2: Trip Plans & Itineraries ─────────────────────────────── */}
+          {activeTab === 'trips' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-aurora/10 border border-aurora/20">
+                <div className="flex items-center gap-3">
+                  <Luggage className="w-5 h-5 text-aurora" />
+                  <div>
+                    <h2 className="text-sm font-semibold text-foreground">Plan Your Next Adventure in Indian Rupees (₹)</h2>
+                    <p className="text-xs text-muted-foreground">Build day-by-day itineraries, track expenses, and checklist packing essentials.</p>
+                  </div>
+                </div>
+                <Link href="/trip-planner">
+                  <Button size="sm" className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-full text-xs">
+                    Open Trip Planner →
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {tripPlans.length > 0 ? (
+                  tripPlans.map((trip) => (
+                    <div key={trip.id || trip._id} className="lift rounded-2xl p-6 glass border border-border shadow-cast space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="t-label text-aurora text-[11px]">{trip.destination}</span>
+                          <h3 className="font-serif text-xl font-normal text-foreground mt-0.5">{trip.title}</h3>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-foreground bg-card border border-border px-2.5 py-1 rounded-full">
+                          ₹{Number(trip.budgetINR || trip.budgetUSD * 83 || 50000).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-aurora" />
+                          {trip.startDate || 'Upcoming'}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-violet" />
+                          {trip.days?.length || 3} Days
+                        </span>
+                      </div>
+
+                      <Link href="/trip-planner">
+                        <Button variant="outline" size="sm" className="w-full text-xs rounded-full border-border">
+                          View Itinerary &amp; Budget
+                        </Button>
+                      </Link>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-2 text-center py-12 border border-dashed border-border rounded-3xl p-8">
+                    <Luggage className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                    <h3 className="text-base font-semibold text-foreground">No active itineraries yet</h3>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                      Create your first custom day-by-day trip plan with full budget breakdown in Rupees.
+                    </p>
+                    <Link href="/trip-planner" className="inline-block mt-4">
+                      <Button className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs rounded-full px-6">
+                        Create Trip Plan
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Tab 3: Badges & Milestones ─────────────────────────────────── */}
+          {activeTab === 'badges' && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+              {allBadges.map((badge) => (
+                <div
+                  key={badge.id}
+                  className={`lift rounded-2xl p-4 text-center border shadow-cast ${
+                    badge.earned
+                      ? 'glass border-border'
+                      : 'border-border/40 bg-card/40 opacity-50 grayscale'
+                  }`}
+                >
+                  <div className="text-3xl mb-2">{badge.icon}</div>
+                  <h4 className="text-xs font-semibold text-foreground">{badge.name}</h4>
+                  <p className="text-[10px] text-muted-foreground mt-1">{badge.description}</p>
+                  {badge.earned && (
+                    <span className="inline-block font-mono text-[10px] text-aurora mt-2 bg-aurora/10 px-2 py-0.5 rounded-full">
+                      Earned {badge.earnedDate || '2026'}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Tab 4: Saved Destinations ──────────────────────────────────── */}
+          {activeTab === 'saved' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-serif font-medium text-foreground">Saved World Expeditions</h3>
+                  <p className="text-xs text-muted-foreground">Your bookmarked hidden sanctuaries and destinations</p>
+                </div>
+                <Link href="/destinations">
+                  <Button variant="outline" size="sm" className="rounded-full text-xs border-border hover:border-aurora">
+                    Explore All 12+ Destinations →
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {favoriteDestinations.map((dest) => (
+                  <div key={dest.id} className="lift rounded-3xl overflow-hidden bg-card border border-border/80 shadow-cast group flex flex-col justify-between">
+                    <div className="relative h-44 overflow-hidden bg-black">
+                      <img
+                        src={dest.image}
+                        alt={dest.name}
+                        className="w-full h-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-[1.04]"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full bg-black/60 border border-white/20 text-white text-[11px] font-mono flex items-center gap-1 backdrop-blur-md">
+                        <Star className="w-3 h-3 text-aurora fill-aurora" />
+                        {dest.rating}
+                      </div>
+                      <div className="absolute bottom-2 left-3 text-[10px] font-mono text-white/90">
+                        📍 {dest.country}
+                      </div>
+                    </div>
+
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                      <div>
+                        <span className="t-label text-aurora text-[10px] uppercase font-mono">{dest.region}</span>
+                        <h4 className="font-serif text-lg font-normal text-foreground mt-0.5">{dest.name}</h4>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{dest.description}</p>
+                      </div>
+
+                      {/* Quick triggers */}
+                      <div className="pt-2 border-t border-border/50 grid grid-cols-2 gap-1.5 text-[11px]">
+                        <Link href={`/globe?destination=${dest.id}`} className="block">
+                          <button
+                            type="button"
+                            className="w-full py-1.5 px-2 rounded-xl border border-aurora/40 bg-aurora/10 hover:bg-aurora hover:text-ink-void text-aurora font-semibold flex items-center justify-center gap-1 transition-colors"
+                          >
+                            <Globe className="w-3 h-3" />
+                            <span>3D Earth</span>
+                          </button>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setBudgetDestination(dest)}
+                          className="py-1.5 px-2 rounded-xl border border-border bg-card/60 hover:bg-card text-foreground font-medium flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <Calculator className="w-3 h-3 text-orchid" />
+                          <span>AI Budget</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* ── Pin Memory Modal ──────────────────────────────────────────────── */}
       <AnimatePresence>
-        {showSettings && (
+        {showMemoryModal && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-            onClick={() => setShowSettings(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+            onClick={() => setShowMemoryModal(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.93, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.93, y: 20 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              onClick={e => e.stopPropagation()}
-              className={`relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl ${
-                isDark ? 'bg-slate-900 border border-white/10' : 'bg-white border border-slate-200'
-              }`}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ duration: 0.35, ease: EASE }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-lg rounded-3xl glass border border-border p-6 sm:p-8 shadow-2xl space-y-5"
             >
-              {/* Header */}
-              <div className={`flex items-center justify-between px-6 py-4 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
-                <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Edit Profile</h2>
-                <button onClick={() => setShowSettings(false)} className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-white/10 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-aurora/15 text-aurora flex items-center justify-center">
+                    <PenLine className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-serif font-normal text-foreground">Pin a World Memory</h2>
+                    <p className="text-xs text-muted-foreground">Share your travel reflection with the community</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMemoryModal(false)}
+                  className="p-1.5 rounded-full hover:bg-card text-muted-foreground hover:text-foreground"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="px-6 py-5 space-y-5">
-                {/* Avatar */}
-                <div className="flex items-center gap-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                    Place / Landmark
+                  </label>
                   <div className="relative">
-                    <div
-                      onClick={() => avatarInputRef.current?.click()}
-                      className="w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 border-dashed border-amber-500/50 hover:border-amber-400 transition-colors flex items-center justify-center bg-gradient-to-br from-amber-400/20 to-orange-400/20"
-                    >
-                      {editAvatar
-                        ? <img src={editAvatar} alt="avatar" className="w-full h-full object-cover" />
-                        : <span className="text-3xl">👤</span>
-                      }
-                    </div>
-                    <div onClick={() => avatarInputRef.current?.click()} className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center cursor-pointer shadow-lg">
-                      <Camera className="w-3.5 h-3.5 text-white" />
-                    </div>
-                    <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-                  </div>
-                  <div>
-                    <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>Profile Photo</p>
-                    <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Click to upload a new photo</p>
+                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="e.g. Oia, Santorini or Kyoto, Japan"
+                      value={placeInput}
+                      onChange={(e) => {
+                        setPlaceInput(e.target.value);
+                        setGeoError('');
+                      }}
+                      className="pl-10 h-11 bg-card/60 border-border text-foreground"
+                    />
                   </div>
                 </div>
 
-                {/* Name */}
                 <div>
-                  <label className={`block text-xs font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Display Name</label>
-                  <input
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                    placeholder="Your name"
-                    className={`w-full px-3 py-2.5 rounded-xl text-sm outline-none border transition-colors ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-amber-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-amber-500'
-                    }`}
-                  />
-                </div>
-
-                {/* Bio */}
-                <div>
-                  <label className={`block text-xs font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Bio</label>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                    Your Memory Note
+                  </label>
                   <textarea
-                    value={editBio}
-                    onChange={e => setEditBio(e.target.value)}
-                    placeholder="Tell the world about yourself..."
                     rows={3}
-                    className={`w-full px-3 py-2.5 rounded-xl text-sm outline-none border resize-none transition-colors ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-amber-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-amber-500'
-                    }`}
+                    placeholder="Describe the aroma, the twilight breeze, the laughter in that quiet café..."
+                    value={memoryText}
+                    onChange={(e) => setMemoryText(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm bg-card/60 border border-border text-foreground placeholder:text-muted-foreground outline-none resize-none focus:border-aurora"
                   />
                 </div>
 
-                {/* Travel Style */}
                 <div>
-                  <label className={`block text-xs font-semibold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Travel Style</label>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                    Pin Emoji
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {['📍', '🌸', '🏔️', '🌊', '🍵', '✨', '🙏', '💍', '🚗', '🎒', '🏛️', '🌅'].map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => setFormEmoji(emoji)}
+                        className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all ${
+                          formEmoji === emoji
+                            ? 'bg-aurora text-primary-foreground scale-110 shadow-sm'
+                            : 'bg-card border border-border hover:border-aurora/50'
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                    Travel Mood
+                  </label>
                   <div className="flex flex-wrap gap-2">
-                    {TRAVEL_STYLES.map(s => (
+                    {MOODS.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setFormMood(m.id)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
+                          formMood === m.id
+                            ? 'bg-aurora/20 text-aurora border border-aurora'
+                            : 'bg-card border border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <span>{m.emoji}</span>
+                        <span>{m.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {geoError && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <X className="w-3.5 h-3.5" />
+                    {geoError}
+                  </p>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowMemoryModal(false)}
+                    className="w-1/3 h-11 rounded-full border-border text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddMemory}
+                    disabled={geocoding || memorySuccess}
+                    className="w-2/3 h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-full shadow-cast text-xs"
+                  >
+                    {memorySuccess ? '✓ Memory Pinned!' : geocoding ? 'Geolocating...' : 'Pin Memory to Map'}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Settings Modal ────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+            onClick={() => setShowSettings(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ duration: 0.35, ease: EASE }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl glass border border-border p-6 sm:p-8 shadow-2xl space-y-5"
+            >
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <h2 className="font-serif text-xl text-foreground">Edit Traveler Profile</h2>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="p-1.5 rounded-full hover:bg-card text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Avatar upload */}
+                <div className="flex items-center gap-4">
+                  <div
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="relative w-18 h-18 rounded-full overflow-hidden border-2 border-dashed border-border hover:border-aurora cursor-pointer flex items-center justify-center bg-card group"
+                  >
+                    {editAvatar ? (
+                      <img src={editAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl">👤</span>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Camera className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                  <div>
+                    <span className="text-xs font-semibold text-foreground">Avatar Photo</span>
+                    <p className="text-[11px] text-muted-foreground">Click to upload a custom picture</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                    Display Name
+                  </label>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="h-10 bg-card/60 border-border text-foreground"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                    Travel Bio / Motto
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editBio}
+                    onChange={(e) => setEditBio(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm bg-card/60 border border-border text-foreground outline-none resize-none focus:border-aurora"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                    Travel Styles
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {TRAVEL_STYLES.map((s) => (
                       <button
                         key={s.id}
+                        type="button"
                         onClick={() => toggleStyle(s.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
                           editTravelStyle.includes(s.id)
-                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
-                            : isDark ? 'bg-slate-800 border border-slate-700 text-slate-300 hover:border-amber-500/50' : 'bg-slate-100 border border-slate-200 text-slate-600 hover:border-amber-400'
+                            ? 'bg-aurora/20 text-aurora border border-aurora'
+                            : 'bg-card border border-border text-muted-foreground hover:text-foreground'
                         }`}
                       >
                         {editTravelStyle.includes(s.id) && <Check className="w-3 h-3" />}
@@ -663,36 +1013,61 @@ export default function UserDashboard() {
                   </div>
                 </div>
 
-                {/* Dream Destinations */}
                 <div>
-                  <label className={`block text-xs font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Dream Destinations</label>
-                  <input
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                    Dream Destinations
+                  </label>
+                  <Input
                     value={editDestinations}
-                    onChange={e => setEditDestinations(e.target.value)}
-                    placeholder="Japan, Iceland, Morocco..."
-                    className={`w-full px-3 py-2.5 rounded-xl text-sm outline-none border transition-colors ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-amber-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-amber-500'
-                    }`}
+                    onChange={(e) => setEditDestinations(e.target.value)}
+                    placeholder="Japan, Iceland, Patagonia..."
+                    className="h-10 bg-card/60 border-border text-foreground"
                   />
                 </div>
 
-                {/* Save */}
-                <button
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                    📍 Default Departure City (For AI Location Budgeting)
+                  </label>
+                  <Input
+                    value={editHomeLocation}
+                    onChange={(e) => setEditHomeLocation(e.target.value)}
+                    placeholder="e.g. Mumbai, India or London, UK"
+                    className="h-10 bg-card/60 border-border text-foreground"
+                  />
+                </div>
+
+                <Button
                   onClick={handleSaveSettings}
                   disabled={saving || saveSuccess}
-                  className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
-                    saveSuccess
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-lg disabled:opacity-70'
-                  }`}
+                  className="w-full h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-full shadow-cast text-xs mt-2"
                 >
-                  {saveSuccess ? <><Check className="w-4 h-4" />Saved!</> : saving ? 'Saving...' : <><Save className="w-4 h-4" />Save Changes</>}
-                </button>
+                  {saveSuccess ? '✓ Profile Updated!' : saving ? 'Saving changes...' : 'Save Profile Changes'}
+                </Button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── 3D Earth Globe Modal ───────────────────────────────────────────── */}
+      {globeDestination && (
+        <DestinationGlobeModal
+          destination={globeDestination}
+          userLocationName={editHomeLocation}
+          onClose={() => setGlobeDestination(null)}
+        />
+      )}
+
+      {/* ── AI Budget Estimator Modal ─────────────────────────────────────── */}
+      {budgetDestination && (
+        <AIBudgetEstimatorModal
+          destination={budgetDestination}
+          initialOrigin={editHomeLocation}
+          onClose={() => setBudgetDestination(null)}
+          onSaveOrigin={(newOrigin) => setEditHomeLocation(newOrigin)}
+        />
+      )}
     </div>
   );
 }

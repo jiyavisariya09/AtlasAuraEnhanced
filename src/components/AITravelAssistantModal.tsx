@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, X, Bot, MapPin, Calendar, DollarSign, ArrowRight, ShieldCheck, Utensils, CheckCircle } from 'lucide-react'
-import { useTheme } from '@/context/ThemeContext'
+import { Sparkles, X, Bot, MapPin, ShieldCheck, Utensils } from 'lucide-react'
 import { useCurrency } from '@/context/CurrencyContext'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 import { Button } from '@/components/ui/button'
 
 interface AITravelAssistantModalProps {
@@ -12,24 +12,50 @@ interface AITravelAssistantModalProps {
   onClose: () => void
 }
 
+interface ItineraryDay {
+  day: number
+  title: string
+  activities: string[]
+}
+
+interface Recommendation {
+  id: string
+  name: string
+  country: string
+  budgetUSD: number
+  description: string
+  suggestedItinerary?: ItineraryDay[]
+  foodRecommendations?: string[]
+}
+
+interface AssistantResult {
+  recommendations?: Recommendation[]
+}
+
+const EASE = [0.22, 1, 0.36, 1] as const
+
+const MOOD_OPTIONS = [
+  { id: 'solo', label: '🎒 Solo Explorer', mood: 'solo' },
+  { id: 'adventure', label: '⛰️ High Adventure', mood: 'adventure' },
+  { id: 'calm', label: '🧘 Serene Escape', mood: 'calm' },
+  { id: 'culture', label: '🏛️ Cultural Immersion', mood: 'culture' },
+  { id: 'honeymoon', label: '💕 Romantic Retreat', mood: 'honeymoon' },
+]
+
 export default function AITravelAssistantModal({ isOpen, onClose }: AITravelAssistantModalProps) {
-  const { theme } = useTheme()
-  const { formatPrice, currency } = useCurrency()
-  const isDark = theme === 'dark'
+  const { formatPrice } = useCurrency()
 
   const [prompt, setPrompt] = useState('')
   const [selectedMood, setSelectedMood] = useState('adventure')
   const [maxBudget, setMaxBudget] = useState('150')
   const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState<any | null>(null)
+  const [results, setResults] = useState<AssistantResult | null>(null)
 
-  const MOOD_OPTIONS = [
-    { id: 'solo', label: '🎒 Solo Explorer', mood: 'solo' },
-    { id: 'adventure', label: '⛰️ High Adventure', mood: 'adventure' },
-    { id: 'calm', label: '🧘 Serene Escape', mood: 'calm' },
-    { id: 'culture', label: '🏛️ Cultural Immersion', mood: 'culture' },
-    { id: 'honeymoon', label: '💕 Romantic Retreat', mood: 'honeymoon' },
-  ]
+  /* Escape to close, hold the page still underneath, and hand focus in and back
+     out again — the contract every dismissible layer here shares, so the whole
+     site dismisses alike. It used to be spelt out in this file; four other
+     overlays had none of it, which is why it now lives in one place. */
+  const panelRef = useModalLayer(isOpen, onClose)
 
   const handleGenerate = async () => {
     setLoading(true)
@@ -52,209 +78,220 @@ export default function AITravelAssistantModal({ isOpen, onClose }: AITravelAssi
     }
   }
 
-  if (!isOpen) return null
-
+  /* The early `return null` used to sit outside AnimatePresence, which meant the
+     whole tree — presence detector included — unmounted the moment isOpen went
+     false, so none of the exit animations below ever ran. The condition belongs
+     inside instead. */
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/75 backdrop-blur-md"
-          onClick={onClose}
-        />
+      {isOpen && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: EASE }}
+            className="absolute inset-0 backdrop-blur-md"
+            style={{ background: 'hsl(var(--ink-void) / 0.72)' }}
+            onClick={onClose}
+            aria-hidden="true"
+          />
 
-        {/* Modal Window */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.94, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94, y: 20 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className={`relative w-full max-w-4xl max-h-[88vh] overflow-y-auto rounded-3xl shadow-2xl border ${
-            isDark ? 'bg-slate-900 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                <Bot className="w-5 h-5 text-white" />
+          <motion.div
+            ref={panelRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ai-assistant-title"
+            initial={{ opacity: 0, scale: 0.94, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 20 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="ink-panel relative max-h-[88vh] w-full max-w-4xl overflow-y-auto rounded-3xl"
+          >
+            <div className="hairline-b flex items-center justify-between gap-4 p-6">
+              <div className="flex items-center gap-3">
+                <span
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
+                  aria-hidden="true"
+                >
+                  <Bot className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3
+                    id="ai-assistant-title"
+                    className="t-sub flex flex-wrap items-center gap-2 text-foreground"
+                  >
+                    Travel assistant
+                    <span className="t-label rounded-full border border-aurora/30 bg-aurora/10 px-2 py-0.5 text-aurora">
+                      Beta
+                    </span>
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Describe the trip you want. It answers with places, a day-by-day outline and
+                    what people eat there.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  AI Travel Assistant
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
-                    BETA
-                  </span>
-                </h3>
-                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Smart recommendations, custom itineraries & local wisdom powered by MongoDB & AI
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close travel assistant"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-white/10 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
 
-          {/* Form & Controls */}
-          <div className="p-6 space-y-6">
-            <div>
-              <label className={`block text-xs font-semibold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                What kind of experience are you seeking?
-              </label>
-              <div className="relative">
+            <div className="space-y-6 p-6">
+              <div>
+                <label
+                  htmlFor="ai-prompt"
+                  className="t-label mb-2 block text-muted-foreground"
+                >
+                  What kind of trip are you after?
+                </label>
                 <input
+                  id="ai-prompt"
                   type="text"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="e.g. A peaceful week in the mountains with good food and local traditions..."
-                  className={`w-full px-4 py-3 rounded-xl text-sm outline-none border transition-all ${
-                    isDark
-                      ? 'bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400'
-                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-amber-500'
-                  }`}
+                  placeholder="A quiet week in the mountains, good food, few tourists…"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground transition-colors duration-200 placeholder:text-muted-foreground focus-visible:border-aurora"
                   onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
                 />
               </div>
-            </div>
 
-            {/* Mood selector & budget */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-xs font-semibold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Travel Mood
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {MOOD_OPTIONS.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setSelectedMood(m.mood)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        selectedMood === m.mood
-                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
-                          : isDark
-                          ? 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                  <p className="t-label mb-2 text-muted-foreground">Mood</p>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Travel mood">
+                    {MOOD_OPTIONS.map((m) => {
+                      const on = selectedMood === m.mood
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => setSelectedMood(m.mood)}
+                          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 ${
+                            on
+                              ? 'bg-primary text-primary-foreground shadow-aurora'
+                              : 'border border-border bg-card text-muted-foreground hover:border-aurora hover:text-foreground'
+                          }`}
+                        >
+                          {m.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="ai-budget"
+                    className="t-label mb-2 block text-muted-foreground"
+                  >
+                    Budget a day
+                  </label>
+                  <p className="t-data mb-3 text-foreground">
+                    {formatPrice(parseFloat(maxBudget) || 100)}
+                  </p>
+                  <input
+                    id="ai-budget"
+                    type="range"
+                    min="20"
+                    max="400"
+                    step="10"
+                    value={maxBudget}
+                    onChange={(e) => setMaxBudget(e.target.value)}
+                    className="w-full accent-aurora"
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className={`block text-xs font-semibold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Max Daily Budget: <span className="text-amber-500 font-bold">{formatPrice(parseFloat(maxBudget) || 100)} / day</span>
-                </label>
-                <input
-                  type="range"
-                  min="20"
-                  max="400"
-                  step="10"
-                  value={maxBudget}
-                  onChange={(e) => setMaxBudget(e.target.value)}
-                  className="w-full accent-amber-500"
-                />
-              </div>
-            </div>
-
-            {/* Action button */}
-            <Button
-              onClick={handleGenerate}
-              disabled={loading}
-              className="w-full py-6 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold shadow-lg shadow-orange-500/20 text-base flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <Sparkles className="w-5 h-5 animate-spin" />
-                  Generating Personalized Itinerary...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  Generate AI Travel Recommendations
-                </>
-              )}
-            </Button>
-
-            {/* Results Display */}
-            {results && results.recommendations && (
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 space-y-6 pt-6 border-t border-white/10"
+              <Button
+                onClick={handleGenerate}
+                disabled={loading}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl py-6 text-base font-semibold hover:bg-primary-hover"
               >
-                <h4 className="text-lg font-bold flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-amber-500" />
-                  Top Recommended Destinations
-                </h4>
+                <Sparkles className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+                {loading ? 'Drawing up an itinerary…' : 'Find me somewhere'}
+              </Button>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {results.recommendations.map((rec: any) => (
-                    <div
-                      key={rec.id}
-                      className={`p-5 rounded-2xl border ${
-                        isDark ? 'bg-slate-800/80 border-white/10' : 'bg-slate-50 border-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div>
-                          <h5 className="font-bold text-lg">{rec.name}</h5>
-                          <p className="text-xs text-amber-500 font-semibold">{rec.country}</p>
+              {results && results.recommendations && (
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: EASE }}
+                  className="hairline-t mt-8 space-y-6 pt-6"
+                >
+                  <h4 className="t-sub flex items-center gap-2 text-foreground">
+                    <MapPin className="h-5 w-5 text-aurora" aria-hidden="true" />
+                    Where to go
+                  </h4>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {results.recommendations.map((rec) => (
+                      <div
+                        key={rec.id}
+                        className="rounded-2xl border border-border bg-muted/50 p-5"
+                      >
+                        <div className="mb-3 flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h5 className="truncate text-base font-semibold text-foreground">
+                              {rec.name}
+                            </h5>
+                            <p className="t-label mt-1 text-aurora">{rec.country}</p>
+                          </div>
+                          <span className="t-data shrink-0 rounded-full bg-aurora/15 px-2.5 py-1 text-xs text-aurora">
+                            {formatPrice(rec.budgetUSD)}
+                          </span>
                         </div>
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400">
-                          {formatPrice(rec.budgetUSD)} / day
-                        </span>
+
+                        <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
+                          {rec.description}
+                        </p>
+
+                        {rec.suggestedItinerary && (
+                          <div className="mb-4 space-y-2">
+                            <p className="t-label text-muted-foreground">Day by day</p>
+                            {rec.suggestedItinerary.map((day) => (
+                              <div
+                                key={day.day}
+                                className="rounded-xl border border-border bg-background/60 p-2.5 text-xs"
+                              >
+                                <span className="t-data mr-2 text-aurora">Day {day.day}</span>
+                                <span className="font-medium text-foreground">{day.title}</span>
+                                <p className="mt-1 text-[11px] text-muted-foreground">
+                                  {day.activities.join(' · ')}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                          <div className="flex items-center gap-1.5 text-aurora">
+                            <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span className="truncate">Safety checked</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-orchid">
+                            <Utensils className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span className="truncate">
+                              {rec.foodRecommendations?.[0] || 'Local dishes'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-
-                      <p className={`text-xs mb-4 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{rec.description}</p>
-
-                      {/* Itinerary Preview */}
-                      {rec.suggestedItinerary && (
-                        <div className="space-y-2 mb-4">
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Suggested Itinerary</p>
-                          {rec.suggestedItinerary.map((day: any) => (
-                            <div
-                              key={day.day}
-                              className={`p-2.5 rounded-xl text-xs ${isDark ? 'bg-white/5' : 'bg-white border border-slate-200/60'}`}
-                            >
-                              <span className="font-bold text-amber-500 mr-2">Day {day.day}:</span>
-                              <span className="font-medium">{day.title}</span>
-                              <p className={`text-[11px] mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                                {day.activities.join(' • ')}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Safety & Food */}
-                      <div className="grid grid-cols-2 gap-2 text-[11px]">
-                        <div className="flex items-center gap-1.5 text-emerald-400">
-                          <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">Safety Verified</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-orange-400">
-                          <Utensils className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{rec.foodRecommendations?.[0] || 'Local Dishes'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
-      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </AnimatePresence>
   )
 }

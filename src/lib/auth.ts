@@ -75,11 +75,33 @@ export function updateUserPreferences(prefs: Partial<AuthUser>) {
 }
 
 // ── API calls ─────────────────────────────────────────────
+export async function sendOtp(data: {
+  email: string
+  name?: string
+  purpose: 'signup' | 'forgot_password'
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch('/api/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    return {
+      success: res.ok,
+      message: json.message || (res.ok ? 'Code sent.' : 'Failed to send code.'),
+    }
+  } catch {
+    return { success: false, message: 'Network error. Please try again.' }
+  }
+}
+
 export async function signUp(data: {
   name: string
   email: string
   phone?: string
   password: string
+  otp: string
 }): Promise<{ success: boolean; error?: string; user?: AuthUser }> {
   try {
     const res = await fetch('/api/auth/signup', {
@@ -124,11 +146,19 @@ export async function signIn(data: {
 }
 
 export async function forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+  return sendOtp({ email, purpose: 'forgot_password' })
+}
+
+export async function resetPasswordWithOtp(data: {
+  email: string
+  otp: string
+  newPassword: string
+}): Promise<{ success: boolean; message: string }> {
   try {
     const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify(data),
     })
     const json = await res.json()
     return { success: res.ok, message: json.message }

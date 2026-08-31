@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { serverError } from '@/lib/server/session'
 
 export async function GET(
   req: NextRequest,
@@ -32,8 +33,7 @@ export async function GET(
     }
 
     return NextResponse.json({ destination })
-  } catch (err: any) {
-    console.error('Destination by ID error:', err)
-    return NextResponse.json({ message: err.message || 'Failed to fetch destination' }, { status: 500 })
+  } catch (err) {
+    return serverError('Destination by ID error', err, 'Could not load that destination.')
   }
 }

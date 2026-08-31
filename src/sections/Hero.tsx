@@ -1,208 +1,186 @@
-"use client";
+'use client';
 
-import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowDown, MapPin, Compass } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useTheme } from "@/context/ThemeContext";
-import Link from "next/link";
+import { useRef } from 'react';
+import Link from 'next/link';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { ArrowRight, Compass, Map, BookOpen } from 'lucide-react';
+import { smoothScrollTo } from '@/lib/utils';
 
-const STARS = [
-  { top: "6%", left: "8%", size: "w-[2px] h-[2px]", delay: "0.2s", opacity: "opacity-80" },
-  { top: "12%", left: "18%", size: "w-[3px] h-[3px]", delay: "1.1s", opacity: "opacity-90" },
-  { top: "5%", left: "28%", size: "w-[1.5px] h-[1.5px]", delay: "2.4s", opacity: "opacity-70" },
-  { top: "18%", left: "36%", size: "w-[2px] h-[2px]", delay: "0.8s", opacity: "opacity-85" },
-  { top: "9%", left: "48%", size: "w-[4px] h-[4px]", delay: "1.5s", opacity: "opacity-100", flare: true },
-  { top: "15%", left: "58%", size: "w-[2px] h-[2px]", delay: "0.4s", opacity: "opacity-80" },
-  { top: "7%", left: "69%", size: "w-[3px] h-[3px]", delay: "1.9s", opacity: "opacity-95" },
-  { top: "14%", left: "78%", size: "w-[4px] h-[4px]", delay: "0.7s", opacity: "opacity-100", flare: true },
-  { top: "8%", left: "89%", size: "w-[2px] h-[2px]", delay: "2.2s", opacity: "opacity-85" },
-  { top: "22%", left: "12%", size: "w-[2.5px] h-[2.5px]", delay: "1.6s", opacity: "opacity-75" },
-  { top: "25%", left: "24%", size: "w-[1.5px] h-[1.5px]", delay: "0.3s", opacity: "opacity-65" },
-  { top: "20%", left: "42%", size: "w-[3px] h-[3px]", delay: "2.8s", opacity: "opacity-90" },
-  { top: "24%", left: "64%", size: "w-[2px] h-[2px]", delay: "1.2s", opacity: "opacity-80" },
-  { top: "21%", left: "84%", size: "w-[3.5px] h-[3.5px]", delay: "2.0s", opacity: "opacity-95", flare: true },
-  { top: "29%", left: "7%", size: "w-[1.5px] h-[1.5px]", delay: "0.9s", opacity: "opacity-70" },
-  { top: "31%", left: "31%", size: "w-[2px] h-[2px]", delay: "1.8s", opacity: "opacity-85" },
-  { top: "27%", left: "53%", size: "w-[4px] h-[4px]", delay: "2.5s", opacity: "opacity-100", flare: true },
-  { top: "33%", left: "76%", size: "w-[2px] h-[2px]", delay: "0.6s", opacity: "opacity-75" },
-  { top: "30%", left: "93%", size: "w-[2.5px] h-[2.5px]", delay: "1.4s", opacity: "opacity-85" },
-  { top: "38%", left: "19%", size: "w-[1.5px] h-[1.5px]", delay: "2.1s", opacity: "opacity-60" },
-  { top: "36%", left: "46%", size: "w-[2px] h-[2px]", delay: "0.5s", opacity: "opacity-80" },
-  { top: "37%", left: "82%", size: "w-[2px] h-[2px]", delay: "1.7s", opacity: "opacity-70" },
+/* Footage is opt-in and needs no code change: put a file in public/ and add
+   NEXT_PUBLIC_HERO_VIDEO=/hero.mp4 to .env.local. The photographs below stay as
+   the poster and as the fallback, so the hero is never empty — if the variable
+   is unset, or the file 404s, or the browser refuses to autoplay, what remains
+   is the still. That is why the video sits *over* the stills rather than
+   replacing them. */
+const HERO_VIDEO = process.env.NEXT_PUBLIC_HERO_VIDEO ?? '';
+
+/* The three ways into the site — which are also the next three sections of this
+   page, in the order they appear. The strip along the bottom of the hero is the
+   page's table of contents, so the reader's first scroll is a choice they have
+   already been offered rather than a surprise. Not a 01/02/03 sequence: these
+   are alternatives, and numbering them would imply an order that isn't real. */
+const WAYS_IN = [
+  { href: '#explore', label: 'By feeling', detail: 'Describe the mood, not the place', Icon: Compass },
+  { href: '#world-map', label: 'By place', detail: 'Open the map and wander', Icon: Map },
+  { href: '#stories', label: 'By story', detail: "Read someone's account first", Icon: BookOpen },
 ];
 
 export default function Hero() {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+  const ref = useRef<HTMLElement>(null);
 
-  // Scroll parallax
-  const { scrollY } = useScroll();
-  const bgScrollY = useTransform(scrollY, [0, 600], [0, 120]);
-  const textY = useTransform(scrollY, [0, 600], [0, 80]);
-  const opacity = useTransform(scrollY, [0, 450], [1, 0]);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start start', 'end start'],
+  });
 
-  const stats = [
-    { value: "50K+", label: "Memory Pins" },
-    { value: "195", label: "Countries" },
-    { value: "12K+", label: "Stories" },
-  ];
+  // Fluid Spring Physics Damper: Converts discrete mousewheel notches into buttery-smooth continuous momentum
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 90,
+    damping: 26,
+    mass: 0.8,
+    restDelta: 0.0001,
+  });
+
+  // Hardware GPU-Accelerated Balloon Ascension Physics (Pure composited transforms)
+  const copyY = useTransform(smoothProgress, [0, 1], [0, -220]);
+  const copyScale = useTransform(smoothProgress, [0, 0.7], [1, 0.96]);
+  const copyFade = useTransform(smoothProgress, [0, 0.65], [1, 0]);
+  const copyStyle = { y: copyY, scale: copyScale, opacity: copyFade };
+
+  // Planetary altitude camera depth
+  const backdropY = useTransform(smoothProgress, [0, 1], [0, 90]);
+  const backdropScale = useTransform(smoothProgress, [0, 1], [1.0, 1.08]);
+  const backdropStyle = { y: backdropY, scale: backdropScale };
+
+  // Floating bottom ways-in strip
+  const waysY = useTransform(smoothProgress, [0, 1], [0, -60]);
+  const waysFade = useTransform(smoothProgress, [0, 0.45], [1, 0]);
+  const waysStyle = { y: waysY, opacity: waysFade };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-
-      {/* ── Static Background Image ── */}
-      <motion.div
-        className="absolute inset-0 z-0 overflow-hidden"
-        style={{ y: bgScrollY }}
+    <section ref={ref} className="relative isolate flex min-h-[100svh] flex-col overflow-hidden">
+      {/* ── Backdrop (Hardware-Accelerated Altitude Parallax) ───────────────── */}
+      <motion.div 
+        style={backdropStyle}
+        className="absolute inset-0 -z-10 overflow-hidden pointer-events-none transform-gpu will-change-transform"
       >
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('/hero-bg.jpg')`,
-          }}
-        />
-
-        {/* Day mode overlay — smooth 600ms theme transition */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-600 ease-out ${
-            !isDark ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-sky-950/50 via-blue-900/35 to-indigo-950/65" />
-          <div className="absolute inset-0 bg-gradient-to-t from-sky-950/85 via-transparent to-sky-900/30" />
+        {/* Night Layer (Image + Scrim + Seam Blend) */}
+        <div aria-hidden="true" className="hero-layer theme-night-only">
+          <img
+            src="/hero-bg.jpg"
+            alt=""
+            fetchPriority="high"
+            decoding="async"
+            className="hero-media"
+          />
+          <div className="hero-scrim-night pointer-events-none absolute inset-0" />
         </div>
 
-        {/* Dark mode overlay with Twinkling Starry Night Sky */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-700 ease-out ${
-            isDark ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-indigo-950/50 to-slate-950/85" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-transparent to-slate-950/40" />
+        {/* Day Layer (Image + Scrim + Seam Blend) */}
+        <div aria-hidden="true" className="hero-layer theme-day-only">
+          <img
+            src="/hero-bg-day.jpg"
+            alt=""
+            decoding="async"
+            className="hero-media"
+          />
+          <div className="hero-scrim-day pointer-events-none absolute inset-0" />
+        </div>
 
-          {/* Twinkling Stars Over Mountain Sky */}
-          <div className="absolute inset-x-0 top-0 h-[60%] pointer-events-none overflow-hidden">
-            {STARS.map((star, i) => (
-              <div
-                key={i}
-                className={`absolute rounded-full bg-white animate-pulse ${star.size} ${star.opacity}`}
-                style={{
-                  top: star.top,
-                  left: star.left,
-                  animationDelay: star.delay,
-                  animationDuration: '3s',
-                  boxShadow: star.flare
-                    ? '0 0 10px 2px rgba(255, 255, 255, 0.9), 0 0 16px 4px rgba(186, 230, 253, 0.5)'
-                    : '0 0 4px 1px rgba(255, 255, 255, 0.6)',
-                }}
-              />
-            ))}
+        {HERO_VIDEO && (
+          <video
+            src={HERO_VIDEO}
+            poster="/hero-bg.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-hidden="true"
+            className="hero-media"
+          />
+        )}
+      </motion.div>
+
+      {/* ── Copy (Hot Air Balloon Buoyant Ascent) ─────────────────────────── */}
+      <motion.div
+        className="shell flex flex-1 flex-col justify-center pb-8 pt-28 lg:pt-32"
+        style={copyStyle}
+      >
+        <div className="max-w-[46rem]">
+          <div className="animate-rise-in flex items-center gap-4" style={{ animationDelay: '80ms' }}>
+            {/* The thesis, stated flatly. It is the one claim that separates
+                this from every other travel site, so it goes first and it goes
+                in the smallest type on the screen. */}
+            <span className="t-label text-aurora font-bold drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">A travel atlas with no star ratings</span>
+            <span className="h-px flex-1 bg-white/20" />
+          </div>
+
+          <h1
+            className="t-display animate-rise-in mt-7 text-balance text-foreground drop-shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
+            style={{ animationDelay: '180ms' }}
+          >
+            Somewhere in here is the trip you&rsquo;ll still be describing in ten years.
+          </h1>
+
+          <p
+            className="t-lead animate-rise-in mt-7 max-w-xl text-foreground/90 font-medium"
+            style={{ animationDelay: '300ms' }}
+          >
+            First-hand accounts from 120 countries — what people saw, what it cost, and
+            what they&rsquo;d do differently.
+          </p>
+
+          <div
+            className="animate-rise-in mt-10 flex flex-wrap items-center gap-3"
+            style={{ animationDelay: '400ms' }}
+          >
+            <Link
+              href="#explore"
+              onClick={(e) => smoothScrollTo('#explore', e)}
+              className="lift group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover shadow-md"
+            >
+              Start with a feeling
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+            <Link
+              href="/signup"
+              className="inline-flex items-center gap-2 rounded-full glass px-6 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:text-aurora hover:border-aurora/40 shadow-sm"
+            >
+              Start your own atlas
+            </Link>
           </div>
         </div>
       </motion.div>
 
-      {/* ── Main Content ── */}
-      <motion.div
-        className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-16"
-        style={{ y: textY, opacity }}
-      >
-        {/* Headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.1] text-white drop-shadow-lg"
-        >
-          Where Every Journey
-          <br />
-          <span className="text-gradient drop-shadow-none">Leaves a Mark</span>
-        </motion.h1>
-
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="text-lg sm:text-xl max-w-2xl mx-auto mb-10 text-white/85 leading-relaxed font-normal"
-        >
-          AtlasAura is your companion for purpose-driven travel. Explore countries through emotional memories, cultural insights, and hidden gems shared by fellow wanderers.
-        </motion.p>
-
-        {/* CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
-          <Link href="/signup">
-            <Button
-              size="lg"
-              className="group bg-gradient-to-r from-sky-500 via-sky-400 to-indigo-500 text-white font-bold px-8 py-6 text-lg transition-all duration-300 ease-out hover:shadow-2xl hover:shadow-sky-500/35 hover:scale-[1.02] active:scale-[0.98] transform-gpu shadow-xl shadow-sky-500/25 border border-sky-300/30"
-            >
-              <Compass className="w-5 h-5 mr-2 transition-transform duration-500 ease-out group-hover:rotate-45" />
-              Start Exploring
-            </Button>
-          </Link>
-          <Link href="#world-map">
-            <Button
-              size="lg"
-              variant="outline"
-              className="group border-white/30 text-white hover:bg-white/20 hover:border-white/60 bg-white/10 backdrop-blur-md px-8 py-6 text-lg font-bold transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] transform-gpu"
-            >
-              <MapPin className="w-5 h-5 mr-2 transition-transform duration-300 ease-out group-hover:-translate-y-0.5" />
-              View World Map
-            </Button>
-          </Link>
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto"
-        >
-          {stats.map((stat, i) => (
-            <div
-              key={i}
-              className="text-center group cursor-pointer"
-            >
-              <div className="text-2xl sm:text-3xl font-bold text-white group-hover:text-sky-300 transition-colors duration-300">{stat.value}</div>
-              <div className="text-sm text-white/65 mt-1 tracking-wide font-medium">{stat.label}</div>
-            </div>
-          ))}
-        </motion.div>
+      {/* ── The three ways in ────────────────────────────────────────────── */}
+      <motion.div style={waysStyle} className="relative border-t border-white/15">
+        <div className="shell">
+          <ul className="grid grid-cols-1 sm:grid-cols-3">
+            {WAYS_IN.map(({ href, label, detail, Icon }, i) => (
+              <li key={href} className={i > 0 ? 'sm:border-l sm:border-white/15' : undefined}>
+                <Link
+                  href={href}
+                  onClick={(e) => smoothScrollTo(href, e)}
+                  className="group flex items-center gap-3 px-0 py-5 transition-colors duration-200 sm:px-6"
+                >
+                  <Icon
+                    className="h-5 w-5 shrink-0 text-aurora transition-transform duration-200 group-hover:scale-110 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-xs font-bold tracking-widest text-white uppercase transition-colors duration-200 group-hover:text-aurora drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                      {label}
+                    </span>
+                    <span className="block truncate text-sm font-medium text-white/90 transition-colors duration-200 group-hover:text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                      {detail}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </motion.div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.8 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
-      >
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-2 cursor-pointer"
-          onClick={() => {
-            const el = document.getElementById('explore');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }}
-        >
-          <span className="text-xs uppercase tracking-[0.2em] text-white/50 font-medium">Scroll to explore</span>
-          <ArrowDown className="w-4 h-4 text-white/50" />
-        </motion.div>
-      </motion.div>
-
-      {/* Soft, natural bottom fade transition */}
-      <div className={`absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t z-10 pointer-events-none transition-colors duration-700 ease-out ${
-        isDark
-          ? 'from-[#090d1a] via-[#090d1a]/40 to-transparent'
-          : 'from-[#f0f6ff] via-[#f0f6ff]/40 to-transparent'
-      }`} />
     </section>
   );
 }

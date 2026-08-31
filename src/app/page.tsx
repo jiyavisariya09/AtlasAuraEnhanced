@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import Navigation from '@/sections/Navigation';
 import { getCurrentUser, type AuthUser } from '@/lib/auth';
@@ -9,91 +9,145 @@ import Hero from '@/sections/Hero';
 import MoodSearch from '@/sections/MoodSearch';
 import CountryStories from '@/sections/CountryStories';
 import HiddenGems from '@/sections/HiddenGems';
+import Passage from '@/sections/Passage';
 import CuriosityFeed from '@/sections/CuriosityFeed';
 import UserFeatures from '@/sections/UserFeatures';
 import Footer from '@/sections/Footer';
 
-const WorldMap = dynamic(() => import('@/sections/WorldMap'), { ssr: false });
+/* `ssr: false` is not optional here — Leaflet reaches for `window` as it loads.
+   But that alone would leave `#world-map` out of the server HTML entirely, so a
+   cold visit to /#world-map (and the hero's own "Explore the atlas" link) would
+   have no element to scroll to. The fallback holds the anchor and the 600px the
+   map will occupy, so the document does not jump when the real one arrives. */
+const WorldMap = dynamic(() => import('@/sections/WorldMap'), {
+  ssr: false,
+  loading: () => (
+    <section id="world-map" className="hairline-t section-y">
+      <div className="shell">
+        <div
+          className="rounded-3xl border border-border bg-muted/30"
+          style={{ height: '600px' }}
+          aria-hidden="true"
+        />
+      </div>
+    </section>
+  ),
+});
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+const SPLASH_MS = 1400;
 
 function LoadingScreen({ onComplete }: { onComplete: () => void }) {
+  const reduced = useReducedMotion();
+
   useEffect(() => {
-    const timer = setTimeout(onComplete, 2200);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+    /* The old hold was 2200ms and the page below wasn't mounted until it ended,
+       so every visit began with two and a bit seconds of a spinner. The global
+       reduced-motion rule zeroes CSS durations but cannot touch a JS timer, so
+       that case is shortened here as well. */
+    const timer = setTimeout(onComplete, reduced ? 200 : SPLASH_MS);
+    /* And nobody should be held at a splash they have already seen. */
+    const skip = () => onComplete();
+    window.addEventListener('pointerdown', skip);
+    window.addEventListener('keydown', skip);
+    window.addEventListener('wheel', skip, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('pointerdown', skip);
+      window.removeEventListener('keydown', skip);
+      window.removeEventListener('wheel', skip);
+    };
+  }, [onComplete, reduced]);
+
+  const draw = (delay: number) =>
+    reduced
+      ? { duration: 0 }
+      : { duration: 0.75, delay, ease: EASE };
 
   return (
+    /* aria-hidden rather than role="status": the real page is mounted underneath
+       this veil, so there is nothing to announce as loading and a screen reader
+       should go straight to the content. */
     <motion.div
+      aria-hidden="true"
+      data-splash-veil=""
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
-      className="fixed inset-0 z-[100] bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 flex items-center justify-center"
+      transition={{ duration: 0.5, ease: EASE }}
+      className="fixed inset-0 z-[100] grid place-items-center overflow-hidden bg-background"
     >
-      <div className="flex flex-col items-center gap-8">
-        {/* Animated Globe Icon */}
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
-          className="relative"
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-            className="w-16 h-16 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center"
-          >
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </motion.div>
-          <motion.div
-            animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-0 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 blur-xl -z-10"
+      <div className="graticule pointer-events-none absolute inset-0 opacity-50" aria-hidden="true" />
+      <div className="aurora-wash pointer-events-none absolute inset-0" aria-hidden="true" />
+
+      <div className="relative flex flex-col items-center px-6">
+        {/* The mark draws itself — equator, then meridian, then the axis, then
+            the pin lands. It is the header's logo at three times the size, so
+            the first thing the site does is construct its own emblem. */}
+        <svg viewBox="0 0 32 32" className="h-24 w-24" aria-hidden="true">
+          <motion.circle
+            cx="16"
+            cy="16"
+            r="11"
+            fill="none"
+            stroke="hsl(var(--aurora))"
+            strokeWidth="1.25"
+            opacity="0.55"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={draw(0)}
           />
-        </motion.div>
+          <motion.ellipse
+            cx="16"
+            cy="16"
+            rx="4.6"
+            ry="11"
+            fill="none"
+            stroke="hsl(var(--aurora))"
+            strokeWidth="1.25"
+            opacity="0.4"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={draw(0.18)}
+          />
+          <motion.line
+            x1="5"
+            y1="16"
+            x2="27"
+            y2="16"
+            stroke="hsl(var(--aurora))"
+            strokeWidth="1.25"
+            opacity="0.4"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={draw(0.3)}
+          />
+          <motion.circle
+            cx="21.2"
+            cy="10.4"
+            r="2.5"
+            fill="hsl(var(--aurora))"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={reduced ? { duration: 0 } : { duration: 0.4, delay: 0.52, ease: EASE }}
+            style={{ transformOrigin: '21.2px 10.4px' }}
+          />
+        </svg>
 
-        {/* Brand Name */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
-          className="text-center"
-        >
-          <h1 className="text-3xl font-bold">
-            <span className="text-white">Atlas</span>
-            <span className="text-gradient">Aura</span>
-          </h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-            className="text-sm text-slate-500 mt-2 tracking-wider"
-          >
-            Purpose-driven travel
-          </motion.p>
-        </motion.div>
+        <h1 className="mt-6 font-sans text-2xl font-semibold tracking-tight text-foreground">
+          Atlas<span className="text-aurora">Aura</span>
+        </h1>
+        <p className="t-label mt-3 text-muted-foreground">Memories, mapped</p>
 
-        {/* Loading dots */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-          className="flex gap-2"
-        >
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
-              transition={{
-                duration: 0.8,
-                repeat: Infinity,
-                delay: i * 0.15,
-                ease: "easeInOut",
-              }}
-              className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-sky-400 to-indigo-400"
-            />
-          ))}
-        </motion.div>
+        {/* A hairline that fills, echoing the rule between the hero's label and
+            its coordinates. It reports the real wait rather than looping. */}
+        <div className="mt-8 h-px w-40 bg-border">
+          <motion.span
+            className="block h-px w-full origin-left bg-aurora"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: reduced ? 0.2 : SPLASH_MS / 1000, ease: 'linear' }}
+          />
+        </div>
       </div>
     </motion.div>
   );
@@ -102,8 +156,7 @@ function LoadingScreen({ onComplete }: { onComplete: () => void }) {
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [mapKey, setMapKey] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const user = getCurrentUser();
@@ -111,7 +164,6 @@ export default function Home() {
       setIsLoggedIn(true);
       setCurrentUser(user);
     }
-    setMapKey(1);
   }, []);
 
   const handleLoginToggle = () => {
@@ -124,47 +176,60 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden theme-transition">
-      <AnimatePresence>
-        {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
-      </AnimatePresence>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Without JS, `isLoading` never flips and an opaque veil would sit over a
+          page that is otherwise perfectly readable. */}
+      <noscript
+        dangerouslySetInnerHTML={{
+          __html: '<style>[data-splash-veil]{display:none !important}</style>',
+        }}
+      />
 
-      {!isLoading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
-        >
-          <Navigation isLoggedIn={isLoggedIn} onLoginToggle={handleLoginToggle} />
-          <main>
-            <Hero />
-            <MoodSearch />
-            <WorldMap key={mapKey} />
-            <CountryStories />
-            <HiddenGems />
-            <CuriosityFeed isLoggedIn={isLoggedIn} />
-            <UserFeatures isLoggedIn={isLoggedIn} />
-          </main>
-          <Footer />
-          
-          <AnimatePresence>
-            {isLoggedIn && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 16 }}
-                transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
-                className="fixed bottom-24 right-8 z-40 px-4 py-2 rounded-full glass border-sky-500/20"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-breathe" />
-                  <span className="text-sm text-slate-500">Signed in as <span className="text-sky-400 font-medium">{currentUser?.name || 'Traveler'}</span></span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      )}
+      <Navigation isLoggedIn={isLoggedIn} onLoginToggle={handleLoginToggle} />
+      <main>
+        <Hero />
+        <MoodSearch />
+        <WorldMap />
+        <CountryStories />
+        <HiddenGems />
+        {/* The set-piece sits here deliberately. By this point the reader has
+            been through a search, a map and two card grids, so a pinned
+            full-bleed frame is a genuine change of gear rather than a second
+            helping of the hero. It also re-states the thesis in someone else's
+            words right before the feed and the sign-up prompt. */}
+        <Passage />
+        <CuriosityFeed isLoggedIn={isLoggedIn} />
+        <UserFeatures isLoggedIn={isLoggedIn} />
+      </main>
+      <Footer />
+
+      <AnimatePresence>
+        {isLoggedIn && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.5, ease: EASE }}
+            className="fixed bottom-24 right-8 z-40"
+          >
+            {/* `.glass` sets the `border` shorthand, so a `border-*` utility
+                beside it is decided by stylesheet order. The pill carries its
+                own single ring instead. */}
+            <div className="glass flex items-center gap-2 rounded-full px-4 py-2">
+              <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
+                <span className="animate-pin-pulse absolute inset-0 rounded-full bg-aurora" />
+                <span className="relative h-2 w-2 rounded-full bg-aurora" />
+              </span>
+              <span className="text-sm text-muted-foreground">
+                Signed in as{' '}
+                <span className="font-medium text-foreground">
+                  {currentUser?.name || 'Traveller'}
+                </span>
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

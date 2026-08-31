@@ -5,45 +5,60 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, MapPin, DollarSign, Users, X, Star, Compass } from 'lucide-react';
 import { countries } from '@/data/mockData';
+import { useModalLayer } from '@/hooks/use-modal-layer';
 import type { Country } from '@/types';
 import { Button } from '@/components/ui/button';
-import { useTheme } from '@/context/ThemeContext';
+
+/* Same entrance curve as `.lift`, the hero reveal and MoodSearch — one hand
+   across the whole page instead of three near-identical beziers. */
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export default function CountryStories() {
   const router = useRouter();
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
 
+  /* Escape, a still page underneath, and focus handed into the dialog and back
+     to the card afterwards — the contract every overlay here shares. */
+  const closeCountry = () => setSelectedCountry(null);
+  const panelRef = useModalLayer(selectedCountry !== null, closeCountry);
+
+  /* Cost is a three-step scale, so it gets the three Aurora Ink accents rather
+     than emerald/sky/indigo. The theme ternaries are gone: the tints resolve
+     against --aurora/--violet/--rose, which already flip per theme. */
   const costMeta: Record<string, { label: string; bg: string; text: string }> = {
-    budget:   { label: '$ Budget',   bg: isDark ? 'bg-emerald-500/20' : 'bg-emerald-100', text: isDark ? 'text-emerald-400' : 'text-emerald-700' },
-    moderate: { label: '$$ Moderate', bg: isDark ? 'bg-sky-500/20'     : 'bg-sky-100',     text: isDark ? 'text-sky-400'     : 'text-sky-700'     },
-    luxury:   { label: '$$$ Luxury',  bg: isDark ? 'bg-indigo-500/20'  : 'bg-indigo-100',  text: isDark ? 'text-indigo-400'  : 'text-indigo-700'  },
+    budget:   { label: '$ Budget',    bg: 'bg-aurora/15', text: 'text-aurora' },
+    moderate: { label: '$$ Moderate', bg: 'bg-orchid/15', text: 'text-orchid' },
+    luxury:   { label: '$$$ Luxury',  bg: 'bg-blush/15',  text: 'text-blush'  },
   };
 
   const c = costMeta;
 
   return (
-    <section id="stories" className={`relative py-24 overflow-hidden ${isDark ? 'bg-transparent' : 'bg-sky-50/40'}`}>
-      {/* Background blobs */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className={`absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-3xl ${isDark ? 'bg-sky-500/8' : 'bg-sky-300/20'}`} />
-        <div className={`absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full blur-3xl ${isDark ? 'bg-indigo-500/8' : 'bg-indigo-200/20'}`} />
+    <section id="stories" className="hairline-t section-y relative isolate overflow-hidden">
+      {/* Background — the atlas's own grid plus two cool blooms. No warm stops,
+          and no `/8` tints: that is not an alpha step Tailwind emits. */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="graticule absolute inset-0 opacity-25" />
+        <div className="animate-aurora-drift absolute right-0 top-0 h-[420px] w-[420px] rounded-full bg-aurora/5 blur-3xl" />
+        <div
+          className="animate-aurora-drift absolute bottom-0 left-0 h-[420px] w-[420px] rounded-full bg-orchid/5 blur-3xl"
+          style={{ animationDelay: '5s' }}
+        />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="shell relative">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.1 }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.9, ease: EASE }}
           className="text-center mb-16"
         >
-          <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-            Stories That <span className="text-gradient">Inspire</span>
+          <h2 className="t-title mb-4 text-foreground">
+            Stories That <span className="text-aurora">Inspire</span>
           </h2>
-          <p className={`text-lg max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className="t-lead mx-auto max-w-2xl">
             Dive into visual narratives that capture the essence of each destination.
           </p>
         </motion.div>
@@ -56,29 +71,30 @@ export default function CountryStories() {
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.1 }}
-              transition={{ duration: 0.8, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.8, delay: index * 0.05, ease: EASE }}
               className="group cursor-pointer"
               onClick={() => setSelectedCountry(country)}
             >
-              <div className={`relative h-full rounded-2xl overflow-hidden border transition-all duration-500 ease-smooth group-hover:-translate-y-2 transform-gpu ${
-                isDark
-                  ? 'bg-slate-800/60 border-white/8 group-hover:border-sky-500/30 group-hover:shadow-xl group-hover:shadow-sky-500/8'
-                  : 'bg-white border-slate-200/80 group-hover:border-sky-300 group-hover:shadow-xl group-hover:shadow-sky-200/40'
-              }`}>
+              {/* `.lift` owns the hover rise, shadow and its own transition
+                  shorthand, so no `transition-*`/`-translate-y` here — the two
+                  would cancel depending on stylesheet order. The surface is spelt
+                  out rather than using `.ink-panel`, because this card animates
+                  its border and `.ink-panel` sets the `border` shorthand.
+                  `.lift` already transitions border-color for us. */}
+              <div className="lift relative h-full overflow-hidden rounded-2xl bg-card border border-border/70 shadow-cast hover:shadow-2xl">
                 {/* Image */}
-                <div className="relative h-52 overflow-hidden">
+                <div className="relative h-52 w-full overflow-hidden bg-black">
                   <img
                     src={country.image}
                     alt={country.name}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-[1.06] will-change-transform"
+                    className="w-full h-full object-cover transition-transform duration-700 ease-smooth will-change-transform group-hover:scale-[1.04]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                  <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm">
-                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                    <span className="text-xs font-semibold text-white">{country.rating}</span>
+                  <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 border border-white/20 backdrop-blur-md">
+                    <Star className="w-3.5 h-3.5 text-aurora fill-aurora" />
+                    <span className="t-data text-white font-semibold">{country.rating}</span>
                   </div>
                   <div className="absolute bottom-3 left-3">
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${c[country.costLevel]?.bg ?? 'bg-slate-500/20'} ${c[country.costLevel]?.text ?? 'text-slate-300'}`}>
+                    <span className={`t-data px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10 ${c[country.costLevel]?.bg ?? 'bg-black/60'} ${c[country.costLevel]?.text ?? 'text-white'}`}>
                       {c[country.costLevel]?.label ?? country.costLevel}
                     </span>
                   </div>
@@ -87,30 +103,28 @@ export default function CountryStories() {
                 {/* Body */}
                 <div className="p-5">
                   <div className="flex items-center gap-1.5 mb-2">
-                    <MapPin className="w-3.5 h-3.5 text-sky-500" />
-                    <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{country.region}</span>
+                    <MapPin className="w-3.5 h-3.5 text-aurora" />
+                    <span className="t-label text-aurora">{country.region}</span>
                   </div>
 
-                  <h3 className={`text-xl font-bold mb-2 transition-colors duration-500 ease-smooth group-hover:text-sky-500 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <h3 className="t-sub mb-2 text-foreground transition-colors duration-500 ease-smooth group-hover:text-aurora">
                     {country.name}
                   </h3>
 
-                  <p className={`text-sm mb-4 line-clamp-2 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  <p className="text-sm mb-4 line-clamp-2 leading-relaxed text-muted-foreground">
                     {country.description}
                   </p>
 
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1.5 mb-4">
                     {country.purposes.slice(0, 3).map((p) => (
-                      <span key={p} className={`px-2 py-0.5 text-xs rounded-full capitalize font-medium ${
-                        isDark ? 'bg-sky-500/15 text-sky-300' : 'bg-sky-100 text-sky-700'
-                      }`}>{p}</span>
+                      <span key={p} className="t-label rounded-full bg-muted/70 px-2 py-1 text-muted-foreground">{p}</span>
                     ))}
                   </div>
 
-                  <div className={`flex items-center justify-between pt-3 border-t ${isDark ? 'border-white/8' : 'border-slate-100'}`}>
-                    <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{country.vibe}</span>
-                    <span className="text-xs font-semibold text-sky-500 group-hover:translate-x-1 transition-transform duration-500 ease-smooth inline-block">
+                  <div className="flex items-center justify-between pt-3 border-t border-border/20">
+                    <span className="text-xs text-muted-foreground">{country.vibe}</span>
+                    <span className="text-xs font-semibold text-aurora group-hover:translate-x-1 transition-transform duration-500 ease-smooth inline-block">
                       Read Story →
                     </span>
                   </div>
@@ -124,103 +138,108 @@ export default function CountryStories() {
       {/* Modal */}
       <AnimatePresence>
         {selectedCountry && (
+          /* Same scrim as the command palette in Navigation: --ink-void is only
+             declared on :root, so it stays deep navy in the day theme too, which
+             is what a dialog over cool paper needs. */
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            onClick={() => setSelectedCountry(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+            style={{ background: 'hsl(var(--ink-void) / 0.72)' }}
+            onClick={closeCountry}
           >
             <motion.div
+              ref={panelRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="country-modal-title"
               initial={{ scale: 0.96, opacity: 0, y: 16 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.96, opacity: 0, y: 16 }}
-              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
-              className={`relative max-w-3xl w-full rounded-3xl overflow-hidden border shadow-2xl ${
-                isDark
-                  ? 'bg-slate-900 border-white/10'
-                  : 'bg-white border-slate-200'
-              }`}
+              transition={{ duration: 0.4, ease: EASE }}
+              className="ink-panel relative max-w-3xl w-full rounded-3xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Hero image — fixed height, no scroll */}
               <div className="relative h-64 shrink-0">
                 <img src={selectedCountry.image} alt={selectedCountry.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-card via-card/85 to-transparent" />
                 <button
-                  onClick={() => setSelectedCountry(null)}
-                  className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+                  type="button"
+                  onClick={closeCountry}
+                  aria-label="Close"
+                  className="absolute top-4 right-4 p-2 rounded-full bg-card/80 backdrop-blur-sm transition-colors hover:bg-card"
                 >
-                  <X className="w-4 h-4 text-white" />
+                  <X className="w-4 h-4 text-foreground" />
                 </button>
                 <div className="absolute bottom-5 left-6">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <MapPin className="w-3.5 h-3.5 text-sky-300" />
-                    <span className="text-sm text-slate-200">{selectedCountry.region}</span>
+                    <MapPin className="w-3.5 h-3.5 text-aurora" />
+                    <span className="t-label text-aurora">{selectedCountry.region}</span>
                   </div>
-                  <h2 className="text-3xl font-bold text-white">{selectedCountry.name}</h2>
+                  <h2 id="country-modal-title" className="t-sub text-foreground">{selectedCountry.name}</h2>
                 </div>
               </div>
 
               {/* Scrollable content */}
               <div className="overflow-y-auto max-h-[60vh] p-6 space-y-6">
-                {/* Stats row */}
+                {/* Stats row — a readout of real field values, which is exactly
+                    where the mono face is allowed to appear. */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { icon: DollarSign, label: 'Cost', value: selectedCountry.costLevel, cap: true },
                     { icon: Star,       label: 'Rating', value: `${selectedCountry.rating}/5` },
                     { icon: Compass,    label: 'Vibe',   value: selectedCountry.vibe },
                   ].map(({ icon: Icon, label, value, cap }) => (
-                    <div key={label} className={`p-3 rounded-xl text-center ${isDark ? 'bg-white/5' : 'bg-sky-50 border border-sky-100'}`}>
-                      <Icon className="w-4 h-4 text-sky-500 mx-auto mb-1" />
-                      <p className={`text-xs mb-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{label}</p>
-                      <p className={`text-sm font-semibold ${cap ? 'capitalize' : ''} ${isDark ? 'text-white' : 'text-slate-800'}`}>{value}</p>
+                    <div key={label} className="p-3 rounded-xl text-center bg-muted">
+                      <Icon className="w-4 h-4 text-aurora mx-auto mb-1" />
+                      <p className="t-label mb-1 text-muted-foreground">{label}</p>
+                      <p className={`t-data text-foreground ${cap ? 'capitalize' : ''}`}>{value}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Story */}
                 <div>
-                  <h3 className={`text-base font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>The Story</h3>
-                  <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{selectedCountry.description}</p>
+                  <h3 className="t-label mb-2 text-aurora">The Story</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{selectedCountry.description}</p>
                 </div>
 
                 {/* Culture */}
                 <div>
-                  <h3 className={`text-base font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Culture & Heritage</h3>
-                  <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{selectedCountry.culture}</p>
+                  <h3 className="t-label mb-2 text-aurora">Culture & Heritage</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{selectedCountry.culture}</p>
                 </div>
 
                 {/* Hidden Gems */}
                 <div>
-                  <h3 className={`text-base font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Hidden Gems</h3>
+                  <h3 className="t-label mb-2 text-aurora">Hidden Gems</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedCountry.hiddenGems.map((gem, i) => (
-                      <span key={i} className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        isDark ? 'bg-sky-500/20 text-sky-300' : 'bg-sky-100 text-sky-700 border border-sky-200'
-                      }`}>✦ {gem}</span>
+                      <span key={i} className="px-3 py-1 rounded-full text-xs font-medium border border-aurora/20 bg-aurora/10 text-aurora">✦ {gem}</span>
                     ))}
                   </div>
                 </div>
 
-                {/* Perfect For */}
+                {/* Perfect For — the one sparing use of violet in this section */}
                 <div>
-                  <h3 className={`text-base font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Perfect For</h3>
+                  <h3 className="t-label mb-2 text-aurora">Perfect For</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedCountry.purposes.map((p) => (
-                      <span key={p} className={`px-3 py-1 rounded-full text-xs font-medium capitalize flex items-center gap-1 ${
-                        isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-700 border border-indigo-200'
-                      }`}>
+                      <span key={p} className="px-3 py-1 rounded-full text-xs font-medium capitalize flex items-center gap-1 border border-orchid/20 bg-orchid/10 text-orchid">
                         <Users className="w-3 h-3" />{p}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                {/* CTAs */}
+                {/* CTAs — the Button variants already resolve to primary/border/
+                    accent tokens, so only the teal hover needs stating. */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-1">
                   <Button
-                    className="flex-1 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white font-semibold"
+                    className="flex-1 font-semibold hover:bg-primary-hover"
                     onClick={() => {
                       setSelectedCountry(null);
                       setTimeout(() => {
@@ -244,9 +263,12 @@ export default function CountryStories() {
                   >
                     <MapPin className="w-4 h-4 mr-2" />View on Map
                   </Button>
+                  {/* The `outline` variant already resolves to border/background/
+                      accent tokens — the old amber overrides were the only warm
+                      thing left in this section. */}
                   <Button
                     variant="outline"
-                    className="flex-1 font-semibold border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+                    className="flex-1 font-semibold"
                     onClick={() => {
                       router.push(`/destinations/${selectedCountry.id}`);
                     }}

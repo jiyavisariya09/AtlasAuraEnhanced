@@ -31,12 +31,12 @@ export default function CurrencySelector() {
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
           isDark
-            ? 'bg-white/8 hover:bg-white/12 text-slate-200 border border-white/10'
+            ? 'bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10'
             : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 shadow-sm'
         }`}
         title="Select currency"
       >
-        <Coins className="w-3.5 h-3.5 text-amber-500" />
+        <Coins className="w-3.5 h-3.5 text-aurora" />
         <span>{activeCurrency.code}</span>
         <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -63,7 +63,7 @@ export default function CurrencySelector() {
                 }}
                 className={`w-full px-3 py-1.5 text-left text-xs flex items-center justify-between transition-colors ${
                   currency === c.code
-                    ? 'bg-amber-500/20 text-amber-500 font-bold'
+                    ? 'bg-aurora/20 text-aurora font-bold'
                     : isDark
                     ? 'hover:bg-white/10 text-slate-300'
                     : 'hover:bg-slate-100 text-slate-700'

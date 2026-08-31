@@ -328,10 +328,14 @@ export const currentUser: User = {
   badges: badges.filter(b => b.earned)
 };
 
+/* `color` is a Tailwind class pair, so these strings are compiled as if they were
+   written in a component — they must stay inside the Aurora Ink palette even
+   while no component reads the field. Teal leads; violet marks the solitary
+   moods and rose the romantic one, matching the mood chips on the world map. */
 export const moodOptions = [
-  { id: 'solo', label: 'Solo Journey', icon: '🎒', description: 'Find yourself', color: 'from-purple-500 to-indigo-500' },
-  { id: 'honeymoon', label: 'Romance', icon: '💕', description: 'Love & connection', color: 'from-pink-500 to-rose-500' },
-  { id: 'adventure', label: 'Adventure', icon: '⛰️', description: 'Thrill & explore', color: 'from-orange-500 to-amber-500' },
-  { id: 'culture', label: 'Culture', icon: '🏛️', description: 'Learn & immerse', color: 'from-emerald-500 to-teal-500' },
-  { id: 'calm', label: 'Peace', icon: '🧘', description: 'Rest & recharge', color: 'from-cyan-500 to-blue-500' }
+  { id: 'solo', label: 'Solo Journey', icon: '🎒', description: 'Find yourself', color: 'bg-orchid/15 text-orchid' },
+  { id: 'honeymoon', label: 'Romance', icon: '💕', description: 'Love & connection', color: 'bg-blush/15 text-blush' },
+  { id: 'adventure', label: 'Adventure', icon: '⛰️', description: 'Thrill & explore', color: 'bg-aurora/15 text-aurora' },
+  { id: 'culture', label: 'Culture', icon: '🏛️', description: 'Learn & immerse', color: 'bg-aurora/15 text-aurora' },
+  { id: 'calm', label: 'Peace', icon: '🧘', description: 'Rest & recharge', color: 'bg-aurora/15 text-aurora' }
 ];

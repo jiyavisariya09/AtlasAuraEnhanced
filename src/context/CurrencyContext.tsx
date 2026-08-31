@@ -30,19 +30,26 @@ interface CurrencyContextType {
   isLoading: boolean
 }
 
+/* The fallback shape used before a provider mounts. Its currency must match the
+   provider's initial state below, or a component reading the context outside a
+   provider would format prices in a different currency to one inside it. */
 const CurrencyContext = createContext<CurrencyContextType>({
-  currency: 'USD',
+  currency: 'INR',
   setCurrency: () => {},
   rates: { USD: 1 },
   convert: (amount) => amount,
-  formatPrice: (amount) => `$${amount.toFixed(0)}`,
+  formatPrice: (amount) => `₹${amount.toFixed(0)}`,
   isLoading: false,
 })
 
 const CURRENCY_STORAGE_KEY = 'atlasaura-preferred-currency'
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrencyState] = useState<CurrencyCode>('USD')
+  /* Rupees by default. Prices in the data are authored in USD and converted on
+     read, so this is a display preference only — `convert` still divides by the
+     USD rate and nothing downstream needs to change. A saved choice in
+     localStorage overrides it on mount. */
+  const [currency, setCurrencyState] = useState<CurrencyCode>('INR')
   const [rates, setRates] = useState<Record<string, number>>({ USD: 1, INR: 87.5, EUR: 0.92, GBP: 0.79, JPY: 155.2, CAD: 1.37, AUD: 1.52, AED: 3.67 })
   const [isLoading, setIsLoading] = useState(true)
 

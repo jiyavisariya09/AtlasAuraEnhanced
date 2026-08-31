@@ -1,30 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyToken } from '@/lib/server/jwt'
-
-function getUserId(req: NextRequest): string | null {
-  const token = req.cookies.get('token')?.value
-  if (!token) return null
-  try {
-    const payload = verifyToken(token)
-    return payload.id as string
-  } catch {
-    return null
-  }
-}
+import { getUserId, serverError, unauthorized } from '@/lib/server/session'
+import { parseBody, reviewSchema } from '@/lib/server/validation'
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const destinationId = searchParams.get('destinationId')
 
-    const where: any = {}
-    if (destinationId) {
-      where.destinationId = destinationId
-    }
-
     const reviews = await prisma.review.findMany({
-      where,
+      where: destinationId ? { destinationId } : {},
       include: {
         user: {
           select: {
@@ -45,28 +30,37 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ reviews, count: reviews.length })
-  } catch (err: any) {
-    console.error('Reviews GET error:', err)
-    return NextResponse.json({ message: err.message || 'Failed to fetch reviews' }, { status: 500 })
+  } catch (err) {
+    return serverError('Reviews GET error', err, 'Could not load reviews.')
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const userId = getUserId(req)
-    if (!userId) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    if (!userId) return unauthorized()
 
-    const { destinationId, rating, content } = await req.json()
+    const parsed = await parseBody(req, reviewSchema)
+    if (!parsed.ok) return parsed.response
+    const { destinationId, rating, content } = parsed.data
 
-    if (!destinationId || !rating || !content) {
-      return NextResponse.json({ message: 'Destination ID, rating, and content are required' }, { status: 400 })
+    /* Checked before the write. Prisma's referential action on a bad
+       destinationId surfaces as a 500, which reads to the caller as "the server
+       is broken" rather than "that place doesn't exist". */
+    const destination = await prisma.destination.findUnique({
+      where: { id: destinationId },
+      select: { id: true },
+    })
+    if (!destination) {
+      return NextResponse.json({ message: 'That destination does not exist.' }, { status: 404 })
     }
 
     const review = await prisma.review.create({
       data: {
         destinationId,
+        /* From the cookie. A caller cannot post a review as someone else. */
         userId,
-        rating: parseFloat(rating),
+        rating,
         content,
         helpfulVotes: 0,
       },
@@ -90,8 +84,7 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ message: 'Review submitted successfully', review }, { status: 201 })
-  } catch (err: any) {
-    console.error('Reviews POST error:', err)
-    return NextResponse.json({ message: err.message || 'Failed to submit review' }, { status: 500 })
+  } catch (err) {
+    return serverError('Reviews POST error', err, 'Could not post that review.')
   }
 }

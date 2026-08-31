@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { TravelMood } from '@prisma/client'
+import { TravelMood, Prisma } from '@prisma/client'
+import { serverError } from '@/lib/server/session'
 
 export async function POST(req: NextRequest) {
   try {
     const { prompt, mood, maxBudget, durationDays, interests } = await req.json()
 
     // Query destinations matching criteria
-    const where: any = {}
+    const where: Prisma.DestinationWhereInput = {}
 
     if (mood && Object.values(TravelMood).includes(mood as TravelMood)) {
       where.purposes = { has: mood as TravelMood }
@@ -75,8 +76,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(aiResponse)
-  } catch (err: any) {
-    console.error('AI Assistant error:', err)
-    return NextResponse.json({ message: err.message || 'Failed to generate AI recommendations' }, { status: 500 })
+  } catch (err) {
+    return serverError('AI Assistant error', err, 'Could not put together recommendations right now.')
   }
 }

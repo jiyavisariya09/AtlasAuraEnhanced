@@ -7,22 +7,45 @@ import { questions as initialQuestions } from '@/data/mockData';
 import type { Question } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useTheme } from '@/context/ThemeContext';
 import { getAuthorAvatar } from '@/lib/utils';
+import { useModalLayer } from '@/hooks/use-modal-layer';
+
+/* Same entrance curve as `.lift`, the hero reveal, MoodSearch, CountryStories
+   and HiddenGems — one hand across the page instead of a second near-identical
+   bezier per section. */
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+/* Overlay control shared by both modals' close buttons. Spelt out rather than
+   `.glass`, because `.glass` sets the `border` shorthand and these need a
+   single border colour that can animate on hover. */
+const CLOSE_BUTTON =
+  'absolute top-4 right-4 rounded-full border border-border bg-card/80 p-2 text-muted-foreground backdrop-blur-sm transition-colors duration-200 hover:border-aurora hover:text-aurora';
+
+/* Multi-line fields. Nothing here suppresses the outline: the old rule removed
+   it in every state rather than only on mouse focus, which took the global
+   :focus-visible aurora ring with it. */
+const FIELD =
+  'w-full resize-none rounded-xl border border-border bg-card p-3 text-foreground placeholder:text-muted-foreground transition-colors duration-200 focus-visible:border-aurora';
 
 interface CuriosityFeedProps {
   isLoggedIn: boolean;
 }
 
 export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
   const [questions, setQuestions] = useState<Question[]>(initialQuestions);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showAskModal, setShowAskModal] = useState(false);
+
+  /* Two overlays, the same contract as every other one on the site: Escape
+     closes, the page underneath holds still, focus goes in and comes back.
+     Both are driven from here because both are rendered inline rather than
+     lifted into their own component. */
+  const closeQuestion = () => setSelectedQuestion(null);
+  const closeAsk = () => setShowAskModal(false);
+  const questionPanelRef = useModalLayer(selectedQuestion !== null, closeQuestion);
+  const askPanelRef = useModalLayer(showAskModal, closeAsk);
 
   // Ask question form state
   const [askTitle, setAskTitle] = useState('');
@@ -80,30 +103,36 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
     setAnswerText('');
   };
 
-  const inputCls = `bg-white/5 border-white/10 text-white placeholder:text-slate-500`;
+  /* The Input primitive is already fully tokenised (border, placeholder, ring),
+     so this only has to name the surface it sits on. */
+  const inputCls = `bg-card text-foreground`;
 
   return (
-    <section id="curiosity" className="relative py-24 overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-cyan-500/5 rounded-full blur-3xl" />
+    <section id="curiosity" className="hairline-t section-y relative isolate overflow-hidden">
+      {/* One cool bloom. The original was a stock cyan tint that belonged to
+          neither theme's palette; this reads from --aurora, so it flips. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+        <div className="animate-aurora-drift absolute bottom-0 left-0 h-[560px] w-[560px] rounded-full bg-aurora/5 blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* `.shell` owns width, gutters and centring. It sets the `max-width`
+          property itself, so no width or inline-padding utility sits beside it. */}
+      <div className="shell relative">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-80px" }} transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }} className="text-center mb-16">
-          <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-            Ask. Learn. <span className="text-gradient">Share.</span>
+        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-80px" }} transition={{ duration: 0.8, ease: EASE }} className="text-center mb-16">
+          <h2 className="t-title mb-4 text-foreground">
+            Ask. Learn. <span className="text-aurora">Share.</span>
           </h2>
-          <p className={`text-lg max-w-2xl mx-auto leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-            A traveler-friendly Q&A community where curiosity meets experience. Get answers from those who've been there.
+          <p className="t-lead mx-auto max-w-2xl">
+            A traveler-friendly Q&A community where curiosity meets experience. Get answers from those who&apos;ve been there.
           </p>
         </motion.div>
 
         {/* Search & Filter */}
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, delay: 0.15, ease: [0.25, 1, 0.5, 1] }} className="mb-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, delay: 0.15, ease: EASE }} className="mb-8">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 placeholder="Search questions..."
                 value={searchQuery}
@@ -112,19 +141,24 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
               />
             </div>
             {isLoggedIn && (
+              /* The default Button variant already resolves to primary/
+                 primary-foreground, so only the teal hover needs stating. */
               <Button
                 onClick={() => setShowAskModal(true)}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 font-medium px-6"
+                className="px-6 font-medium hover:bg-primary-hover"
               >
                 <Plus className="w-4 h-4 mr-2" />Ask Question
               </Button>
             )}
           </div>
 
+          {/* Selection is one accent, not a second hue per tag. `.glass` sets
+              the `border` shorthand, so no `border-*` is paired with it. */}
           <div className="flex flex-wrap gap-2 mt-4">
             <button
               onClick={() => setSelectedTag(null)}
-              className={`px-3 py-1.5 rounded-full text-sm transition-all duration-500 ease-smooth ${!selectedTag ? 'bg-sky-500 text-white' : isDark ? 'glass text-slate-400 hover:text-white' : 'glass text-slate-600 hover:text-slate-900'}`}
+              aria-pressed={!selectedTag}
+              className={`px-3 py-1.5 rounded-full text-sm transition-colors duration-500 ease-smooth ${!selectedTag ? 'bg-primary text-primary-foreground shadow-aurora' : 'glass text-muted-foreground hover:text-foreground'}`}
             >
               All
             </button>
@@ -132,7 +166,8 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
               <button
                 key={tag}
                 onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
-                className={`px-3 py-1.5 rounded-full text-sm capitalize transition-all duration-500 ease-smooth ${selectedTag === tag ? 'bg-sky-500 text-white' : isDark ? 'glass text-slate-400 hover:text-white' : 'glass text-slate-600 hover:text-slate-900'}`}
+                aria-pressed={selectedTag === tag}
+                className={`px-3 py-1.5 rounded-full text-sm capitalize transition-colors duration-500 ease-smooth ${selectedTag === tag ? 'bg-primary text-primary-foreground shadow-aurora' : 'glass text-muted-foreground hover:text-foreground'}`}
               >
                 {tag}
               </button>
@@ -148,36 +183,43 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 1, 0.5, 1] }}
+              transition={{ duration: 0.5, delay: index * 0.08, ease: EASE }}
               className="group cursor-pointer"
               onClick={() => { setSelectedQuestion(question); setAnswerText(''); }}
             >
-              <div className="h-full p-6 rounded-2xl glass hover:border-sky-500/30 transition-all duration-500 ease-smooth hover:-translate-y-1.5 hover:shadow-xl hover:shadow-sky-500/8 transform-gpu flex flex-col justify-between">
+              {/* `.lift` owns the hover rise, the shadow and its own transition
+                  shorthand, so no `transition-*`/`-translate-y` here — the two
+                  would cancel on stylesheet order. The surface is spelt out
+                  rather than `.ink-panel`/`.glass` because the border colour
+                  animates, and both of those set the `border` shorthand. */}
+              <div className="lift flex h-full flex-col justify-between rounded-2xl bg-card p-6 shadow-cast hover:shadow-2xl transition-all duration-300">
                 <div>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {question.tags.map(tag => (
-                      <span key={tag} className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-full font-medium ${isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-200 text-slate-700'}`}>
-                        <Tag className="w-3 h-3 text-amber-400" />{tag}
+                      <span key={tag} className="flex items-center gap-1 rounded-full bg-muted/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                        <Tag className="w-3 h-3 text-aurora" />{tag}
                       </span>
                     ))}
                   </div>
-                  <h3 className={`text-lg font-semibold mb-2 group-hover:text-sky-400 transition-colors duration-500 ease-smooth line-clamp-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <h3 className="t-sub mb-2 line-clamp-2 text-foreground transition-colors duration-500 ease-smooth group-hover:text-aurora">
                     {question.title}
                   </h3>
-                  <p className={`text-sm line-clamp-2 mb-6 ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>{question.content}</p>
+                  <p className="text-sm line-clamp-2 mb-6 leading-relaxed text-muted-foreground">{question.content}</p>
                 </div>
-                <div className={`flex items-center justify-between pt-4 border-t mt-auto ${isDark ? 'border-white/8' : 'border-slate-200'}`}>
+                <div className="flex items-center justify-between pt-4 mt-auto border-t border-border/20">
                   <div className="flex items-center gap-2.5">
                     <img
                       src={getAuthorAvatar(question.author)}
                       alt={question.author}
-                      className="w-8 h-8 rounded-full object-cover border border-amber-500/30 shrink-0 shadow-sm"
+                      className="w-8 h-8 rounded-full object-cover border border-aurora/30 shrink-0"
                     />
-                    <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{question.author}</span>
+                    <span className="text-sm font-medium text-foreground">{question.author}</span>
                   </div>
-                  <div className={`flex items-center gap-4 text-sm ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
-                    <span className="flex items-center gap-1.5"><MessageCircle className="w-4 h-4" />{question.answers.length}</span>
-                    <span className="flex items-center gap-1.5"><ThumbsUp className="w-4 h-4" />{question.likes}</span>
+                  {/* Real counts, which is exactly where the mono face is
+                      allowed to appear. */}
+                  <div className="flex items-center gap-4 text-muted-foreground">
+                    <span className="t-data flex items-center gap-1.5"><MessageCircle className="w-4 h-4" />{question.answers.length}</span>
+                    <span className="t-data flex items-center gap-1.5"><ThumbsUp className="w-4 h-4" />{question.likes}</span>
                   </div>
                 </div>
               </div>
@@ -185,8 +227,10 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
           ))}
         </div>
 
+        {/* The `outline` variant already resolves to border/background/accent
+            tokens, so there is nothing left to override but the width. */}
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mt-12">
-          <Button variant="outline" className={`px-8 ${isDark ? 'border-white/20 text-white hover:bg-white/5' : 'border-slate-300 text-slate-900 hover:bg-slate-100'}`}>
+          <Button variant="outline" className="px-8">
             View All Questions
           </Button>
         </motion.div>
@@ -195,69 +239,89 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
       {/* Question Detail Modal */}
       <AnimatePresence>
         {selectedQuestion && (
+          /* Same scrim as CountryStories' modal, HiddenGems' modal and the
+             command palette: --ink-void is only declared on :root, so it stays
+             deep navy in the day theme too, which is what a dialog over cool
+             paper needs. */
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
-            onClick={() => setSelectedQuestion(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+            style={{ background: 'hsl(var(--ink-void) / 0.72)' }}
+            onClick={closeQuestion}
           >
+            {/* `.ink-panel` supplies surface, hairline and cast shadow in one,
+                so there is no `border-*`/`shadow-*` here to fight it. */}
             <motion.div
+              ref={questionPanelRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="question-modal-title"
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="relative max-w-2xl w-full max-h-[80vh] overflow-y-auto rounded-2xl glass"
+              transition={{ duration: 0.4, ease: EASE }}
+              className="ink-panel relative w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl"
               onClick={e => e.stopPropagation()}
             >
-              <button onClick={() => setSelectedQuestion(null)} className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors">
-                <X className="w-5 h-5 text-slate-400" />
+              <button type="button" onClick={closeQuestion} aria-label="Close question" className={CLOSE_BUTTON}>
+                <X className="w-5 h-5" />
               </button>
 
               <div className="p-8">
                 <div className="flex flex-wrap gap-2 mb-4">
                   {selectedQuestion.tags.map(tag => (
-                    <span key={tag} className="px-3 py-1 text-xs rounded-full bg-amber-500/20 text-amber-400">{tag}</span>
+                    <span key={tag} className="rounded-full border border-aurora/20 bg-aurora/10 px-3 py-1 text-xs font-medium capitalize text-aurora">{tag}</span>
                   ))}
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-4">{selectedQuestion.title}</h2>
-                <p className="text-slate-300 mb-6">{selectedQuestion.content}</p>
-                <div className="flex items-center gap-3 mb-8 pb-6 border-b border-white/10">
+                <h2 id="question-modal-title" className="t-sub mb-4 text-foreground">{selectedQuestion.title}</h2>
+                <p className="t-body mb-6">{selectedQuestion.content}</p>
+                {/* `.hairline-b` sets `border-bottom`; no `border-b` beside it. */}
+                <div className="hairline-b flex items-center gap-3 mb-8 pb-6">
                   <img
                     src={getAuthorAvatar(selectedQuestion.author)}
                     alt={selectedQuestion.author}
-                    className="w-10 h-10 rounded-full object-cover border border-amber-500/40 shrink-0 shadow-sm"
+                    className="w-10 h-10 rounded-full object-cover border border-aurora/40 shrink-0"
                   />
                   <div>
-                    <p className="text-white font-medium">{selectedQuestion.author}</p>
-                    <p className="text-sm text-slate-400">{selectedQuestion.date}</p>
+                    <p className="font-medium text-foreground">{selectedQuestion.author}</p>
+                    <p className="t-data text-muted-foreground">{selectedQuestion.date}</p>
                   </div>
                 </div>
 
-                {/* Answers */}
-                <h3 className="text-lg font-semibold text-white mb-4">Answers ({selectedQuestion.answers.length})</h3>
+                {/* Answers — the modal's section headings use the map-label
+                    vernacular, same as CountryStories' modal. */}
+                <h3 className="t-label mb-4 text-aurora">Answers ({selectedQuestion.answers.length})</h3>
                 <div className="space-y-4">
                   {selectedQuestion.answers.length === 0 && (
-                    <p className="text-slate-500 text-sm italic">No answers yet. Be the first to answer!</p>
+                    <p className="text-sm italic text-muted-foreground">No answers yet. Be the first to answer!</p>
                   )}
                   {selectedQuestion.answers.map(answer => (
-                    <div key={answer.id} className="p-4 rounded-xl bg-white/5">
+                    <div key={answer.id} className="p-4 rounded-xl bg-muted">
                       <div className="flex items-start gap-3">
+                        {/* Answer authors carry the section's one violet note,
+                            so they read apart from the asker above. */}
                         <img
                           src={getAuthorAvatar(answer.author)}
                           alt={answer.author}
-                          className="w-8 h-8 rounded-full object-cover border border-sky-400/40 shrink-0 shadow-sm"
+                          className="w-8 h-8 rounded-full object-cover border border-orchid/40 shrink-0"
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-white font-medium">{answer.author}</span>
+                            <span className="font-medium text-foreground">{answer.author}</span>
                             {answer.isHelpful && (
-                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs">
+                              <span className="flex items-center gap-1 rounded-full bg-aurora/15 px-2 py-0.5 text-xs text-aurora">
                                 <CheckCircle className="w-3 h-3" />Helpful
                               </span>
                             )}
                           </div>
-                          <p className="text-slate-300 text-sm">{answer.content}</p>
-                          <div className="flex items-center gap-4 mt-3 text-sm text-slate-500">
-                            <button className="flex items-center gap-1 hover:text-amber-400 transition-colors">
+                          <p className="text-sm leading-relaxed text-muted-foreground">{answer.content}</p>
+                          <div className="flex items-center gap-4 mt-3 text-muted-foreground">
+                            <button
+                              aria-label={`Like this answer — ${answer.likes} likes`}
+                              className="t-data flex items-center gap-1 transition-colors duration-200 hover:text-aurora"
+                            >
                               <ThumbsUp className="w-4 h-4" />{answer.likes}
                             </button>
-                            <span>{answer.date}</span>
+                            <span className="t-data">{answer.date}</span>
                           </div>
                         </div>
                       </div>
@@ -267,19 +331,20 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
 
                 {/* Answer input */}
                 {isLoggedIn ? (
-                  <div className="mt-6 pt-6 border-t border-white/10">
+                  <div className="hairline-t mt-6 pt-6">
                     <div className="flex gap-3">
                       <img
                         src={getAuthorAvatar('You')}
                         alt="You"
-                        className="w-10 h-10 rounded-full object-cover border border-amber-500/40 shrink-0 shadow-sm"
+                        className="w-10 h-10 rounded-full object-cover border border-aurora/40 shrink-0"
                       />
                       <div className="flex-1">
                         <textarea
+                          aria-label="Your answer"
                           placeholder="Share your experience..."
                           value={answerText}
                           onChange={e => setAnswerText(e.target.value)}
-                          className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 resize-none outline-none focus:border-amber-500/50"
+                          className={FIELD}
                           rows={3}
                         />
                         <div className="flex justify-end mt-2">
@@ -287,7 +352,7 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
                             size="sm"
                             onClick={handlePostAnswer}
                             disabled={!answerText.trim()}
-                            className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 disabled:opacity-50"
+                            className="disabled:opacity-50 hover:bg-primary-hover"
                           >
                             Post Answer
                           </Button>
@@ -296,8 +361,8 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-6 pt-6 border-t border-white/10 text-center text-sm text-slate-500">
-                    <a href="/signin" className="text-amber-400 hover:underline">Sign in</a> to post an answer
+                  <p className="hairline-t mt-6 pt-6 text-center text-sm text-muted-foreground">
+                    <a href="/signin" className="text-aurora hover:underline">Sign in</a> to post an answer
                   </p>
                 )}
               </div>
@@ -311,23 +376,30 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
         {showAskModal && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
-            onClick={() => setShowAskModal(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+            style={{ background: 'hsl(var(--ink-void) / 0.72)' }}
+            onClick={closeAsk}
           >
             <motion.div
+              ref={askPanelRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="ask-modal-title"
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="relative max-w-lg w-full rounded-2xl glass p-8"
+              transition={{ duration: 0.4, ease: EASE }}
+              className="ink-panel relative w-full max-w-lg rounded-2xl p-8"
               onClick={e => e.stopPropagation()}
             >
-              <button onClick={() => setShowAskModal(false)} className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors">
-                <X className="w-5 h-5 text-slate-400" />
+              <button type="button" onClick={closeAsk} aria-label="Close" className={CLOSE_BUTTON}>
+                <X className="w-5 h-5" />
               </button>
 
-              <h2 className="text-2xl font-bold text-white mb-6">Ask the Community</h2>
+              <h2 id="ask-modal-title" className="t-sub mb-6 text-foreground">Ask the Community</h2>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Title *</label>
+                  <label className="t-label mb-2 block text-muted-foreground">Title *</label>
                   <Input
                     placeholder="What's your question?"
                     value={askTitle}
@@ -336,17 +408,18 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Details *</label>
+                  <label className="t-label mb-2 block text-muted-foreground">Details *</label>
                   <textarea
+                    aria-label="Question details"
                     placeholder="Provide more context..."
                     value={askDetails}
                     onChange={e => setAskDetails(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 resize-none outline-none focus:border-amber-500/50"
+                    className={FIELD}
                     rows={4}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Tags</label>
+                  <label className="t-label mb-2 block text-muted-foreground">Tags</label>
                   <Input
                     placeholder="e.g. safety, solo, culture"
                     value={askTags}
@@ -357,7 +430,7 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
                 <Button
                   onClick={handlePostQuestion}
                   disabled={!askTitle.trim() || !askDetails.trim()}
-                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 font-semibold disabled:opacity-50"
+                  className="w-full font-semibold disabled:opacity-50 hover:bg-primary-hover"
                 >
                   Post Question
                 </Button>

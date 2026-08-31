@@ -1,28 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyToken } from '@/lib/server/jwt'
-
-function getUserId(req: NextRequest): string | null {
-  const token = req.cookies.get('token')?.value
-  if (!token) return null
-  try {
-    const payload = verifyToken(token)
-    return payload.id as string
-  } catch {
-    return null
-  }
-}
+import { getUserId } from '@/lib/server/session'
 
 export async function GET(req: NextRequest) {
   try {
     const id = getUserId(req)
-    if (!id) {
-      return NextResponse.json({ user: null }, { status: 200 })
-    }
+
+    /* Signed out is not an error here — the header calls this on every page to
+       decide which nav to draw — so an absent session answers 200 with a null
+       user rather than 401. */
+    if (!id) return NextResponse.json({ user: null })
 
     const user = await prisma.user.findUnique({
       where: { id },
-      include: {
+      /* Explicit, because `include` returns every scalar on the model and this
+         one has a `passwordHash` column. */
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        bio: true,
+        travelStyle: true,
+        dreamDestinations: true,
+        countriesExplored: true,
+        contributionScore: true,
+        streakDays: true,
+        createdAt: true,
         badges: true,
         preference: true,
         _count: {
@@ -37,31 +42,12 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    if (!user) {
-      return NextResponse.json({ user: null }, { status: 200 })
-    }
+    if (!user) return NextResponse.json({ user: null })
 
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        avatar: user.avatar,
-        bio: user.bio,
-        travelStyle: user.travelStyle,
-        dreamDestinations: user.dreamDestinations,
-        countriesExplored: user.countriesExplored,
-        contributionScore: user.contributionScore,
-        streakDays: user.streakDays,
-        createdAt: user.createdAt,
-        badges: user.badges,
-        preference: user.preference,
-        counts: user._count,
-      },
-    })
-  } catch (err: any) {
+    const { _count, ...rest } = user
+    return NextResponse.json({ user: { ...rest, counts: _count } })
+  } catch (err) {
     console.error('Session error:', err)
-    return NextResponse.json({ user: null }, { status: 200 })
+    return NextResponse.json({ user: null })
   }
 }

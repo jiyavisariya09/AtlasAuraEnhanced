@@ -1,82 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyToken } from '@/lib/server/jwt'
+import { getUserId, serverError, unauthorized } from '@/lib/server/session'
+import { parseBody, profileUpdateSchema } from '@/lib/server/validation'
 
-function getUserId(req: NextRequest): string | null {
-  const token = req.cookies.get('token')?.value
-  if (!token) return null
-  try {
-    const payload = verifyToken(token)
-    return payload.id as string
-  } catch {
-    return null
-  }
-}
+/* The shape of a profile as the client is allowed to see it. Named once and
+   reused by both handlers, because the two used to disagree: GET listed its
+   fields by hand while PUT returned `include`, which on this model means the
+   `passwordHash` column travelled back in the update response — and the
+   settings page writes that response into localStorage. */
+const PROFILE_FIELDS = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  avatar: true,
+  bio: true,
+  travelStyle: true,
+  dreamDestinations: true,
+  countriesExplored: true,
+  contributionScore: true,
+  streakDays: true,
+  createdAt: true,
+  badges: true,
+  preference: true,
+} as const
 
 export async function GET(req: NextRequest) {
   try {
     const id = getUserId(req)
-    if (!id) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    if (!id) return unauthorized()
 
-    const user = await prisma.user.findUnique({
-      where: { id },
-      include: {
-        badges: true,
-        preference: true,
-      },
-    })
-
+    const user = await prisma.user.findUnique({ where: { id }, select: PROFILE_FIELDS })
     if (!user) return NextResponse.json({ message: 'User not found' }, { status: 404 })
 
-    return NextResponse.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      avatar: user.avatar,
-      bio: user.bio,
-      travelStyle: user.travelStyle,
-      dreamDestinations: user.dreamDestinations,
-      countriesExplored: user.countriesExplored,
-      contributionScore: user.contributionScore,
-      streakDays: user.streakDays,
-      joinedAt: user.createdAt,
-      badges: user.badges,
-      preference: user.preference,
-    })
-  } catch (err: any) {
-    console.error('Profile GET error:', err)
-    return NextResponse.json({ message: err.message || 'Failed to fetch profile' }, { status: 500 })
+    return NextResponse.json({ ...user, joinedAt: user.createdAt })
+  } catch (err) {
+    return serverError('Profile GET error', err, 'Could not load your profile.')
   }
 }
 
 export async function PUT(req: NextRequest) {
   try {
     const id = getUserId(req)
-    if (!id) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    if (!id) return unauthorized()
 
-    const body = await req.json()
-    const { name, phone, avatar, bio, travelStyle, dreamDestinations } = body
+    const parsed = await parseBody(req, profileUpdateSchema)
+    if (!parsed.ok) return parsed.response
+
+    /* Written key by key rather than spread. The schema is already an allow
+       list, but building the update this way means adding a field to the schema
+       can never quietly make a new column writable — including the ones that
+       are supposed to be earned, like contributionScore, or the ones that
+       identify the account, like email. */
+    const { name, phone, avatar, bio, travelStyle, dreamDestinations } = parsed.data
 
     const user = await prisma.user.update({
       where: { id },
       data: {
-        ...(name !== undefined && { name: name.trim() }),
+        ...(name !== undefined && { name }),
         ...(phone !== undefined && { phone }),
         ...(avatar !== undefined && { avatar }),
         ...(bio !== undefined && { bio }),
         ...(travelStyle !== undefined && { travelStyle }),
         ...(dreamDestinations !== undefined && { dreamDestinations }),
       },
-      include: {
-        badges: true,
-        preference: true,
-      },
+      select: PROFILE_FIELDS,
     })
 
     return NextResponse.json({ message: 'Profile updated successfully', user })
-  } catch (err: any) {
-    console.error('Profile PUT error:', err)
-    return NextResponse.json({ message: err.message || 'Failed to update profile' }, { status: 500 })
+  } catch (err) {
+    return serverError('Profile PUT error', err, 'Could not save your profile.')
   }
 }

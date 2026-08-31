@@ -30,7 +30,7 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
     const colors: Record<string, string> = {
       solo: 'from-purple-500 to-indigo-500',
       honeymoon: 'from-pink-500 to-rose-500',
-      adventure: 'from-orange-500 to-amber-500',
+      adventure: 'from-orchid to-aurora',
       culture: 'from-emerald-500 to-teal-500',
       calm: 'from-cyan-500 to-blue-500',
     };
@@ -40,7 +40,7 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
   return (
     <section id="memory-map" className="relative py-24 overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full blur-3xl ${isDark ? 'bg-amber-500/5' : 'bg-amber-400/10'}`} />
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[560px] h-[560px] rounded-full blur-3xl ${isDark ? 'bg-aurora/5' : 'bg-aurora/5'}`} />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -107,7 +107,7 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
                   whileInView={{ pathLength: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 1.5, delay: 0.2 + i * 0.2 }}
-                  className="hover:fill-amber-500/40 transition-all cursor-pointer"
+                  className="hover:fill-aurora/40 transition-all cursor-pointer"
                   onMouseEnter={() => setHoveredRegion(region.id)}
                   onMouseLeave={() => setHoveredRegion(null)}
                 />
@@ -148,7 +148,7 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
                 <span className={`text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
                   {worldRegions.find(r => r.id === hoveredRegion)?.name}
                 </span>
-                <span className="text-xs text-amber-500 ml-2">
+                <span className="text-xs text-aurora ml-2">
                   {worldRegions.find(r => r.id === hoveredRegion)?.pins} memories
                 </span>
               </motion.div>
@@ -161,7 +161,7 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
                 transition={{ delay: 2 }}
                 className="absolute bottom-4 right-4"
               >
-                <Button className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium">
+                <Button className="bg-gradient-to-r from-aurora to-orchid text-white font-medium">
                   <Plus className="w-4 h-4 mr-1" />
                   Add Memory
                 </Button>
@@ -183,7 +183,7 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
             { icon: Lock, label: 'Private Memories', value: '3.2K' },
           ].map((stat, i) => (
             <div key={i} className={`flex items-center gap-3 px-4 py-2 rounded-full ${isDark ? 'glass' : 'bg-white shadow-md'}`}>
-              <stat.icon className="w-4 h-4 text-amber-500" />
+              <stat.icon className="w-4 h-4 text-aurora" />
               <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{stat.label}</span>
               <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{stat.value}</span>
             </div>
@@ -215,7 +215,7 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
               </button>
 
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-md border border-amber-500/30">
+                <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-md border border-aurora/30">
                   <img src={getPinImage(selectedPin)} alt={selectedPin.country} className="w-full h-full object-cover" />
                 </div>
                 <div>

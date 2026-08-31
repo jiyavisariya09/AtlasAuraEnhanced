@@ -1,249 +1,603 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   AtlasAura — "Aurora Ink"
+   Palette: deep ink navy, aurora teal, violet, cool rose. No warm/amber tones.
+   Type:    Instrument Serif (display) · Manrope (body/UI) · JetBrains Mono (data)
+   Fonts are loaded via next/font in app/layout.tsx — do not @import them here.
+   ========================================================================== */
+
 @layer base {
   :root {
-    /* ── LIGHT THEME (Default) ── Sky Blue + Pearl White + Slate */
-    --background: 210 40% 98%;        /* #f0f6ff — pearl sky */
-    --foreground: 215 35% 18%;        /* #1e2d45 — deep navy slate */
-    --card: 0 0% 100%;                /* pure white cards */
-    --card-foreground: 215 35% 18%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 35% 18%;
-    --primary: 207 90% 54%;           /* #1a9fe0 — sky blue */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 30% 94%;         /* #e8f2fb — soft blue-grey */
-    --secondary-foreground: 215 35% 25%;
-    --muted: 210 25% 92%;             /* #e2edf7 */
-    --muted-foreground: 215 20% 48%;  /* #6b82a0 */
-    --accent: 199 89% 48%;            /* #0bb5e0 — cyan accent */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 210 25% 88%;            /* #d4e4f2 */
-    --input: 210 25% 94%;
-    --ring: 207 90% 54%;
-    --radius: 0.75rem;
+    /* ── Aurora Ink · NIGHT (default) ──────────────────────────────────── */
+    --ink-void: 225 43% 5%;      /* #080B14  page base            */
+    --ink-deep: 226 44% 8%;      /* #0B0F1C  recessed             */
+    --ink-raised: 226 42% 12%;   /* #11172A  cards / surfaces     */
+    --ink-line: 227 39% 18%;     /* #1C2440  hairlines            */
 
-    /* Custom vars */
-    --glass-bg: rgba(255, 255, 255, 0.75);
-    --glass-border: rgba(147, 197, 253, 0.35);
-    --glass-bg-hover: rgba(255, 255, 255, 0.95);
-    --shadow-color: rgba(30, 64, 120, 0.08);
-    --gradient-from: #0284c7;
-    --gradient-to: #4f46e5;
-    --hero-overlay: rgba(240, 246, 255, 0.55);
-    --text-muted: #6b82a0;
-    --surface: rgba(224, 240, 255, 0.6);
+    --aurora: 169 79% 58%;       /* #3EE8C8  primary accent       */
+    --violet: 246 85% 73%;       /* #8B7FF5  secondary accent     */
+    --rose: 341 82% 71%;         /* #F2789F  tertiary accent      */
+
+    --paper: 220 48% 94%;        /* #E8EDF7  primary text         */
+    --paper-dim: 221 29% 68%;    /* #94A3C4  secondary text       */
+
+    /* shadcn contract — every ui/* component reads these */
+    --background: var(--ink-void);
+    --foreground: var(--paper);
+    --card: var(--ink-raised);
+    --card-foreground: var(--paper);
+    --popover: 226 44% 9%;
+    --popover-foreground: var(--paper);
+    --primary: var(--aurora);
+    --primary-foreground: var(--ink-void);   /* ink on teal — 12.40:1 */
+    /* The hover state of a primary fill, defined per theme rather than named at
+       the call site. Night brightens the teal (58% → 70%); day deepens it. A
+       fixed class could not serve both: whichever theme aliased --primary to
+       that same colour got a hover that did nothing. */
+    --primary-hover: var(--aurora-bright);
+    --secondary: var(--ink-raised);
+    --secondary-foreground: var(--paper);
+    --muted: 226 34% 15%;
+    --muted-foreground: var(--paper-dim);
+    --accent: var(--violet);
+    --accent-foreground: var(--ink-void);
+    --destructive: 355 78% 62%;
+    /* Ink, not white. At night --destructive is a *light* red (#EA535F), so a
+       white label on it measures 3.57:1 — under AA. Every other bright accent
+       here already takes an ink label; this one was the exception by oversight. */
+    --destructive-foreground: var(--ink-void);
+    --border: var(--ink-line);
+    --input: 227 39% 16%;
+    --radius: 0.625rem;
+    --font-display: var(--font-serif);
+    --font-instrument: var(--font-serif);
+
+    /* Composed effects */
+    --glass-bg: hsl(226 44% 8% / 0.72);
+    --glass-line: hsl(169 79% 58% / 0.14);
+    --veil: hsl(225 43% 5% / 0.66);
+    --shadow-cast: 0 24px 60px -20px hsl(225 60% 2% / 0.85);
+    --glow-aurora: 0 0 0 1px hsl(169 79% 58% / 0.22), 0 8px 40px -10px hsl(169 79% 58% / 0.34);
+    --grain-opacity: 0.02;
+
+    /* A genuinely lighter teal, not an alias — this is what --primary-hover
+       resolves to at night, so aliasing it back to --aurora would flatten every
+       primary button's hover. Also carries the ring and the glow. */
+    --aurora-bright: 169 84% 70%; /* #6DF0DA */
+
+    color-scheme: dark;
   }
 
-  [data-theme='dark'] {
-    /* ── DARK THEME ── Deep Ocean & Midnight Navy */
-    --background: 222 47% 7%;         /* #090d1a */
-    --foreground: 210 40% 95%;        /* #e8f0fb */
-    --card: 222 40% 11%;              /* #111827 */
-    --card-foreground: 210 40% 95%;
-    --popover: 222 40% 10%;
-    --popover-foreground: 210 40% 95%;
-    --primary: 207 90% 60%;           /* #29aff0 */
-    --primary-foreground: 222 47% 8%;
-    --secondary: 222 30% 16%;
-    --secondary-foreground: 210 40% 90%;
-    --muted: 222 25% 18%;
-    --muted-foreground: 215 20% 55%;
-    --accent: 199 89% 55%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 222 25% 18%;
-    --input: 222 25% 16%;
-    --ring: 207 90% 60%;
+  [data-theme='light'] {
+    /* ── Aurora Ink · DAY ───────────────────────────────────────────────
+       Not an inversion. Cool paper, ink type, teal pulled down to hold
+       contrast on white (#0A7A69 = 4.99:1 on paper). Every accent that
+       carries small text is checked against --paper-bg, not eyeballed. */
+    --paper-bg: 214 54% 98%;     /* #F5F8FC */
+    --ink-line: 213 40% 90%;     /* #DCE5F0 */
 
-    /* Custom vars */
-    --glass-bg: rgba(15, 23, 42, 0.65);
-    --glass-border: rgba(56, 189, 248, 0.15);
-    --glass-bg-hover: rgba(30, 41, 59, 0.8);
-    --shadow-color: rgba(0, 0, 0, 0.5);
-    --gradient-from: #38bdf8;
-    --gradient-to: #818cf8;
-    --hero-overlay: rgba(9, 13, 26, 0.65);
-    --text-muted: #7a9abf;
-    --surface: rgba(255, 255, 255, 0.04);
+    /* `paper` means "primary type colour", not "a light colour" — so it has to
+       flip too, or every text-paper/text-paper-dim usage washes out on white. */
+    --paper: 226 49% 8%;         /* #0B1020 */
+    --paper-dim: 222 24% 44%;    /* #55658A — 5.45:1 on paper-bg */
+
+    --aurora: 171 84% 26%;       /* #0A7A69  text + fills, 4.99:1 */
+    --aurora-bright: 171 84% 33%;/* #0E9C86  ring / glow only     */
+    --violet: 246 59% 56%;       /* #5A4CD1  5.87:1 */
+    /* Was 52% (#C93F72), which measured 4.48:1 — just under AA, and this is the
+       tag/label colour, so it lands on 11px text in six places. 46% clears it. */
+    --rose: 338 56% 46%;         /* #B73464  5.43:1 */
+
+    --background: var(--paper-bg);
+    --foreground: 226 49% 8%;    /* #0B1020 */
+    --card: 0 0% 100%;
+    --card-foreground: 226 49% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 226 49% 8%;
+    /* The fill goes darker than the old #0E9C86 and the label flips to white.
+       At 33% lightness the button was only 3.31:1 against the paper — a pale
+       teal shape on pale paper — and it could not be deepened on hover without
+       dropping an ink label under AA (ink needs the fill at 30% or lighter to
+       stay legible; the page needs it at 30% or darker to read as a button).
+       White on 26% resolves both at 5.25:1 and leaves room to go darker still. */
+    --primary: var(--aurora);
+    --primary-foreground: 0 0% 100%;    /* white on teal — 5.25:1 */
+    --primary-hover: 171 84% 20%;       /* #085E51 — white 7.71:1 */
+    --secondary: 213 45% 95%;
+    --secondary-foreground: 226 40% 20%;
+    --muted: 213 42% 94%;
+    --muted-foreground: 222 24% 44%;    /* #55658A — 5.45:1 */
+    --accent: var(--violet);
+    --accent-foreground: 0 0% 100%;
+    /* Day never redefined these, so the night red (355 78% 62%) leaked through
+       at 3.40:1 on paper — and it is the colour of the Sign out control. */
+    --destructive: 355 68% 48%;         /* #CE2735  5.05:1 on paper */
+    --destructive-foreground: 0 0% 100%;
+    --border: var(--ink-line);
+    --input: 213 40% 93%;
+    --ring: var(--aurora-bright);
+
+    --glass-bg: hsl(0 0% 100% / 0.78);
+    --glass-line: hsl(213 40% 84% / 0.9);
+    --veil: hsl(214 54% 98% / 0.7);
+    --shadow-cast: 0 20px 50px -22px hsl(222 40% 40% / 0.28);
+    --glow-aurora: 0 0 0 1px hsl(171 84% 33% / 0.2), 0 8px 34px -12px hsl(171 84% 33% / 0.26);
+    --grain-opacity: 0.012;
+
+    color-scheme: light;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
+
+  /* `overflow-x: clip`, not `hidden`, and deliberately only here.
+
+     `hidden` on one axis forces the other axis to compute to `auto`, which turns
+     the element into a scroll container. On `html` that is harmless — the root's
+     overflow propagates to the viewport, which is the scroll container anyway.
+     On `body` it was not harmless: it made body an *intermediate* scroll
+     container between the viewport and the page, and `position: sticky` resolves
+     against its nearest scrolling ancestor. Any sticky element on this site
+     would have silently refused to stick, with no error and nothing in the
+     console — which is exactly what would have happened to the pinned set-piece
+     in Passage.tsx. So the copies on `body` and on the page root div are gone;
+     this one is the only guard, and every section already clips its own
+     decorative blooms with its own `overflow-hidden`.
+
+     `clip` prevents the same horizontal scroll without creating a scroll
+     container at all, so it cannot resurrect the bug. */
   html {
-    scroll-behavior: smooth;
-    overflow-x: hidden;
-    max-width: 100vw;
+    scroll-behavior: smooth !important;
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
   }
+
+  section[id] {
+    scroll-margin-top: 5rem;
+  }
+
+  /* Safari below 16 does not know `clip`, where the declaration above is simply
+     dropped. Nothing on the page overflows horizontally on its own, so this is
+     belt-and-braces rather than load-bearing. */
+  @supports not (overflow-x: clip) {
+    html { overflow-x: hidden; }
+  }
+
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    overflow-x: hidden;
-    max-width: 100vw;
-    transition: background-color 0.3s ease-out,
-                color 0.3s ease-out;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', Georgia, serif;
+
+  h1, h2 {
+    font-family: var(--font-serif), 'Playfair Display', Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+  }
+  h3, h4 {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    font-weight: 600;
     letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  h5, h6 {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    line-height: 1.35;
   }
 
-  /* Universal smooth theme transition for all UI elements */
-  *, *::before, *::after {
-    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
-    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-    transition-duration: 0.5s;
+  /* ── Theme switching ──────────────────────────────────────────────────
+     Synchronized 300ms ease-in-out transition across root, body, pseudo-elements, and all children. */
+  html[data-theme-switching],
+  html[data-theme-switching] body,
+  html[data-theme-switching] *,
+  html[data-theme-switching] *::before,
+  html[data-theme-switching] *::after {
+    transition: background-color 300ms ease-in-out,
+                border-color 300ms ease-in-out,
+                color 300ms ease-in-out,
+                fill 300ms ease-in-out,
+                stroke 300ms ease-in-out,
+                box-shadow 300ms ease-in-out,
+                opacity 300ms ease-in-out !important;
+    transition-delay: 0ms !important;
+  }
+
+  /* ── Interactive micro-transitions ─────────────────────────────────────── */
+  a, button, [role="button"], input, select, textarea {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    transition-duration: 200ms;
+  }
+
+  ::selection {
+    background: hsl(var(--aurora) / 0.3);
+    color: hsl(var(--foreground));
+  }
+
+  /* ── Scrollbars ─────────────────────────────────────────────────────────── */
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--aurora));
+    outline-offset: 3px;
   }
 }
 
+/* ============================================================================
+   Type scale — fluid, crisp, legible.
+   ========================================================================== */
+@layer components {
+  .t-display {
+    font-family: var(--font-serif), 'Playfair Display', Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2.5rem, 6vw, 5.25rem);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+  }
+  .t-title {
+    font-family: var(--font-serif), 'Playfair Display', Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(1.875rem, 3.4vw, 3rem);
+    line-height: 1.18;
+    letter-spacing: -0.01em;
+  }
+  .t-sub {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.125rem, 1.8vw, 1.5rem);
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+  .t-body {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.68;
+    color: hsl(var(--muted-foreground));
+  }
+  .t-lead {
+    font-size: clamp(1.0625rem, 1.3vw, 1.1875rem);
+    line-height: 1.6;
+    color: hsl(var(--muted-foreground));
+  }
+  /* Map-label vernacular: spaced small caps, used for eyebrows */
+  .t-label {
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+  .t-data {
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ============================================================================
+   Surfaces & effects
+   ========================================================================== */
 @layer utilities {
-  .text-gradient {
-    background: linear-gradient(135deg, var(--gradient-from) 0%, #38bdf8 50%, var(--gradient-to) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .ink-panel {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-cast);
   }
 
   .glass {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
-    transition: background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid var(--glass-line);
   }
 
-  .glass:hover {
-    background: var(--glass-bg-hover);
-    border-color: rgba(56, 189, 248, 0.35);
+  /* Glass for full-bleed bars. `.glass` uses the `border` shorthand, so pairing
+     it with `border-b` is a coin-flip on source order and it draws borders down
+     both screen edges plus a stray line across the top of the viewport. Bars get
+     their own single-edge utility instead of fighting that shorthand. */
+  .glass-bar,
+  .glass-sheet {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 0;
+  }
+  .glass-bar { border-bottom: 1px solid hsl(var(--border)); }
+  .glass-sheet { border-top: 1px solid hsl(var(--border)); }
+
+  .aurora-glow { box-shadow: var(--glow-aurora); }
+
+  .text-aurora { color: hsl(var(--aurora)); }
+  .text-violet { color: hsl(var(--violet)); }
+  .text-rose-cool { color: hsl(var(--rose)); }
+
+  /* Aurora wash — the one gradient in the system. Cool only.
+     Corner glow, not fog. The previous values (0.13 / 0.14 / 0.07 at 70% / 60% /
+     80% radii) covered the whole surface, and because three sections apply this
+     *and* stack a drifting bloom on top, the veils composited: two 13% teal
+     layers plus a 10% bloom is 1-(0.87 x 0.87 x 0.90) = 32% of colour sitting
+     between the reader and the page. That is the cloudiness. Halving the alpha
+     and pulling each stop back to roughly a third of the frame keeps the accent
+     where it does the work — the corners — and hands the middle back to the ink. */
+  .aurora-wash {
+    background-image:
+      radial-gradient(46% 38% at 6% 2%, hsl(var(--aurora) / 0.07), transparent 70%),
+      radial-gradient(42% 34% at 95% 10%, hsl(var(--violet) / 0.07), transparent 70%),
+      radial-gradient(55% 40% at 50% 104%, hsl(var(--rose) / 0.035), transparent 72%);
   }
 
+  /* Film grain: keeps large ink fields from banding. */
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+
+  /* Graticule — latitude/longitude rule, the atlas's own grid.
+     0.35, down from 0.55: at full strength the grid competed with the hairlines
+     on actual cards, so the page read as gridded paper rather than as ink with a
+     survey mark on it. */
+  .graticule {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.35) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.35) 1px, transparent 1px);
+    background-size: 88px 88px;
+  }
+
+  .hairline-t { border-top: 1px solid hsl(var(--border)); }
+  .hairline-b { border-bottom: 1px solid hsl(var(--border)); }
+
+  /* Section rhythm — one source of truth, so section padding can't fight
+     itself through competing selectors. */
+  .section-y { padding-top: clamp(4.5rem, 9vw, 8.5rem); padding-bottom: clamp(4.5rem, 9vw, 8.5rem); }
+  .shell { width: 100%; max-width: 84rem; margin-inline: auto; padding-inline: 1.25rem; }
+  @media (min-width: 640px) { .shell { padding-inline: 2rem; } }
+  @media (min-width: 1024px) { .shell { padding-inline: 2.5rem; } }
+
+  .lift {
+    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform, box-shadow;
+  }
+  .lift:hover {
+    transform: translateY(-3px) translateZ(0);
+    box-shadow: var(--shadow-cast);
+  }
+
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ── Compatibility shims ──────────────────────────────────────────────
+     Pages outside this redesign pass (/dashboard, /welcome, ui/chart) still
+     reference these. Re-pointed at Aurora Ink so they inherit the new
+     palette instead of the old sky/indigo one. */
+  .text-gradient {
+    background-image: linear-gradient(100deg, hsl(var(--aurora)) 0%, hsl(var(--violet)) 62%, hsl(var(--rose)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
   .surface {
-    background: var(--surface);
-    border: 1px solid var(--glass-border);
-  }
-
-  .glow-sky {
-    box-shadow: 0 0 40px rgba(56, 189, 248, 0.2),
-                0 0 80px rgba(56, 189, 248, 0.06);
-  }
-
-  .glow-indigo {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.2),
-                0 0 80px rgba(99, 102, 241, 0.06);
-  }
-
-  .theme-transition {
-    transition: background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
   }
 }
 
-/* ── Completely Hide Scrollbars Across All Browsers ── */
-* {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+/* ============================================================================
+   Motion
+   ========================================================================== */
+/* Drift only — no opacity ramp. This used to run opacity 0.5 → 0.78 → 0.5 over
+   18s on nine different blooms, which is a fade the eye tracks even when it
+   cannot say what is moving: the page appeared to breathe, and "cloudy, fading"
+   is exactly what that looks like from the outside. The blooms still drift, so
+   the atmosphere is alive; its density is now constant and set by the element's
+   own alpha, where it can be reasoned about. */
+@keyframes aurora-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(2%, -3%, 0) scale(1.06); }
+}
+@keyframes pin-pulse {
+  0%   { transform: scale(1);   opacity: 0.85; }
+  70%  { transform: scale(2.6); opacity: 0; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+@keyframes marquee-x {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes caret {
+  0%, 48% { opacity: 1; }
+  52%, 100% { opacity: 0; }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+/* Ken-Burns for the hero photograph. Deliberately long and deliberately small:
+   28s and 6% is a drift you notice only if you look for it, which is what
+   separates a cinematic backdrop from a slideshow. */
+@keyframes hero-drift {
+  from { transform: scale(1)    translate3d(0, 0, 0); }
+  to   { transform: scale(1.06) translate3d(-1.2%, -0.8%, 0); }
 }
 
-::-webkit-scrollbar {
-  display: none !important;
-  width: 0px !important;
-  height: 0px !important;
-  background: transparent !important;
+.animate-aurora-drift { animation: aurora-drift 18s ease-in-out infinite; }
+.animate-pin-pulse    { animation: pin-pulse 2.8s cubic-bezier(0.2, 0.6, 0.3, 1) infinite; }
+.animate-caret        { animation: caret 1.1s steps(1) infinite; }
+.animate-rise-in      { animation: rise-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ── Header veil ────────────────────────────────────────────────────────────
+   The landing header sits over the hero photograph with no background of its
+   own, which meant its contents were legible or not depending on what the
+   photograph happened to be doing behind them. This is the field they sit on.
+
+   Sized from measurement, not taste. The alpha holds at roughly 0.76 through
+   the header's own 4rem, then ramps out over the last third so there is no
+   visible edge where it stops. At 0.76, over a *worst-case* photograph — pure
+   white behind the night theme, pure black behind the day theme — the
+   full-strength foreground colour measures 8.2:1 at night and 9.9:1 in day.
+
+   What this cannot rescue is `--muted-foreground`: over an adversarial photo
+   the day secondary colour stays under 4.5:1 even at 0.90 alpha, which is why
+   Navigation.tsx switches its links to `text-foreground` while unscrolled
+   instead of asking this gradient to do the impossible. */
+.header-veil {
+  background-image: linear-gradient(
+    to bottom,
+    hsl(var(--background) / 0.82) 0%,
+    hsl(var(--background) / 0.55) 55%,
+    hsl(var(--background) / 0.15) 85%,
+    hsl(var(--background) / 0) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
 }
 
-::selection {
-  background: hsl(var(--primary) / 0.25);
-  color: inherit;
+/* ── Hero backdrop ────────────────────────────────────────────────────────── */
+.hero-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: opacity;
 }
 
-/* ── Keyframe Animations ── */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
-}
-@keyframes gentle-pulse {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.05); }
-}
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-@keyframes rotate-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-@keyframes cloud-move {
-  0%, 100% { transform: translateX(0px); }
-  40% { transform: translateX(4px); }
-  80% { transform: translateX(-4px); }
-}
-@keyframes star-twinkle {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  40% { transform: scale(1.3); opacity: 1; }
-  80% { transform: scale(0.7); opacity: 0.5; }
+.hero-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: hero-drift 28s ease-in-out infinite alternate;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
-.animate-float { animation: float 6s ease-in-out infinite; }
-.animate-pulse-glow { animation: gentle-pulse 4s ease-in-out infinite; }
-.animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 2.5s infinite;
-}
-.animate-rotate-slow { animation: rotate-slow 25s linear infinite; }
-.animate-cloud-move { animation: cloud-move 6s ease-in-out infinite; }
-.animate-star-twinkle { animation: star-twinkle 2.5s ease-in-out infinite; }
-
-/* ── Card hover — smooth physics ── */
-.card-hover {
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px var(--shadow-color);
+/* Crystal-clear night scrim with text contrast and zero mist */
+.hero-scrim-night {
+  background: linear-gradient(
+    95deg,
+    rgba(8, 11, 20, 0.75) 0%,
+    rgba(8, 11, 20, 0.35) 35%,
+    transparent 65%
+  );
+  transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+/* Crisp day scrim: crystal clear, zero milky white mist, preserving vivid photo */
+.hero-scrim-day {
+  background: linear-gradient(
+    95deg,
+    rgba(245, 248, 252, 0.45) 0%,
+    rgba(245, 248, 252, 0.15) 35%,
+    transparent 65%
+  );
+  transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Image transitions ── */
-img {
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+@media (max-width: 1023px) {
+  .hero-scrim-night {
+    background: linear-gradient(
+      180deg,
+      rgba(8, 11, 20, 0.6) 0%,
+      rgba(8, 11, 20, 0.3) 50%,
+      rgba(8, 11, 20, 0.75) 100%
+    );
+  }
+  .hero-scrim-day {
+    background: linear-gradient(
+      180deg,
+      rgba(245, 248, 252, 0.4) 0%,
+      rgba(245, 248, 252, 0.15) 50%,
+      rgba(245, 248, 252, 0.6) 100%
+    );
+  }
 }
 
-/* ── Focus ring ── */
-:focus-visible {
-  outline: 2px solid #38bdf8;
-  outline-offset: 2px;
+/* Matched theme visibility with smooth 400ms cross-fade in lockstep */
+.theme-night-only { opacity: 1; pointer-events: auto; }
+.theme-day-only   { opacity: 0; pointer-events: none; }
+[data-theme='light'] .theme-night-only { opacity: 0; pointer-events: none; }
+[data-theme='light'] .theme-day-only   { opacity: 1; pointer-events: auto; }
+
+/* ============================================================================
+   Synchronized Cinematic Day/Night Theme Transition
+   Gated strictly to active theme switching so Framer Motion scroll parallax runs at 100% native 60fps
+   ========================================================================== */
+html[data-theme-switching] body,
+html[data-theme-switching] header,
+html[data-theme-switching] nav,
+html[data-theme-switching] main,
+html[data-theme-switching] section,
+html[data-theme-switching] footer,
+html[data-theme-switching] h1,
+html[data-theme-switching] h2,
+html[data-theme-switching] h3,
+html[data-theme-switching] h4,
+html[data-theme-switching] h5,
+html[data-theme-switching] h6,
+html[data-theme-switching] p,
+html[data-theme-switching] span,
+html[data-theme-switching] a,
+html[data-theme-switching] button,
+html[data-theme-switching] input,
+html[data-theme-switching] .card,
+html[data-theme-switching] .lift {
+  transition: 
+    color 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-x 46s linear infinite;
+}
+.marquee:hover .marquee-track { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+  .marquee-track { animation: none; transform: none; }
 }

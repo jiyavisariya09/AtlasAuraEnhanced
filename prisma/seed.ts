@@ -1,9 +1,66 @@
 import { PrismaClient, TravelMood, CrowdLevel, GemType } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { randomBytes } from 'node:crypto'
 
 const prisma = new PrismaClient()
 
+/* ── Two guards, because this script is destructive twice over ──────────────
+   It begins with a dozen `deleteMany()` calls, and it used to give every
+   account it created the password `password123`. Pointed at a shared database —
+   and DATABASE_URL in this repo's .env points at a live Atlas cluster — that is
+   both "erase everything" and "leave the front door open", in one command that
+   is one arrow-key away in anyone's shell history.
+
+   So: local databases seed freely, anything else has to be asked for out loud. */
+
+function assertSafeTarget() {
+  const url = process.env.DATABASE_URL ?? ''
+  const isLocal = /@?(localhost|127\.0\.0\.1|\[::1\]|host\.docker\.internal)(:|\/)/.test(url)
+
+  if (isLocal || process.env.SEED_ALLOW_REMOTE === 'yes-erase-this-database') {
+    return
+  }
+
+  console.error(
+    [
+      '',
+      '  Refusing to seed: DATABASE_URL does not look like a local database.',
+      '',
+      '  This script deletes every user, destination, gem, pin, trip and review',
+      '  before it writes anything. Running it against a shared or production',
+      '  database is not recoverable.',
+      '',
+      '  If that is genuinely what you want:',
+      '    SEED_ALLOW_REMOTE=yes-erase-this-database npm run db:seed',
+      '',
+    ].join('\n'),
+  )
+  process.exit(1)
+}
+
+/**
+ * The password every seeded demo account shares.
+ *
+ * Was the literal string `password123`. The seeded accounts use real-looking
+ * addresses (alex@atlasaura.com and friends) and the dashboard route used to
+ * hand one of those addresses to anonymous callers, so the pair amounted to
+ * published credentials for a live database.
+ *
+ * Now: whatever SEED_PASSWORD says, or a random one printed once at the end of
+ * the run. Random means a forgotten seed leaves behind accounts nobody can log
+ * into, which is the right default for something left forgotten.
+ */
+function demoPassword(): { value: string; generated: boolean } {
+  const provided = process.env.SEED_PASSWORD
+  if (provided && provided.length >= 8) return { value: provided, generated: false }
+  return { value: `demo-${randomBytes(9).toString('base64url')}`, generated: true }
+}
+
+const DEMO_PASSWORD = demoPassword()
+
 async function main() {
+  assertSafeTarget()
+
   console.log('🌱 Seeding AtlasAura database...\n')
 
   // ─── Clean existing data ────────────────────────────────────────
@@ -25,7 +82,7 @@ async function main() {
 
   // ─── Seed Users ─────────────────────────────────────────────────
   console.log('👤 Creating users...')
-  const passwordHash = await bcrypt.hash('password123', 12)
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD.value, 12)
 
   const users = await Promise.all([
     prisma.user.create({
@@ -567,6 +624,17 @@ async function main() {
     console.log(`  ${key.padEnd(20)} ${count}`)
   })
   console.log('─'.repeat(40))
+
+  /* Printed once, here, and nowhere else. If it was generated it exists only in
+     this terminal — which is the point: nobody can look it up later, including
+     whoever finds the repository. */
+  if (DEMO_PASSWORD.generated) {
+    console.log('\n🔑 Demo accounts share this password (generated for this run):')
+    console.log(`     ${DEMO_PASSWORD.value}`)
+    console.log('   Copy it now, or set SEED_PASSWORD before seeding to choose your own.')
+  } else {
+    console.log('\n🔑 Demo accounts use the password from SEED_PASSWORD.')
+  }
 }
 
 main()

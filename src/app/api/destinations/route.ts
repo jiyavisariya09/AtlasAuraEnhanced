@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { TravelMood, CrowdLevel } from '@prisma/client'
+import { TravelMood, CrowdLevel, Prisma } from '@prisma/client'
+import { serverError } from '@/lib/server/session'
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
     const maxBudget = searchParams.get('maxBudget')
     const crowdLevel = searchParams.get('crowdLevel')
 
-    const where: any = {}
+    const where: Prisma.DestinationWhereInput = {}
 
     if (search) {
       where.OR = [
@@ -53,8 +54,7 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ destinations, count: destinations.length })
-  } catch (err: any) {
-    console.error('Destinations GET error:', err)
-    return NextResponse.json({ message: err.message || 'Failed to fetch destinations' }, { status: 500 })
+  } catch (err) {
+    return serverError('Destinations GET error', err, 'Could not load destinations.')
   }
 }
