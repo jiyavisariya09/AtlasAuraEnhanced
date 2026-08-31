@@ -1,24 +1,22 @@
+'use client';
+
 import { Suspense } from 'react';
-import ThreeGlobeExplorer from '@/components/ThreeGlobeExplorer';
+import { useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 
-export const metadata = {
-  title: '3D World Globe Explorer | AtlasAura',
-  description: 'Explore the Earth in full 3D with geodesic flight arcs, terrain telemetry, and destination dossiers.',
-};
+const ThreeGlobeExplorer = dynamic(
+  () => import('@/components/ThreeGlobeExplorer'),
+  { ssr: false }
+);
 
-function GlobeContent({ searchParams }: { searchParams?: { destination?: string } }) {
-  return (
-    <ThreeGlobeExplorer
-      initialDestinationId={searchParams?.destination}
-    />
-  );
+function GlobeInner() {
+  const searchParams = useSearchParams();
+  const destination = searchParams?.get('destination') ?? undefined;
+
+  return <ThreeGlobeExplorer initialDestinationId={destination} />;
 }
 
-export default async function GlobePage(props: {
-  searchParams: Promise<{ destination?: string }>;
-}) {
-  const searchParams = await props.searchParams;
-
+export default function GlobePage() {
   return (
     <Suspense
       fallback={
@@ -28,7 +26,7 @@ export default async function GlobePage(props: {
         </div>
       }
     >
-      <GlobeContent searchParams={searchParams} />
+      <GlobeInner />
     </Suspense>
   );
 }

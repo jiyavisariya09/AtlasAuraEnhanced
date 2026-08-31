@@ -61,8 +61,8 @@ function ForgotPasswordContent() {
 
   // Sync initial email if query param is present
   useEffect(() => {
-    if (initialEmail && !email) {
-      setEmail(initialEmail);
+    if (initialEmail) {
+      setEmail((prev) => prev || initialEmail);
     }
   }, [initialEmail]);
 

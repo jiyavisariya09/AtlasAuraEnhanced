@@ -12,13 +12,18 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useCurrency } from '@/context/CurrencyContext';
+import dynamic from 'next/dynamic';
 import ThemeToggle from '@/components/ThemeToggle';
 import CurrencySelector from '@/components/CurrencySelector';
-import DestinationGlobeModal from '@/components/DestinationGlobeModal';
 import AIBudgetEstimatorModal from '@/components/AIBudgetEstimatorModal';
 import { DESTINATIONS, type DestinationItem } from '@/data/destinationsData';
 import { Button } from '@/components/ui/button';
 import { getCurrentUser } from '@/lib/auth';
+
+const DestinationGlobeModal = dynamic(
+  () => import('@/components/DestinationGlobeModal'),
+  { ssr: false }
+);
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 

@@ -79,8 +79,8 @@ function SignInContent() {
 
   // Sync email if query param changes
   useEffect(() => {
-    if (initialEmail && !formData.email) {
-      setFormData((prev) => ({ ...prev, email: initialEmail }));
+    if (initialEmail) {
+      setFormData((prev) => (prev.email ? prev : { ...prev, email: initialEmail }));
     }
   }, [initialEmail]);
 

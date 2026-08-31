@@ -131,8 +131,8 @@ function SignUpContent() {
 
   // Sync initial email
   useEffect(() => {
-    if (initialEmail && !formData.email) {
-      setFormData((prev) => ({ ...prev, email: initialEmail }));
+    if (initialEmail) {
+      setFormData((prev) => (prev.email ? prev : { ...prev, email: initialEmail }));
     }
   }, [initialEmail]);
 

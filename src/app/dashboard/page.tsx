@@ -14,12 +14,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { currentUser, badges as allBadges, memoryPins as initialPins, countries } from '@/data/mockData';
+import dynamic from 'next/dynamic';
 import { DESTINATIONS, type DestinationItem } from '@/data/destinationsData';
 import ThemeToggle from '@/components/ThemeToggle';
-import DestinationGlobeModal from '@/components/DestinationGlobeModal';
 import AIBudgetEstimatorModal from '@/components/AIBudgetEstimatorModal';
 import { getCurrentUser, signOut, type AuthUser } from '@/lib/auth';
 import { BorderBeam } from '@/components/ui/border-beam';
+
+const DestinationGlobeModal = dynamic(
+  () => import('@/components/DestinationGlobeModal'),
+  { ssr: false }
+);
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
