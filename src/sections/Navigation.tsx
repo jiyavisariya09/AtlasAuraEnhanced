@@ -17,13 +17,13 @@ import {
 } from 'lucide-react';
 import AITravelAssistantModal from '@/components/AITravelAssistantModal';
 import ThemeToggle from '@/components/ThemeToggle';
-import { getCurrentUser, signOut, type AuthUser } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 import { countries } from '@/data/mockData';
 import { getAuthorAvatar, smoothScrollTo } from '@/lib/utils';
 
 interface NavigationProps {
-  isLoggedIn: boolean;
-  onLoginToggle: () => void;
+  isLoggedIn?: boolean;
+  onLoginToggle?: () => void;
 }
 
 /* Four, not five. Curiosity lives on the home page and in the footer; putting
@@ -51,7 +51,9 @@ const FOCUS_COORDS: Record<string, [number, number]> = {
   Greece: [39.0742, 21.8243],
 };
 
-export default function Navigation({ isLoggedIn, onLoginToggle }: NavigationProps) {
+export default function Navigation({ isLoggedIn: propIsLoggedIn, onLoginToggle }: NavigationProps) {
+  const { user, isLoggedIn: authIsLoggedIn, signOut } = useAuth();
+  const isLoggedIn = propIsLoggedIn !== undefined ? propIsLoggedIn : authIsLoggedIn;
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -59,7 +61,6 @@ export default function Navigation({ isLoggedIn, onLoginToggle }: NavigationProp
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [purpose, setPurpose] = useState<string | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -82,10 +83,6 @@ export default function Navigation({ isLoggedIn, onLoginToggle }: NavigationProp
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  useEffect(() => {
-    setUser(isLoggedIn ? getCurrentUser() : null);
-  }, [isLoggedIn]);
 
   const openSearch = useCallback(() => {
     setShowSearch(true);
@@ -158,7 +155,7 @@ export default function Navigation({ isLoggedIn, onLoginToggle }: NavigationProp
     setMenuOpen(false);
     setMobileOpen(false);
     signOut();
-    onLoginToggle();
+    onLoginToggle?.();
   };
 
   const focusCountry = (name: string) => {

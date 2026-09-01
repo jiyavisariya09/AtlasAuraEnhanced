@@ -18,7 +18,8 @@ import dynamic from 'next/dynamic';
 import { DESTINATIONS, type DestinationItem } from '@/data/destinationsData';
 import ThemeToggle from '@/components/ThemeToggle';
 import AIBudgetEstimatorModal from '@/components/AIBudgetEstimatorModal';
-import { getCurrentUser, signOut, type AuthUser } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
+import { type AuthUser } from '@/lib/auth';
 import { BorderBeam } from '@/components/ui/border-beam';
 
 const DestinationGlobeModal = dynamic(
@@ -68,9 +69,9 @@ function CircularProgress({ value, max, size = 88, strokeWidth = 6, children }: 
 
 export default function UserDashboard() {
   const router = useRouter();
+  const { user: authUser, isLoggedIn, isLoading: authLoading, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'memories' | 'trips' | 'badges' | 'saved'>('memories');
   const [greeting, setGreeting] = useState('Welcome back');
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [userPrefs, setUserPrefs] = useState<{
     name: string;
     travelStyle: string[];
@@ -124,18 +125,21 @@ export default function UserDashboard() {
     { id: 'calm', label: 'Peace', emoji: '🧘' },
   ];
 
+  const handleLogout = () => {
+    signOut();
+    router.push('/signin');
+  };
+
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting('Good morning');
     else if (hour < 18) setGreeting('Good afternoon');
     else setGreeting('Good evening');
 
-    const user = getCurrentUser();
-    if (!user) {
+    if (!authLoading && !isLoggedIn) {
       router.push('/signin');
       return;
     }
-    setAuthUser(user);
 
     // 1. Load profile
     fetch('/api/user/profile')
@@ -188,7 +192,7 @@ export default function UserDashboard() {
       console.error(err);
       setFavoriteDestinations(DESTINATIONS.slice(0, 4));
     }
-  }, [router]);
+  }, [router, authLoading, isLoggedIn]);
 
   const openSettings = () => {
     setEditName(userPrefs?.name || authUser?.name || '');
@@ -301,11 +305,6 @@ export default function UserDashboard() {
     } finally {
       setGeocoding(false);
     }
-  };
-
-  const handleLogout = () => {
-    signOut();
-    router.push('/');
   };
 
   const stats = [

@@ -74,12 +74,30 @@ export default function DestinationsPage() {
   const [itemsPerPage, setItemsPerPage] = useState<number>(12);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // Anatomy drawer state: click to toggle directly inside card
-  const [expandedAnatomyId, setExpandedAnatomyId] = useState<string | null>(null);
+  // Full description popup state (Click to view full description)
+  const [activeDescriptionId, setActiveDescriptionId] = useState<string | null>(null);
 
-  const toggleAnatomy = (id: string) => {
-    setExpandedAnatomyId((prev) => (prev === id ? null : id));
-  };
+  // Close description popup on outside click or Escape
+  useEffect(() => {
+    if (!activeDescriptionId) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-desc-popover]') && !target.closest('[data-desc-trigger]')) {
+        setActiveDescriptionId(null);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveDescriptionId(null);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeDescriptionId]);
+
+
 
   // Modals state
   const [globeDestination, setGlobeDestination] = useState<DestinationItem | null>(null);
@@ -439,6 +457,7 @@ export default function DestinationsPage() {
                           alt={dest.name}
                           className="w-full h-full object-cover transition-transform duration-700 ease-smooth will-change-transform group-hover:scale-[1.04]"
                           loading="lazy"
+                          decoding="async"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
 
@@ -476,103 +495,73 @@ export default function DestinationsPage() {
                       <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                         <div className="space-y-3">
                           {/* Elevation & Season Badges Strip */}
-                          <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                              <span className="bg-muted border border-border/80 px-2.5 py-0.5 rounded-lg text-foreground/80 font-medium">
-                                ⛰️ {dest.elevation}
-                              </span>
-                              <span className="bg-muted border border-border/80 px-2.5 py-0.5 rounded-lg text-foreground/80 font-medium truncate max-w-[150px]">
-                                🗓️ {dest.bestSeason.split('(')[0]}
-                              </span>
-                            </div>
-
-                            {/* Toggle Anatomy button */}
-                            <button
-                              type="button"
-                              onClick={() => toggleAnatomy(dest.id)}
-                              className={`text-[10px] font-mono font-bold flex items-center gap-1 px-2.5 py-1 rounded-full transition-all active:scale-95 ${
-                                expandedAnatomyId === dest.id
-                                  ? 'bg-aurora text-ink-void shadow-sm'
-                                  : 'bg-muted text-aurora hover:bg-aurora/15 border border-aurora/30'
-                              }`}
-                            >
-                              <Compass className="w-3 h-3" />
-                              <span>{expandedAnatomyId === dest.id ? 'Hide Anatomy' : 'Place Anatomy'}</span>
-                            </button>
+                          <div className="flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground">
+                            <span className="bg-muted border border-border/80 px-2.5 py-0.5 rounded-lg text-foreground/80 font-medium">
+                              ⛰️ {dest.elevation}
+                            </span>
+                            <span className="bg-muted border border-border/80 px-2.5 py-0.5 rounded-lg text-foreground/80 font-medium">
+                              🗓️ {dest.bestSeason.split('(')[0]}
+                            </span>
                           </div>
 
-                          {/* Title & Interactive Description with Hover Tooltip & Click Toggle */}
+                          {/* Title & Description with Full Popover on Click */}
                           <div>
                             <h3 className="font-serif text-2xl font-semibold text-foreground group-hover:text-aurora transition-colors">
                               {dest.name}
                             </h3>
                             
-                            {/* Description with Hover Tooltip + Click to Expand */}
-                            <div className="relative group/desc mt-1.5">
-                              <div
-                                onClick={() => toggleAnatomy(dest.id)}
-                                className="cursor-pointer rounded-xl p-2 -mx-2 transition-colors hover:bg-muted/50"
-                                title="Click to open Place Anatomy & Lore"
+                            {/* Description (Click to view full description) */}
+                            <div className="relative mt-1.5">
+                              <button
+                                type="button"
+                                data-desc-trigger={dest.id}
+                                onClick={() => setActiveDescriptionId(prev => prev === dest.id ? null : dest.id)}
+                                className="text-left group/desc cursor-pointer focus:outline-none block w-full rounded-md -m-1 p-1 hover:bg-muted/40 transition-colors"
+                                title="Click to view full description"
                               >
-                                <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground line-clamp-2">
+                                <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground group-hover/desc:text-foreground transition-colors line-clamp-2">
                                   {dest.description}
                                 </p>
-                              </div>
+                              </button>
 
-                              {/* Floating Hover Tooltip (Easily read full description on hover) */}
-                              <div className="absolute left-0 bottom-full mb-2.5 hidden group-hover/desc:flex flex-col z-40 w-72 sm:w-80 p-3.5 rounded-2xl bg-[#090d1a] border border-aurora/40 text-white text-xs shadow-2xl backdrop-blur-xl pointer-events-none animate-in fade-in zoom-in-95 duration-150">
-                                <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-aurora mb-1 uppercase tracking-wider">
-                                  <Sparkles className="w-3 h-3" />
-                                  <span>Full Description</span>
-                                </div>
-                                <p className="text-xs text-white/90 leading-relaxed font-normal">
-                                  {dest.description}
-                                </p>
-                                <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-white/60">
-                                  <span>Click card for Place Anatomy</span>
-                                  <span className="text-aurora font-bold">▼ Click to Expand</span>
-                                </div>
-                                {/* Tooltip Downward Arrow Pointer */}
-                                <div className="absolute top-full left-6 -mt-1 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#090d1a]" />
-                              </div>
+                              {/* Floating Popover on Click (Day & Night Mode Supported) */}
+                              <AnimatePresence>
+                                {activeDescriptionId === dest.id && (
+                                  <motion.div
+                                    data-desc-popover={dest.id}
+                                    initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="absolute left-0 bottom-full mb-2.5 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-card border border-border dark:border-aurora/40 text-card-foreground text-xs shadow-2xl backdrop-blur-xl"
+                                  >
+                                    <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-border dark:border-white/10">
+                                      <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-aurora uppercase tracking-wider">
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        <span>Full Description</span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActiveDescriptionId(null);
+                                        }}
+                                        className="text-muted-foreground hover:text-foreground p-0.5 rounded-md hover:bg-muted transition-colors"
+                                        title="Close"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                    <p className="text-xs text-foreground/90 leading-relaxed font-normal">
+                                      {dest.description}
+                                    </p>
+                                    {/* Tooltip Downward Arrow Pointer */}
+                                    <div className="absolute top-full left-6 -mt-[1px] w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-card" />
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           </div>
-
-                          {/* Interactive Place Anatomy Drawer (Toggled on Click) */}
-                          <AnimatePresence>
-                            {expandedAnatomyId === dest.id && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.25 }}
-                                className="overflow-hidden rounded-2xl bg-muted/80 dark:bg-muted/50 border border-aurora/40 p-4 space-y-2.5 text-xs shadow-md"
-                              >
-                                <div className="flex items-center justify-between text-[10px] font-mono">
-                                  <span className="font-bold text-aurora flex items-center gap-1">
-                                    <Compass className="w-3.5 h-3.5" /> Place Anatomy & Culture
-                                  </span>
-                                  <button 
-                                    type="button"
-                                    onClick={() => toggleAnatomy(dest.id)}
-                                    className="text-muted-foreground hover:text-foreground font-semibold"
-                                  >
-                                    ✕ Close
-                                  </button>
-                                </div>
-                                <div>
-                                  <span className="text-[10px] uppercase font-mono text-muted-foreground block font-bold">Cultural Lore</span>
-                                  <p className="text-[11px] text-foreground font-normal leading-relaxed mt-0.5">{dest.culture}</p>
-                                </div>
-                                {dest.localDelicacy && (
-                                  <div className="pt-2 border-t border-border/80">
-                                    <span className="text-[10px] uppercase font-mono text-orchid block font-bold">Local Flavor</span>
-                                    <p className="text-[11px] text-foreground/90 font-normal mt-0.5">{dest.localDelicacy}</p>
-                                  </div>
-                                )}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
 
                           {/* Curated Highlights Chips */}
                           <div className="flex flex-wrap gap-1.5 pt-1">

@@ -153,25 +153,14 @@ function LoadingScreen({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-export default function Home() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+import { useAuth } from '@/context/AuthContext';
 
-  useEffect(() => {
-    const user = getCurrentUser();
-    if (user) {
-      setIsLoggedIn(true);
-      setCurrentUser(user);
-    }
-  }, []);
+export default function Home() {
+  const { isLoggedIn, signOut } = useAuth();
 
   const handleLoginToggle = () => {
-    const newState = !isLoggedIn;
-    setIsLoggedIn(newState);
-    if (!newState) {
-      localStorage.removeItem('atlasaura-user');
-      setCurrentUser(null);
+    if (isLoggedIn) {
+      signOut();
     }
   };
 
@@ -202,34 +191,6 @@ export default function Home() {
         <UserFeatures isLoggedIn={isLoggedIn} />
       </main>
       <Footer />
-
-      <AnimatePresence>
-        {isLoggedIn && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.5, ease: EASE }}
-            className="fixed bottom-24 right-8 z-40"
-          >
-            {/* `.glass` sets the `border` shorthand, so a `border-*` utility
-                beside it is decided by stylesheet order. The pill carries its
-                own single ring instead. */}
-            <div className="glass flex items-center gap-2 rounded-full px-4 py-2">
-              <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
-                <span className="animate-pin-pulse absolute inset-0 rounded-full bg-aurora" />
-                <span className="relative h-2 w-2 rounded-full bg-aurora" />
-              </span>
-              <span className="text-sm text-muted-foreground">
-                Signed in as{' '}
-                <span className="font-medium text-foreground">
-                  {currentUser?.name || 'Traveller'}
-                </span>
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

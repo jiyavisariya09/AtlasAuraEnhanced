@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Manrope, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
+import { AuthProvider } from '@/context/AuthContext';
+import SmoothScroll from '@/components/SmoothScroll';
 import '@/styles/globals.css';
 
 /* Display/Serif: High-legibility, elegant Playfair Display with full weight range (400-800).
@@ -58,7 +60,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${playfair.variable} ${manrope.variable} ${jetbrains.variable} font-sans antialiased`}
       >
         <ThemeProvider>
-          <CurrencyProvider>{children}</CurrencyProvider>
+          <CurrencyProvider>
+            <AuthProvider>
+              <SmoothScroll>{children}</SmoothScroll>
+            </AuthProvider>
+          </CurrencyProvider>
         </ThemeProvider>
       </body>
     </html>

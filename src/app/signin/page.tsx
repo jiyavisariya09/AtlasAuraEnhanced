@@ -12,8 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BorderBeam } from '@/components/ui/border-beam';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from '@/components/ThemeToggle';
-import { signIn } from '@/lib/auth';
 
 const CINEMATIC_DESTINATIONS = [
   {
@@ -68,6 +68,7 @@ function SignInContent() {
   const nextUrl = searchParams?.get('next') || '/dashboard';
   const initialEmail = searchParams?.get('email') || '';
   const { theme, mounted } = useTheme();
+  const { signIn } = useAuth();
   const isDark = mounted ? theme === 'dark' : true;
 
   const [currentIndex, setCurrentIndex] = useState(0);

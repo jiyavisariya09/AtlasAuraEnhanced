@@ -62,9 +62,14 @@ export async function fetchSession(): Promise<AuthUser | null> {
 
 export function signOut() {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem(USER_KEY)
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem('atlasaura-favorite-destinations');
+    localStorage.removeItem('atlasaura-user-pins');
+    localStorage.removeItem('atlasaura-preferences');
+    localStorage.removeItem('atlasaura-trip-plans');
+    localStorage.removeItem('atlasaura-journal');
   }
-  fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+  fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
 }
 
 export function updateUserPreferences(prefs: Partial<AuthUser>) {

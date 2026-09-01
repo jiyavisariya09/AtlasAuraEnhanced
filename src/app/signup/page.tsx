@@ -13,8 +13,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BorderBeam } from '@/components/ui/border-beam';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from '@/components/ThemeToggle';
-import { signUp, sendOtp } from '@/lib/auth';
+import { sendOtp } from '@/lib/auth';
 
 const CINEMATIC_STORIES = [
   {
@@ -108,6 +109,7 @@ function SignUpContent() {
   const searchParams = useSearchParams();
   const initialEmail = searchParams?.get('email') || '';
   const { theme, mounted } = useTheme();
+  const { signUp } = useAuth();
   const isDark = mounted ? theme === 'dark' : true;
 
   const [currentIndex, setCurrentIndex] = useState(0);

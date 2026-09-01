@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useCurrency, SUPPORTED_CURRENCIES } from '@/context/CurrencyContext';
-import { getCurrentUser, signOut, type AuthUser } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
+import { type AuthUser } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -156,13 +157,13 @@ export default function SettingsPage() {
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [pwUpdating, setPwUpdating] = useState(false);
   const [pwMessage, setPwMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const { user: authUser, isLoggedIn, signOut, updateUser } = useAuth();
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-    if (currentUser?.name) setName(currentUser.name);
-    if (currentUser?.avatar) setAvatar(currentUser.avatar);
+    setUser(authUser);
+    if (authUser?.name) setName(authUser.name);
+    if (authUser?.avatar) setAvatar(authUser.avatar);
 
     try {
       const prefs = localStorage.getItem('atlasaura-preferences');
@@ -178,7 +179,7 @@ export default function SettingsPage() {
     } catch (e) {
       console.error(e);
     }
-  }, []);
+  }, [authUser]);
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -216,11 +217,7 @@ export default function SettingsPage() {
       };
 
       localStorage.setItem('atlasaura-preferences', JSON.stringify(profileData));
-
-      const current = getCurrentUser();
-      if (current) {
-        localStorage.setItem('atlasaura-user', JSON.stringify({ ...current, name, avatar }));
-      }
+      updateUser({ name, avatar });
 
       await fetch('/api/user/profile', {
         method: 'PUT',
@@ -770,7 +767,7 @@ export default function SettingsPage() {
                   <span className="text-xs font-mono text-aurora font-bold">Online</span>
                 </div>
 
-                {/* Data Export & Danger Zone */}
+                {/* Data Export & Session Termination */}
                 <div className="pt-4 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>
                     <span className="text-xs font-semibold text-foreground block">Export Passport Archive</span>
@@ -785,6 +782,27 @@ export default function SettingsPage() {
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download JSON</span>
+                  </Button>
+                </div>
+
+                {/* Sign Out Action */}
+                <div className="pt-4 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <span className="text-xs font-semibold text-foreground block">Terminate Session</span>
+                    <p className="text-[11px] text-muted-foreground">Sign out and securely wipe all cached traveler artifacts on this device.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      signOut();
+                      router.push('/');
+                    }}
+                    className="rounded-full text-xs gap-1.5 h-9 shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
                   </Button>
                 </div>
               </div>

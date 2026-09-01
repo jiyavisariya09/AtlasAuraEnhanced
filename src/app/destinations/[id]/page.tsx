@@ -74,22 +74,25 @@ export default function DestinationDetailPage() {
           traditions: matched.highlights.join('. '),
           etiquette: 'Respect local customs, shrines, and sacred natural sanctuaries. Leave no trace.',
         },
-        reviews: [
-          {
-            id: 'rev-1',
-            rating: 5,
-            content: 'Truly breathtaking atmosphere. Walking here felt like stepping onto another planet.',
-            createdAt: new Date().toISOString(),
-            user: { name: 'Elena Rostova', avatar: '/avatars/elena.jpg' },
-          },
-          {
-            id: 'rev-2',
-            rating: 5,
-            content: 'The sunrise reflections and crisp air exceeded every expectation. An absolute must-visit!',
-            createdAt: new Date().toISOString(),
-            user: { name: 'Kenji Sato', avatar: '/avatars/kenji.jpg' },
-          },
-        ],
+        reviews: (matched.reviews && matched.reviews.length > 0)
+          ? matched.reviews.map((r) => ({
+              id: r.id,
+              rating: r.rating,
+              content: r.comment,
+              createdAt: r.date,
+              travelerType: r.travelerType,
+              user: { name: r.author, avatar: r.avatar },
+            }))
+          : [
+              {
+                id: 'rev-1',
+                rating: 5,
+                content: 'Truly breathtaking atmosphere. Walking here felt like stepping onto another planet.',
+                createdAt: new Date().toISOString(),
+                travelerType: 'Explorer',
+                user: { name: 'Elena Rostova', avatar: '/avatars/elena.jpg' },
+              },
+            ],
       });
       setLoading(false);
     } else {
@@ -241,6 +244,7 @@ export default function DestinationDetailPage() {
           src={destination.image}
           alt={destination.name}
           className="absolute inset-0 w-full h-full object-cover"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/20" />
 
@@ -461,16 +465,18 @@ export default function DestinationDetailPage() {
 
                 {/* Reviews list */}
                 <div className="space-y-3">
-                  {(destination.reviews || [
-                    { id: '1', user: { name: 'Evelyn V.' }, rating: 5, createdAt: '2026-02-14', content: 'Words cannot describe the sheer scale of this place. Watching dawn break across the horizon was a spiritual awakening.' },
-                    { id: '2', user: { name: 'Kaelen R.' }, rating: 5, createdAt: '2026-01-28', content: 'Follow the advice on visiting during the shoulder season. Pristine, untouched, and utterly unforgettable.' }
-                  ]).map((r: any) => (
+                  {(destination.reviews || []).map((r: any) => (
                     <div key={r.id} className="p-5 rounded-2xl bg-card border border-border/70 space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-xs text-foreground">{r.user?.name || 'Explorer'}</span>
+                          {r.travelerType && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-aurora/10 text-aurora font-medium border border-aurora/20">
+                              {r.travelerType}
+                            </span>
+                          )}
                           <span className="text-[10px] font-mono text-muted-foreground">
-                            {new Date(r.createdAt).toLocaleDateString()}
+                            {new Date(r.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                           </span>
                         </div>
                         <div className="flex items-center gap-1 text-aurora text-xs">
