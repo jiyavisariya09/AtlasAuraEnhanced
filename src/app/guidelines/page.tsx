@@ -53,7 +53,7 @@ export default function GuidelinesPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aurora/10 border border-aurora/25 text-aurora text-xs font-mono font-semibold tracking-wider uppercase mb-6"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aurora/10 border border-aurora/25 text-aurora text-xs font-semibold tracking-wider uppercase mb-6"
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>Storytelling Code of Conduct</span>

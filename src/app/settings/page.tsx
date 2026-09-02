@@ -98,7 +98,7 @@ function ThemePreview({ variant }: { variant: 'dark' | 'light' }) {
           <span className="block h-1.5 w-3/5 rounded-full" style={{ background: p.dim, opacity: 0.3 }} />
         </span>
         <span
-          className="block rounded-md px-2.5 py-1 text-[0.625rem] font-semibold font-mono"
+          className="block rounded-md px-2.5 py-1 text-[0.625rem] font-semibold"
           style={{ background: p.surface, color: p.dim, border: `1px solid ${p.line}`, width: 'fit-content' }}
         >
           {p.name}
@@ -122,7 +122,7 @@ function SettingsCard({
   return (
     <section className="p-6 sm:p-8 rounded-3xl bg-card border border-border/80 shadow-sm space-y-6">
       <div>
-        <p className="text-[11px] font-mono uppercase font-bold tracking-wider text-aurora">{label}</p>
+        <p className="text-[11px] uppercase font-bold tracking-wider text-aurora">{label}</p>
         <h2 className="font-serif text-2xl font-medium mt-1 text-foreground">{title}</h2>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">{description}</p>
       </div>
@@ -370,7 +370,7 @@ export default function SettingsPage() {
 
           <div className="flex items-center gap-3">
             {savedFeedback && (
-              <span className="text-xs font-mono text-aurora flex items-center gap-1.5 bg-aurora/10 border border-aurora/30 px-3.5 py-1.5 rounded-full shadow-sm">
+              <span className="text-xs text-aurora flex items-center gap-1.5 bg-aurora/10 border border-aurora/30 px-3.5 py-1.5 rounded-full shadow-sm">
                 <Check className="w-3.5 h-3.5" /> Changes Saved
               </span>
             )}
@@ -391,7 +391,7 @@ export default function SettingsPage() {
         {/* Title Header */}
         <div className="border-b border-border/80 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-mono uppercase font-bold text-aurora tracking-wider">Passport & Account Calibration</p>
+            <p className="text-xs uppercase font-bold text-aurora tracking-wider">Passport & Account Calibration</p>
             <h1 className="font-serif text-3xl sm:text-5xl font-medium mt-1 text-foreground tracking-tight">Account Settings</h1>
             <p className="text-sm text-muted-foreground mt-2 max-w-2xl leading-relaxed">
               Personalize your explorer identity, travel preferences, language fluencies, and configure account security and password.
@@ -461,7 +461,7 @@ export default function SettingsPage() {
 
                 {/* Preset Avatars */}
                 <div>
-                  <label className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-2">
+                  <label className="text-xs uppercase font-bold text-muted-foreground block mb-2">
                     Or Select Curated Explorer Avatar:
                   </label>
                   <div className="flex gap-2.5">
@@ -483,7 +483,7 @@ export default function SettingsPage() {
                 {/* Display Name & Departure City */}
                 <div className="space-y-4 pt-2 border-t border-border/60">
                   <div>
-                    <label className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-1.5">
+                    <label className="text-xs uppercase font-bold text-muted-foreground block mb-1.5">
                       Display Name
                     </label>
                     <Input
@@ -495,7 +495,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-1.5">
+                    <label className="text-xs uppercase font-bold text-muted-foreground block mb-1.5">
                       Home Departure City (For Flight AI Calculations)
                     </label>
                     <div className="relative">
@@ -510,7 +510,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-1.5">
+                    <label className="text-xs uppercase font-bold text-muted-foreground block mb-1.5">
                       Travel Taste Bio
                     </label>
                     <textarea
@@ -533,7 +533,7 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 {/* Theme Selector */}
                 <div>
-                  <label className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-3">
+                  <label className="text-xs uppercase font-bold text-muted-foreground block mb-3">
                     Palette Mode
                   </label>
                   <div className="grid grid-cols-2 gap-4">
@@ -556,7 +556,7 @@ export default function SettingsPage() {
 
                 {/* Currency Calibration */}
                 <div className="pt-4 border-t border-border/60">
-                  <label className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-2">
+                  <label className="text-xs uppercase font-bold text-muted-foreground block mb-2">
                     Default Currency
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -565,7 +565,7 @@ export default function SettingsPage() {
                         key={curr.code}
                         type="button"
                         onClick={() => setCurrency(curr.code)}
-                        className={`py-2 px-3 rounded-xl border text-xs font-mono flex items-center justify-between transition-all ${
+                        className={`py-2 px-3 rounded-xl border text-xs flex items-center justify-between transition-all ${
                           currency === curr.code
                             ? 'bg-aurora text-ink-void border-aurora font-bold shadow-sm'
                             : 'bg-card border-border hover:border-border/80 text-foreground'
@@ -614,7 +614,7 @@ export default function SettingsPage() {
 
               {/* Language Fluency */}
               <div className="mt-6 pt-5 border-t border-border/60">
-                <label className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-2.5">
+                <label className="text-xs uppercase font-bold text-muted-foreground block mb-2.5">
                   Languages Known / Preferred
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -625,7 +625,7 @@ export default function SettingsPage() {
                         key={lang.id}
                         type="button"
                         onClick={() => toggleLanguage(lang.id)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-mono border transition-all ${
+                        className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
                           isSelected
                             ? 'bg-aurora text-ink-void border-aurora font-bold shadow-sm'
                             : 'bg-card border-border/70 text-muted-foreground hover:text-foreground'
@@ -663,7 +663,7 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   {/* Current Password */}
                   <div>
-                    <label className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-1.5">
+                    <label className="text-xs uppercase font-bold text-muted-foreground block mb-1.5">
                       Current Password
                     </label>
                     <div className="relative">
@@ -688,7 +688,7 @@ export default function SettingsPage() {
                   {/* New Password & Strength */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-1.5">
+                      <label className="text-xs uppercase font-bold text-muted-foreground block mb-1.5">
                         New Password
                       </label>
                       <div className="relative">
@@ -711,7 +711,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-1.5">
+                      <label className="text-xs uppercase font-bold text-muted-foreground block mb-1.5">
                         Confirm New Password
                       </label>
                       <div className="relative">
@@ -737,7 +737,7 @@ export default function SettingsPage() {
                   {/* Password Strength Indicator */}
                   {newPassword && (
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px] font-mono">
+                      <div className="flex items-center justify-between text-[10px]">
                         <span className="text-muted-foreground">Strength: {pwStrength.label}</span>
                         <span className="text-muted-foreground">{pwStrength.score}%</span>
                       </div>
@@ -804,7 +804,7 @@ export default function SettingsPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-foreground">Windows PC · Chrome 128</span>
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-emerald-500/15 text-emerald-500 font-bold">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] bg-emerald-500/15 text-emerald-500 font-bold">
                           Current Device
                         </span>
                       </div>
@@ -812,7 +812,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <span className="text-xs font-mono text-aurora font-bold">Online</span>
+                  <span className="text-xs text-aurora font-bold">Online</span>
                 </div>
 
                 {/* Data Export & Session Termination */}

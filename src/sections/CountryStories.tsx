@@ -183,7 +183,7 @@ export default function CountryStories() {
   const c = costMeta;
 
   return (
-    <section id="stories" className="hairline-t section-y relative isolate overflow-hidden cv-auto">
+    <section id="stories" className="section-y relative isolate overflow-hidden cv-auto">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="graticule absolute inset-0 opacity-20" />
         <div className="aurora-wash absolute inset-0" />

@@ -75,7 +75,7 @@ export default function StoryPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aurora/10 border border-aurora/25 text-aurora text-xs font-mono font-semibold tracking-wider uppercase mb-6"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aurora/10 border border-aurora/25 text-aurora text-xs font-semibold tracking-wider uppercase mb-6"
           >
             <Compass className="w-3.5 h-3.5" />
             <span>Our Origin & Manifesto</span>
@@ -108,7 +108,7 @@ export default function StoryPage() {
         <div className="shell max-w-5xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-5 space-y-6">
-              <span className="text-xs font-mono font-bold text-aurora tracking-widest uppercase">
+              <span className="text-xs font-bold text-aurora tracking-widest uppercase">
                 The Philosophy
               </span>
               <h2 className="font-serif text-3xl sm:text-4xl leading-tight">
@@ -155,7 +155,7 @@ export default function StoryPage() {
       <section className="section-y bg-muted/20 hairline-t hairline-b relative">
         <div className="shell max-w-4xl mx-auto">
           <div className="text-center max-w-xl mx-auto mb-16">
-            <span className="text-xs font-mono font-bold text-aurora tracking-widest uppercase">
+            <span className="text-xs font-bold text-aurora tracking-widest uppercase">
               The Journey
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl mt-3">
@@ -176,7 +176,7 @@ export default function StoryPage() {
                 {/* Dot */}
                 <div className="absolute -left-[31px] sm:-left-[47px] top-1.5 w-4 h-4 rounded-full bg-background border-2 border-aurora group-hover:bg-aurora transition-colors shadow-sm" />
                 
-                <span className="inline-block sm:absolute sm:-left-32 sm:top-1 text-xs font-mono font-bold text-aurora mb-1 sm:mb-0">
+                <span className="inline-block sm:absolute sm:-left-32 sm:top-1 text-xs font-bold text-aurora mb-1 sm:mb-0">
                   {item.year}
                 </span>
 
@@ -185,7 +185,7 @@ export default function StoryPage() {
                     <h3 className="font-serif text-xl font-bold text-foreground">
                       {item.title}
                     </h3>
-                    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                       {item.location}
                     </span>
                   </div>

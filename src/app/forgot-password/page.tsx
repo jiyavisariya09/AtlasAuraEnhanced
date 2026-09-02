@@ -422,7 +422,7 @@ function ForgotPasswordContent() {
                           onChange={(e) => handleOtpChange(i, e.target.value)}
                           onKeyDown={(e) => handleOtpKeyDown(i, e)}
                           onPaste={handleOtpPaste}
-                          className="w-10 h-11 sm:w-11 sm:h-12 text-center text-xl font-mono font-bold rounded-xl bg-card/80 border border-border text-foreground focus:border-aurora focus:ring-2 focus:ring-aurora/20 focus:scale-105 outline-none transition-all duration-200"
+                          className="w-10 h-11 sm:w-11 sm:h-12 text-center text-xl font-bold rounded-xl bg-card/80 border border-border text-foreground focus:border-aurora focus:ring-2 focus:ring-aurora/20 focus:scale-105 outline-none transition-all duration-200"
                         />
                       ))}
                     </div>
@@ -536,7 +536,7 @@ function ForgotPasswordContent() {
         <div className="flex items-center gap-2 backdrop-blur-md px-4 py-2 rounded-full text-xs font-sans shadow-md bg-black/40 text-white ring-1 ring-white/10">
           <MapPin className="w-3.5 h-3.5 text-aurora shrink-0" />
           <span className="font-semibold">{activeDest.location}</span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white/90">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/90">
             {activeDest.coords}
           </span>
         </div>

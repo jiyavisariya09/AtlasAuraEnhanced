@@ -388,7 +388,7 @@ export default function TripPlannerPage() {
             <div className="flex items-center gap-2">
               <Luggage className="w-5 h-5 text-aurora" />
               <h1 className="font-sans font-bold text-base sm:text-lg text-foreground tracking-tight">
-                Trip Planner <span className="text-aurora font-mono text-xs">(₹ INR)</span>
+                Trip Planner <span className="text-aurora text-xs">(₹ INR)</span>
               </h1>
             </div>
           </div>
@@ -454,7 +454,7 @@ export default function TripPlannerPage() {
                     {activeTrip.destination}
                   </span>
                   {activeTrip.startDate && (
-                    <span className="text-xs font-mono text-muted-foreground bg-card px-2 py-0.5 rounded-full border border-border">
+                    <span className="text-xs text-muted-foreground bg-card px-2 py-0.5 rounded-full border border-border">
                       {activeTrip.startDate} {activeTrip.endDate ? `→ ${activeTrip.endDate}` : ''}
                     </span>
                   )}
@@ -512,7 +512,7 @@ export default function TripPlannerPage() {
 
             {/* Progress bar */}
             <div>
-              <div className="flex justify-between text-xs font-mono text-muted-foreground mb-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
                 <span>Budget Utilization ({budgetPercentage}%)</span>
                 <span>₹{totalSpentINR.toLocaleString('en-IN')} / ₹{tripBudgetINR.toLocaleString('en-IN')}</span>
               </div>
@@ -557,12 +557,12 @@ export default function TripPlannerPage() {
                 >
                   <div className="flex items-center justify-between border-b border-border pb-3">
                     <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-full bg-aurora/15 border border-aurora/30 text-aurora font-mono text-xs font-bold flex items-center justify-center">
+                      <span className="w-8 h-8 rounded-full bg-aurora/15 border border-aurora/30 text-aurora text-xs font-bold flex items-center justify-center">
                         D{dayPlan.day}
                       </span>
                       <h4 className="text-base font-semibold text-foreground">{dayPlan.title}</h4>
                     </div>
-                    <span className="text-xs font-mono text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {dayPlan.activities.length} activities
                     </span>
                   </div>
@@ -630,7 +630,7 @@ export default function TripPlannerPage() {
                       onChange={(e) =>
                         setNewActivityCost((prev) => ({ ...prev, [dayIdx]: e.target.value }))
                       }
-                      className="text-xs h-9 bg-card/40 border-border text-foreground w-24 font-mono"
+                      className="text-xs h-9 bg-card/40 border-border text-foreground w-24"
                     />
                     <Button
                       onClick={() => handleAddActivity(dayIdx)}
@@ -685,7 +685,7 @@ export default function TripPlannerPage() {
                     <div className="flex-1">
                       <p className="text-xs font-medium leading-tight">{item.item}</p>
                       {item.category && (
-                        <span className="text-[10px] uppercase font-mono text-muted-foreground">
+                        <span className="text-[10px] uppercase text-muted-foreground">
                           {item.category}
                         </span>
                       )}
@@ -793,7 +793,7 @@ export default function TripPlannerPage() {
                       placeholder="65000"
                       value={newBudgetINR}
                       onChange={(e) => setNewBudgetINR(e.target.value)}
-                      className="pl-9 h-10 bg-card/60 border-border text-foreground font-mono"
+                      className="pl-9 h-10 bg-card/60 border-border text-foreground"
                     />
                   </div>
                 </div>

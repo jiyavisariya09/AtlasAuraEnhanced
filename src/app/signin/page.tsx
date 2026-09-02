@@ -351,7 +351,7 @@ function SignInContent() {
           <div className="pt-2">
             <div className="flex items-center gap-3 mb-3">
               <div className="flex-1 h-px bg-border/80" />
-              <span className="text-[11px] text-muted-foreground font-mono">NEW TO ATLAS?</span>
+              <span className="text-[11px] text-muted-foreground">NEW TO ATLAS?</span>
               <div className="flex-1 h-px bg-border/80" />
             </div>
 
@@ -392,7 +392,7 @@ function SignInContent() {
                   {activeDest.location} · {activeDest.country}
                 </span>
               </div>
-              <span className="text-[10px] font-mono whitespace-nowrap px-2.5 py-0.5 rounded-full text-white/90 bg-black/40 backdrop-blur-md ring-1 ring-white/10">
+              <span className="text-[10px] whitespace-nowrap px-2.5 py-0.5 rounded-full text-white/90 bg-black/40 backdrop-blur-md ring-1 ring-white/10">
                 {activeDest.coords}
               </span>
             </div>

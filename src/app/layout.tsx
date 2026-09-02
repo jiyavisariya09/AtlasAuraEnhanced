@@ -1,31 +1,32 @@
 import type { Metadata, Viewport } from 'next';
-import { Playfair_Display, Manrope, JetBrains_Mono } from 'next/font/google';
+import { Cormorant_Garamond, DM_Sans, DM_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { AuthProvider } from '@/context/AuthContext';
 import SmoothScroll from '@/components/SmoothScroll';
 import '@/styles/globals.css';
 
-/* Display/Serif: High-legibility, elegant Playfair Display with full weight range (400-800).
-   Body/UI: Clean geometric Manrope.
-   Mono: JetBrains Mono for coordinates, counts, and financial values. */
-const playfair = Playfair_Display({
+/* Display/Serif: Cormorant Garamond — tall x-height, high-contrast editorial serif.
+   Body/UI: DM Sans — clean geometric sans for all body, labels, tags, and UI.
+   Mono: DM Mono — same DM family, used ONLY for geo-coordinates and financial values. */
+const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['300', '400', '500', '600', '700'],
   style: ['normal', 'italic'],
   display: 'swap',
   variable: '--font-serif',
 });
 
-const manrope = Manrope({
+const dmSans = DM_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-manrope',
 });
 
-const jetbrains = JetBrains_Mono({
+const dmMono = DM_Mono({
   subsets: ['latin'],
+  weight: ['400', '500'],
   display: 'swap',
   variable: '--font-jetbrains',
 });
@@ -47,6 +48,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
+        {/* Pre-connect to the video CDN so TLS handshake happens early */}
+        <link rel="preconnect" href="https://d8j0ntlcm91z4.cloudfront.net" />
+        <link rel="dns-prefetch" href="https://d8j0ntlcm91z4.cloudfront.net" />
+        {/* Pre-connect to image CDN for below-fold unsplash images */}
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
         {/* Resolve the theme before first paint so there is no flash. Night is
             the default; only an explicit 'light' preference switches away.
             Falls back to the OS preference on a first visit. */}
@@ -57,7 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body
-        className={`${playfair.variable} ${manrope.variable} ${jetbrains.variable} font-sans antialiased`}
+        className={`${cormorant.variable} ${dmSans.variable} ${dmMono.variable} font-sans antialiased`}
       >
         <ThemeProvider>
           <CurrencyProvider>

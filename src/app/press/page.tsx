@@ -57,7 +57,7 @@ export default function PressPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose/10 border border-rose/25 text-rose text-xs font-mono font-semibold tracking-wider uppercase mb-6"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose/10 border border-rose/25 text-rose text-xs font-semibold tracking-wider uppercase mb-6"
           >
             <Newspaper className="w-3.5 h-3.5" />
             <span>Newsroom & Media Kit</span>
@@ -88,7 +88,7 @@ export default function PressPage() {
       <section className="section-y relative">
         <div className="shell max-w-5xl mx-auto space-y-12">
           <div className="text-center max-w-xl mx-auto">
-            <span className="text-xs font-mono font-bold text-aurora tracking-widest uppercase">
+            <span className="text-xs font-bold text-aurora tracking-widest uppercase">
               Editorial Coverage
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl mt-2">
@@ -107,10 +107,10 @@ export default function PressPage() {
                 className="p-8 rounded-3xl bg-card border border-border/80 hover:border-aurora/40 transition-all shadow-sm group"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <span className="text-xs font-mono font-bold text-aurora uppercase tracking-wider">
+                  <span className="text-xs font-bold text-aurora uppercase tracking-wider">
                     {article.outlet}
                   </span>
-                  <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span>{article.date}</span>
                     <span>·</span>
                     <span>{article.readTime}</span>
@@ -133,7 +133,7 @@ export default function PressPage() {
       <section className="section-y bg-muted/20 hairline-t hairline-b relative">
         <div className="shell max-w-5xl mx-auto space-y-12">
           <div className="text-center max-w-xl mx-auto">
-            <span className="text-xs font-mono font-bold text-aurora tracking-widest uppercase">
+            <span className="text-xs font-bold text-aurora tracking-widest uppercase">
               Brand Identity
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl mt-2">
@@ -158,7 +158,7 @@ export default function PressPage() {
                   <div className="text-xs font-serif font-bold text-foreground truncate">
                     {color.name}
                   </div>
-                  <div className="text-xs font-mono text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     {color.hex}
                   </div>
                   <div className="text-[10px] text-muted-foreground/80 mt-1 leading-tight">

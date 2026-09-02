@@ -1,32 +1,42 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { ArrowRight, Compass, Map, BookOpen } from 'lucide-react';
 import { smoothScrollTo } from '@/lib/utils';
+import SeamlessHeroVideo from '@/components/SeamlessHeroVideo';
 
-/* Footage is opt-in and needs no code change: put a file in public/ and add
-   NEXT_PUBLIC_HERO_VIDEO=/hero.mp4 to .env.local. The photographs below stay as
-   the poster and as the fallback, so the hero is never empty — if the variable
-   is unset, or the file 404s, or the browser refuses to autoplay, what remains
-   is the still. That is why the video sits *over* the stills rather than
-   replacing them. */
-const HERO_VIDEO = process.env.NEXT_PUBLIC_HERO_VIDEO ?? '';
+const HERO_VIDEO_NIGHT =
+  process.env.NEXT_PUBLIC_HERO_VIDEO_NIGHT ||
+  process.env.NEXT_PUBLIC_HERO_VIDEO ||
+  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4';
 
-/* The three ways into the site — which are also the next three sections of this
-   page, in the order they appear. The strip along the bottom of the hero is the
-   page's table of contents, so the reader's first scroll is a choice they have
-   already been offered rather than a surprise. Not a 01/02/03 sequence: these
-   are alternatives, and numbering them would imply an order that isn't real. */
+const HERO_VIDEO_DAY =
+  process.env.NEXT_PUBLIC_HERO_VIDEO_DAY ||
+  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260324_151826_c7218672-6e92-402c-9e45-f1e0f454bdc4.mp4';
+
+/* ── Fallback hero images — used ONLY if video fails or cannot load ── */
+const HERO_POSTER_NIGHT = '/hero-bg.jpg';
+const HERO_POSTER_DAY = '/hero-bg-day.jpg';
+
 const WAYS_IN = [
   { href: '#explore', label: 'By feeling', detail: 'Describe the mood, not the place', Icon: Compass },
   { href: '#world-map', label: 'By place', detail: 'Open the map and wander', Icon: Map },
   { href: '#stories', label: 'By story', detail: "Read someone's account first", Icon: BookOpen },
 ];
 
-export default function Hero() {
+interface HeroProps {
+  onVideoReady?: () => void;
+}
+
+export default function Hero({ onVideoReady }: HeroProps = {}) {
   const ref = useRef<HTMLElement>(null);
+
+  /* Fallback triggers only if video fails or times out */
+  const [useNightFallback, setUseNightFallback] = useState(false);
+  const [useDayFallback, setUseDayFallback] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -64,41 +74,57 @@ export default function Hero() {
         style={backdropStyle}
         className="absolute inset-0 -z-10 overflow-hidden pointer-events-none transform-gpu will-change-transform"
       >
-        {/* Night Layer (Image + Scrim + Seam Blend) */}
-        <div aria-hidden="true" className="hero-layer theme-night-only">
-          <img
-            src="/hero-bg.jpg"
-            alt=""
-            fetchPriority="high"
-            decoding="async"
-            className="hero-media"
-          />
-          <div className="hero-scrim-night pointer-events-none absolute inset-0" />
+        {/* Night Layer (Pure Seamless Infinite Video + Scrim) */}
+        <div aria-hidden="true" className="hero-layer theme-night-only bg-[#080B14]">
+          {useNightFallback ? (
+            <Image
+              src={HERO_POSTER_NIGHT}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-700 ease-out opacity-100"
+            />
+          ) : (
+            <SeamlessHeroVideo
+              src={HERO_VIDEO_NIGHT}
+              crossfadeDuration={1.4}
+              className="hero-media z-0"
+              onPlaying={onVideoReady}
+              onError={() => {
+                setUseNightFallback(true);
+                onVideoReady?.();
+              }}
+            />
+          )}
+          <div className="hero-scrim-night pointer-events-none absolute inset-0 z-[3]" />
         </div>
 
-        {/* Day Layer (Image + Scrim + Seam Blend) */}
-        <div aria-hidden="true" className="hero-layer theme-day-only">
-          <img
-            src="/hero-bg-day.jpg"
-            alt=""
-            decoding="async"
-            className="hero-media"
-          />
-          <div className="hero-scrim-day pointer-events-none absolute inset-0" />
+        {/* Day Layer (Pure Seamless Infinite Day Video + Scrim) */}
+        <div aria-hidden="true" className="hero-layer theme-day-only bg-[#F5F8FC]">
+          {useDayFallback ? (
+            <Image
+              src={HERO_POSTER_DAY}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-700 ease-out opacity-100"
+            />
+          ) : (
+            <SeamlessHeroVideo
+              src={HERO_VIDEO_DAY}
+              crossfadeDuration={1.4}
+              className="hero-media z-0"
+              onPlaying={onVideoReady}
+              onError={() => {
+                setUseDayFallback(true);
+                onVideoReady?.();
+              }}
+            />
+          )}
+          <div className="hero-scrim-day pointer-events-none absolute inset-0 z-[3]" />
         </div>
-
-        {HERO_VIDEO && (
-          <video
-            src={HERO_VIDEO}
-            poster="/hero-bg.jpg"
-            autoPlay
-            muted
-            loop
-            playsInline
-            aria-hidden="true"
-            className="hero-media"
-          />
-        )}
       </motion.div>
 
       {/* ── Copy (Hot Air Balloon Buoyant Ascent) ─────────────────────────── */}
@@ -107,7 +133,7 @@ export default function Hero() {
         style={copyStyle}
       >
         <div className="max-w-[46rem]">
-          <div className="animate-rise-in flex items-center gap-4" style={{ animationDelay: '80ms' }}>
+          <div className="animate-fade-rise flex items-center gap-4">
             <span className="t-label text-aurora font-bold drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
               A travel atlas with no star ratings
             </span>
@@ -115,35 +141,38 @@ export default function Hero() {
           </div>
 
           <h1
-            className="t-display animate-rise-in mt-7 text-balance text-foreground drop-shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
-            style={{ animationDelay: '180ms' }}
+            className="t-display animate-fade-rise mt-7 text-balance text-foreground leading-[1.08] tracking-[-0.015em] drop-shadow-[0_4px_24px_rgba(0,0,0,0.18)]"
           >
-            Somewhere in here is the trip you&rsquo;ll still be describing in ten years.
+            <span className="font-serif italic font-normal text-[#0B4F52] dark:text-[#2DD4BF] drop-shadow-[0_2px_14px_rgba(11,79,82,0.35)]">
+              Somewhere
+            </span>{' '}
+            <span className="font-normal text-foreground/95">in here is the trip</span>{' '}
+            <span className="font-normal text-foreground/80">you&rsquo;ll still be describing</span>{' '}
+            <span className="font-serif italic font-medium text-[#0B4F52] dark:text-aurora">
+              in ten years.
+            </span>
           </h1>
 
           <p
-            className="t-lead animate-rise-in mt-7 max-w-xl text-foreground/90 font-medium"
-            style={{ animationDelay: '300ms' }}
+            className="t-lead animate-fade-rise-delay mt-6 max-w-xl text-foreground/90 font-normal leading-relaxed text-base sm:text-lg drop-shadow-[0_1px_8px_rgba(0,0,0,0.1)]"
           >
-            First-hand accounts from 120 countries — what people saw, what it cost, and
-            what they&rsquo;d do differently.
+            First-hand accounts from <strong className="font-semibold text-foreground">120 countries</strong> — what people saw, what it cost, and what they&rsquo;d do differently.
           </p>
 
           <div
-            className="animate-rise-in mt-10 flex flex-wrap items-center gap-3"
-            style={{ animationDelay: '400ms' }}
+            className="animate-fade-rise-delay-2 mt-9 flex flex-wrap items-center gap-3.5"
           >
             <Link
               href="#explore"
               onClick={(e) => smoothScrollTo('#explore', e)}
-              className="lift group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover shadow-md hover:scale-105 transition-all duration-300"
+              className="lift group inline-flex items-center gap-2.5 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover shadow-md hover:scale-[1.02] transition-all duration-300"
             >
-              Start with a feeling
+              <span>Start with a feeling</span>
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
             <Link
               href="/signup"
-              className="inline-flex items-center gap-2 rounded-full glass px-6 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:text-aurora hover:border-aurora/40 hover:scale-105 shadow-sm"
+              className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 backdrop-blur-md px-6 py-3 text-sm font-medium text-foreground transition-all duration-300 hover:border-white/45 hover:bg-white/20 hover:scale-[1.02] shadow-sm"
             >
               Start your own atlas
             </Link>

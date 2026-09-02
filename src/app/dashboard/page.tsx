@@ -472,7 +472,7 @@ export default function UserDashboard() {
             <div className="flex-1 text-center md:text-left">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-center md:justify-start">
                 <span className="t-label text-aurora text-xs">{greeting},</span>
-                <span className="text-xs text-muted-foreground font-mono">Passport #AA-2026-904</span>
+                <span className="text-xs text-muted-foreground">Passport #AA-2026-904</span>
               </div>
               <h1 className="font-serif text-3xl sm:text-4xl font-normal text-foreground mt-1">
                 {userPrefs?.name || authUser?.name || 'Fellow Traveler'}
@@ -497,7 +497,7 @@ export default function UserDashboard() {
                   <Award className="w-3.5 h-3.5 text-violet" />
                   {currentUser.badges.length} Badges Earned
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card border border-border text-muted-foreground font-mono">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card border border-border text-muted-foreground">
                   <Target className="w-3.5 h-3.5 text-rose" />
                   Rank #142 (Top 5%)
                 </span>
@@ -558,7 +558,7 @@ export default function UserDashboard() {
                   <div className="w-10 h-10 rounded-xl bg-aurora/15 border border-aurora/30 text-aurora flex items-center justify-center">
                     <Icon className="w-5 h-5" />
                   </div>
-                  <span className="text-[11px] font-mono text-aurora bg-aurora/10 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] text-aurora bg-aurora/10 px-2 py-0.5 rounded-full">
                     {stat.trend}
                   </span>
                 </div>
@@ -600,7 +600,7 @@ export default function UserDashboard() {
                   >
                     <Icon className="w-3.5 h-3.5" />
                     <span>{tab.label}</span>
-                    <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${isActive ? 'bg-aurora/20 text-aurora' : 'bg-muted text-muted-foreground'}`}>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-aurora/20 text-aurora' : 'bg-muted text-muted-foreground'}`}>
                       {tab.count}
                     </span>
                   </button>
@@ -640,7 +640,7 @@ export default function UserDashboard() {
                             <MapPin className="w-3.5 h-3.5 text-aurora" />
                             {pin.country}
                           </h2>
-                          <span className="text-[11px] font-mono text-muted-foreground">{pin.date}</span>
+                          <span className="text-[11px] text-muted-foreground">{pin.date}</span>
                         </div>
                       </div>
                       <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
@@ -691,12 +691,12 @@ export default function UserDashboard() {
                           <span className="t-label text-aurora text-[11px]">{trip.destination}</span>
                           <h3 className="font-serif text-xl font-normal text-foreground mt-0.5">{trip.title}</h3>
                         </div>
-                        <span className="text-xs font-mono font-bold text-foreground bg-card border border-border px-2.5 py-1 rounded-full">
+                        <span className="text-xs font-bold text-foreground bg-card border border-border px-2.5 py-1 rounded-full">
                           ₹{Number(trip.budgetINR || trip.budgetUSD * 83 || 50000).toLocaleString('en-IN')}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5 text-aurora" />
                           {trip.startDate || 'Upcoming'}
@@ -748,7 +748,7 @@ export default function UserDashboard() {
                   <h4 className="text-xs font-semibold text-foreground">{badge.name}</h4>
                   <p className="text-[10px] text-muted-foreground mt-1">{badge.description}</p>
                   {badge.earned && (
-                    <span className="inline-block font-mono text-[10px] text-aurora mt-2 bg-aurora/10 px-2 py-0.5 rounded-full">
+                    <span className="inline-block text-[10px] text-aurora mt-2 bg-aurora/10 px-2 py-0.5 rounded-full">
                       Earned {badge.earnedDate || '2026'}
                     </span>
                   )}
@@ -782,18 +782,18 @@ export default function UserDashboard() {
                         className="w-full h-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-[1.04]"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent pointer-events-none" />
-                      <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full bg-black/60 border border-white/20 text-white text-[11px] font-mono flex items-center gap-1 backdrop-blur-md">
+                      <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full bg-black/60 border border-white/20 text-white text-[11px] flex items-center gap-1 backdrop-blur-md">
                         <Star className="w-3 h-3 text-aurora fill-aurora" />
                         {dest.rating}
                       </div>
-                      <div className="absolute bottom-2 left-3 text-[10px] font-mono text-white/90">
+                      <div className="absolute bottom-2 left-3 text-[10px] text-white/90">
                         📍 {dest.country}
                       </div>
                     </div>
 
                     <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                       <div>
-                        <span className="t-label text-aurora text-[10px] uppercase font-mono">{dest.region}</span>
+                        <span className="t-label text-aurora text-[10px] uppercase">{dest.region}</span>
                         <h4 className="font-serif text-lg font-normal text-foreground mt-0.5">{dest.name}</h4>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{dest.description}</p>
                       </div>
@@ -879,7 +879,7 @@ export default function UserDashboard() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Place / Landmark
                   </label>
                   <div className="relative">
@@ -897,7 +897,7 @@ export default function UserDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Your Memory Note
                   </label>
                   <textarea
@@ -910,7 +910,7 @@ export default function UserDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                     Pin Emoji
                   </label>
                   <div className="flex gap-2 flex-wrap">
@@ -932,7 +932,7 @@ export default function UserDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                     Travel Mood
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -1039,7 +1039,7 @@ export default function UserDashboard() {
                 {/* Left Column: Natural Shape Avatar / Photo Preview (5 cols on md/lg) */}
                 <div className="md:col-span-5 space-y-4">
                   <div className="space-y-1">
-                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground">
+                    <label className="block text-xs uppercase font-bold tracking-wider text-muted-foreground">
                       Profile Photograph
                     </label>
                     <p className="text-[11px] text-muted-foreground">
@@ -1115,7 +1115,7 @@ export default function UserDashboard() {
                 {/* Right Column: Traveler Details (7 cols on md/lg) */}
                 <div className="md:col-span-7 space-y-4">
                   <div>
-                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground mb-1.5">
+                    <label className="block text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1.5">
                       Display Name
                     </label>
                     <Input
@@ -1127,7 +1127,7 @@ export default function UserDashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground mb-1.5">
+                    <label className="block text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1.5">
                       Travel Bio / Motto
                     </label>
                     <textarea
@@ -1140,7 +1140,7 @@ export default function UserDashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground mb-2">
+                    <label className="block text-xs uppercase font-bold tracking-wider text-muted-foreground mb-2">
                       Travel Styles
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -1163,7 +1163,7 @@ export default function UserDashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground mb-1.5">
+                    <label className="block text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1.5">
                       Dream Destinations
                     </label>
                     <Input
@@ -1175,7 +1175,7 @@ export default function UserDashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1">
+                    <label className="block text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1">
                       <span>📍 Default Departure City</span>
                       <span className="text-[10px] text-aurora normal-case">(For AI Location Budgeting)</span>
                     </label>

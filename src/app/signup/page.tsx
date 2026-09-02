@@ -377,7 +377,7 @@ function SignUpContent() {
                 <span className={`w-2 h-2 rounded-full transition-all duration-300 ${step >= 1 ? 'bg-aurora shadow-aurora scale-110' : 'bg-muted-foreground/30'}`} />
                 <span className={`w-2 h-2 rounded-full transition-all duration-300 ${step >= 2 ? 'bg-aurora shadow-aurora scale-110' : 'bg-muted-foreground/30'}`} />
                 <span className={`w-2 h-2 rounded-full transition-all duration-300 ${step === 3 ? 'bg-aurora shadow-aurora scale-110' : 'bg-muted-foreground/30'}`} />
-                <span className="text-[10px] font-mono text-muted-foreground ml-1">
+                <span className="text-[10px] text-muted-foreground ml-1">
                   {step}/3
                 </span>
               </div>
@@ -618,7 +618,7 @@ function SignUpContent() {
                     onChange={(e) => handleOtpChange(i, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(i, e)}
                     onPaste={handleOtpPaste}
-                    className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-mono font-bold rounded-xl bg-card/80 border border-border text-foreground focus:border-aurora focus:ring-2 focus:ring-aurora/20 focus:scale-105 outline-none transition-all duration-200"
+                    className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold rounded-xl bg-card/80 border border-border text-foreground focus:border-aurora focus:ring-2 focus:ring-aurora/20 focus:scale-105 outline-none transition-all duration-200"
                   />
                 ))}
               </div>
@@ -686,7 +686,7 @@ function SignUpContent() {
           <div className="pt-2">
             <div className="flex items-center gap-3 mb-3">
               <div className="flex-1 h-px bg-border/80" />
-              <span className="text-[11px] text-muted-foreground font-mono">ALREADY REGISTERED?</span>
+              <span className="text-[11px] text-muted-foreground">ALREADY REGISTERED?</span>
               <div className="flex-1 h-px bg-border/80" />
             </div>
 
@@ -727,7 +727,7 @@ function SignUpContent() {
                   {activeStory.location} · {activeStory.country}
                 </span>
               </div>
-              <span className="text-[10px] font-mono whitespace-nowrap px-2.5 py-0.5 rounded-full text-white/90 bg-black/40 backdrop-blur-md ring-1 ring-white/10">
+              <span className="text-[10px] whitespace-nowrap px-2.5 py-0.5 rounded-full text-white/90 bg-black/40 backdrop-blur-md ring-1 ring-white/10">
                 {activeStory.coords}
               </span>
             </div>

@@ -1,12 +1,10 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { useScroll, useMotionValueEvent } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useMotionValueEvent, useTransform } from 'framer-motion';
+import { MapPin } from 'lucide-react';
 
-/* ============================================================================
-   The passage — the page's one cinematic set-piece.
-   Four accounts share one frame with silky-smooth concurrent cross-fading.
-   ========================================================================== */
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 const VIDEOS = (process.env.NEXT_PUBLIC_PASSAGE_VIDEOS ?? '')
   .split(',')
@@ -67,154 +65,150 @@ const TOTAL = ACCOUNTS.length;
 export default function Passage() {
   const ref = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
-  const [progressVal, setProgressVal] = useState(0);
 
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start start', 'end end'],
   });
 
-  const updateFromProgress = useCallback((latest: number) => {
+  // Switch story index when crossing segment threshold
+  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
     const clamped = Math.max(0, Math.min(0.9999, latest));
-    setProgressVal(clamped);
-    // Smooth, stable segmentation giving generous 185svh scroll runway per story
     const nextIndex = Math.min(TOTAL - 1, Math.max(0, Math.floor(clamped * TOTAL)));
     setActive((prev) => (prev !== nextIndex ? nextIndex : prev));
-  }, []);
-
-  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
-    updateFromProgress(latest);
   });
 
   useEffect(() => {
-    updateFromProgress(scrollYProgress.get());
-  }, [scrollYProgress, updateFromProgress]);
+    const initial = scrollYProgress.get();
+    const clamped = Math.max(0, Math.min(0.9999, initial));
+    const nextIndex = Math.min(TOTAL - 1, Math.max(0, Math.floor(clamped * TOTAL)));
+    setActive(nextIndex);
+  }, [scrollYProgress]);
 
-  const goTo = useCallback(
-    (index: number) => {
-      const el = ref.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const top = window.scrollY + rect.top;
-      const travel = el.offsetHeight - window.innerHeight;
-      const targetScroll = top + travel * ((index + 0.5) / TOTAL);
-      window.scrollTo({
-        top: targetScroll,
-        behavior: 'smooth',
-      });
-    },
-    [],
-  );
+  // Smooth GPU Progress Bars for each segment
+  const bar0 = useTransform(scrollYProgress, [0, 0.25], ['0%', '100%'], { clamp: true });
+  const bar1 = useTransform(scrollYProgress, [0.25, 0.50], ['0%', '100%'], { clamp: true });
+  const bar2 = useTransform(scrollYProgress, [0.50, 0.75], ['0%', '100%'], { clamp: true });
+  const bar3 = useTransform(scrollYProgress, [0.75, 1.0], ['0%', '100%'], { clamp: true });
+  const progressBars = [bar0, bar1, bar2, bar3];
+
+  const goTo = useCallback((index: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    const travel = el.offsetHeight - window.innerHeight;
+    const targetScroll = top + travel * ((index + 0.15) / TOTAL);
+    window.scrollTo({
+      top: targetScroll,
+      behavior: 'smooth',
+    });
+  }, []);
+
+  const nextStory = () => {
+    goTo((active + 1) % TOTAL);
+  };
+
+  const prevStory = () => {
+    goTo((active - 1 + TOTAL) % TOTAL);
+  };
+
+  const currentAccount = ACCOUNTS[active] ?? ACCOUNTS[0];
+  const currentVideo = VIDEOS[active];
 
   return (
-    <section ref={ref} id="passage" className="hairline-t relative h-[750svh]">
-      <div className="sticky top-0 h-[100svh] pt-16 pb-6 lg:pb-10 short:pb-3 flex flex-col justify-between">
-        <div className="shell flex h-full flex-col justify-between gap-4 lg:gap-8 short:gap-2">
-          {/* Eyebrow Header */}
-          <div className="flex shrink-0 items-center gap-4">
-            <h2 className="t-label shrink-0 text-aurora uppercase tracking-widest text-xs">
-              Nobody gave these places a score
-            </h2>
-            <span className="h-px flex-1 bg-border" />
+    <section ref={ref} id="passage" className="relative h-[485svh] bg-background text-foreground">
+      {/* ── Sticky Viewport Window (Centered & Balanced Layout) ───────────── */}
+      <div className="sticky top-0 h-[100svh] w-full overflow-hidden flex items-center justify-center pt-20 pb-10">
+        <div className="shell flex flex-col justify-center gap-6 sm:gap-8 w-full max-w-7xl">
+          {/* Eyebrow Header (Sits with clean, natural proximity to the quote) */}
+          <div className="flex shrink-0 items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="h-2 w-2 rounded-full bg-aurora animate-pulse" />
+              <h2 className="t-label text-aurora uppercase tracking-[0.22em] text-xs font-semibold">
+                Nobody gave these places a score
+              </h2>
+            </div>
           </div>
 
           {/* Core Content Grid */}
-          <div className="flex min-h-0 flex-1 flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-14 short:gap-y-3 items-center">
-            {/* ── Left Column: Words with Smooth Parallel Fade (Zero Blank Frames) ──────── */}
-            <div className="relative w-full min-h-[260px] sm:min-h-[300px] flex items-center">
-              {ACCOUNTS.map((account, i) => {
-                const isActive = i === active;
-                return (
-                  <div
-                    key={account.id}
-                    className={`w-full transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                      isActive
-                        ? 'opacity-100 translate-y-0 relative pointer-events-auto z-10'
-                        : 'opacity-0 translate-y-3 absolute inset-x-0 pointer-events-none z-0'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-aurora animate-pulse" aria-hidden="true" />
-                      <p className="t-data font-mono text-xs sm:text-sm tracking-wider text-muted-foreground">
-                        {account.coord}
-                      </p>
-                    </div>
-
-                    <blockquote className="mt-4 font-serif text-2xl sm:text-3xl lg:text-4xl xl:text-[2.6rem] font-normal leading-[1.2] text-foreground text-balance">
-                      <span aria-hidden="true" className="text-aurora mr-1 font-serif">&ldquo;</span>
-                      {account.quote}
-                      <span aria-hidden="true" className="text-aurora ml-1 font-serif">&rdquo;</span>
-                    </blockquote>
-
-                    <div className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      <span className="t-label text-base sm:text-lg font-semibold tracking-tight text-foreground">
-                        {account.place}
-                      </span>
-                      <span className="text-sm text-muted-foreground">· {account.country}</span>
-                    </div>
-
-                    <p className="t-data mt-2 text-xs sm:text-sm text-muted-foreground font-mono">
-                      {account.meta}
-                    </p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center min-h-[360px] lg:min-h-[420px]">
+            {/* ── Left Column: Words with AnimatePresence (Zero Overlapping Text) ─ */}
+            <div className="lg:col-span-6 relative min-h-[240px] sm:min-h-[280px] flex flex-col justify-center">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentAccount.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -16 }}
+                  transition={{ duration: 0.35, ease: EASE }}
+                  className="w-full"
+                >
+                  <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+                    <MapPin className="w-3.5 h-3.5 text-aurora" />
+                    <span>{currentAccount.coord}</span>
                   </div>
-                );
-              })}
+
+                  <blockquote className="mt-4 font-serif text-2xl sm:text-3xl lg:text-4xl xl:text-[2.6rem] font-normal leading-[1.2] text-foreground text-balance">
+                    <span aria-hidden="true" className="text-aurora mr-1 font-serif">&ldquo;</span>
+                    {currentAccount.quote}
+                    <span aria-hidden="true" className="text-aurora ml-1 font-serif">&rdquo;</span>
+                  </blockquote>
+
+                  <div className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">
+                      {currentAccount.place}
+                    </span>
+                    <span className="text-sm text-muted-foreground">&bull; {currentAccount.country}</span>
+                  </div>
+
+                  <p className="mt-2 text-xs sm:text-sm text-muted-foreground font-mono">
+                    {currentAccount.meta}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
             </div>
 
-            {/* ── Right Column: Photographic Frame with Smooth Hardware Cross-Fade ───── */}
-            <div className="relative w-full h-[280px] sm:h-[360px] lg:h-[480px] xl:h-[540px] max-h-[62svh] min-h-0 flex-1 overflow-hidden rounded-3xl border border-border bg-card/60 shadow-cast shorter:hidden">
-              {ACCOUNTS.map((account, i) => {
-                const isActive = i === active;
-                const videoSrc = VIDEOS[i];
-                return (
-                  <div
-                    key={account.id}
-                    className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                      isActive
-                        ? 'opacity-100 scale-100 z-10'
-                        : 'opacity-0 scale-[1.03] pointer-events-none z-0'
-                    }`}
-                  >
-                    <img
-                      src={account.image}
-                      alt={`${account.place}, ${account.country}`}
-                      decoding="async"
-                      loading="eager"
-                      className="h-full w-full object-cover"
-                    />
-                    {/* Subtle dark vignette overlay for depth */}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
+            {/* ── Right Column: Photographic Frame with Smooth Cross-Fade (No Border) ── */}
+            <div className="lg:col-span-6 relative h-[280px] sm:h-[360px] lg:h-[480px] xl:h-[520px] max-h-[62svh] min-h-0 flex-1 overflow-hidden rounded-3xl bg-card shadow-2xl">
+              <AnimatePresence mode="popLayout">
+                <motion.div
+                  key={currentAccount.id}
+                  initial={{ opacity: 0, scale: 1.03 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.99 }}
+                  transition={{ duration: 0.5, ease: EASE }}
+                  className="absolute inset-0"
+                >
+                  <img
+                    src={currentAccount.image}
+                    alt={`${currentAccount.place}, ${currentAccount.country}`}
+                    decoding="async"
+                    loading="eager"
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
 
-                    {videoSrc && isActive && (
-                      <video
-                        src={videoSrc}
-                        poster={account.image}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="metadata"
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    )}
-                  </div>
-                );
-              })}
+                  {currentVideo && (
+                    <video
+                      src={currentVideo}
+                      poster={currentAccount.image}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
 
-          {/* ── Navigation Rail ───────────────────────────────────────────── */}
+          {/* ── Navigation Progress Rail at Bottom (Scroll Scrubbed) ───────── */}
           <nav aria-label="Accounts in this passage" className="shrink-0 pt-2 pb-1">
-            <ul className="grid grid-cols-4 gap-3 sm:gap-6">
+            <ul className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
               {ACCOUNTS.map((account, i) => {
-                const segStart = i / TOTAL;
-                const segEnd = (i + 1) / TOTAL;
-                let fillPct = 0;
-                if (progressVal >= segEnd) {
-                  fillPct = 1;
-                } else if (progressVal > segStart) {
-                  fillPct = (progressVal - segStart) / (segEnd - segStart);
-                }
                 const isCurrent = active === i;
 
                 return (
@@ -223,17 +217,20 @@ export default function Passage() {
                       type="button"
                       onClick={() => goTo(i)}
                       aria-current={isCurrent ? 'true' : undefined}
-                      className="group block w-full text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-aurora rounded-sm"
+                      className="group block w-full text-left focus:outline-none cursor-pointer"
                     >
-                      <div className="relative h-1 w-full overflow-hidden rounded-full bg-border transition-colors group-hover:bg-muted">
-                        <div
-                          className="absolute inset-y-0 left-0 bg-aurora rounded-full transition-all duration-100 ease-linear"
-                          style={{ width: `${Math.max(0, Math.min(1, fillPct)) * 100}%` }}
+                      {/* Progress Bar Line Driven by Scroll Progress */}
+                      <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-border transition-colors group-hover:bg-muted">
+                        <motion.div
+                          style={{ width: progressBars[i] }}
+                          className="h-full bg-aurora rounded-full transform-gpu"
                         />
                       </div>
+
+                      {/* Place Label & Index */}
                       <div className="mt-3 flex items-center justify-between">
                         <span
-                          className={`t-label block truncate text-xs sm:text-sm transition-colors duration-200 ${
+                          className={`block truncate text-xs sm:text-sm transition-colors duration-200 ${
                             isCurrent
                               ? 'text-foreground font-semibold'
                               : 'text-muted-foreground group-hover:text-foreground'
@@ -241,7 +238,11 @@ export default function Passage() {
                         >
                           {account.place}
                         </span>
-                        <span className={`text-[10px] hidden sm:inline-block font-mono ${isCurrent ? 'text-aurora font-medium' : 'text-muted-foreground/50'}`}>
+                        <span
+                          className={`text-xs font-mono font-medium transition-colors ${
+                            isCurrent ? 'text-aurora' : 'text-muted-foreground/40'
+                          }`}
+                        >
                           0{i + 1}
                         </span>
                       </div>

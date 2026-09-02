@@ -25,7 +25,7 @@ export default function TermsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet/10 border border-violet/25 text-violet text-xs font-mono font-semibold tracking-wider uppercase mb-6"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet/10 border border-violet/25 text-violet text-xs font-semibold tracking-wider uppercase mb-6"
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Wanderer Agreement</span>
@@ -41,7 +41,7 @@ export default function TermsPage() {
             <span className="font-serif-italic text-violet">Usage Agreement.</span>
           </motion.h1>
 
-          <p className="text-xs font-mono text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Effective Date: January 1, 2026 · Version 2.4
           </p>
         </div>

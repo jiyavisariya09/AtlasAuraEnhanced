@@ -22,7 +22,7 @@ export default function GlobePage() {
       fallback={
         <div className="w-screen h-screen bg-[#050814] flex flex-col items-center justify-center text-white space-y-3">
           <div className="w-12 h-12 rounded-full border-2 border-aurora border-t-transparent animate-spin" />
-          <p className="text-xs font-mono text-aurora animate-pulse">Initializing 3D Orbital Earth...</p>
+          <p className="text-xs text-aurora animate-pulse">Initializing 3D Orbital Earth...</p>
         </div>
       }
     >

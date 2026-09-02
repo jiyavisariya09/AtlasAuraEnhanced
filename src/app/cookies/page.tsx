@@ -25,7 +25,7 @@ export default function CookiesPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aurora/10 border border-aurora/25 text-aurora text-xs font-mono font-semibold tracking-wider uppercase mb-6"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aurora/10 border border-aurora/25 text-aurora text-xs font-semibold tracking-wider uppercase mb-6"
           >
             <Cookie className="w-3.5 h-3.5" />
             <span>Local Storage & Sensory Cache</span>
@@ -41,7 +41,7 @@ export default function CookiesPage() {
             <span className="font-serif-italic text-aurora">Policy.</span>
           </motion.h1>
 
-          <p className="text-xs font-mono text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Effective Date: January 1, 2026 · Version 2.4
           </p>
         </div>
@@ -67,7 +67,7 @@ export default function CookiesPage() {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-4 h-4 text-aurora shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-foreground text-xs font-mono block">atlasaura-theme</strong>
+                  <strong className="text-foreground text-xs block">atlasaura-theme</strong>
                   <span className="text-xs text-muted-foreground">Stores your preference for Day (Light) or Night (Dark) mode.</span>
                 </div>
               </div>
@@ -75,7 +75,7 @@ export default function CookiesPage() {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-4 h-4 text-aurora shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-foreground text-xs font-mono block">atlasaura-currency</strong>
+                  <strong className="text-foreground text-xs block">atlasaura-currency</strong>
                   <span className="text-xs text-muted-foreground">Remembers your preferred currency conversion benchmark (USD, INR, EUR, etc.).</span>
                 </div>
               </div>
@@ -83,7 +83,7 @@ export default function CookiesPage() {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-4 h-4 text-aurora shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-foreground text-xs font-mono block">atlasaura_auth_user</strong>
+                  <strong className="text-foreground text-xs block">atlasaura_auth_user</strong>
                   <span className="text-xs text-muted-foreground">Maintains your authenticated session securely on your device.</span>
                 </div>
               </div>

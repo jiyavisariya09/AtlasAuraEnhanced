@@ -249,7 +249,7 @@ export default function WelcomePage() {
                 <Icon className="w-8 h-8" />
               </motion.div>
 
-              <span className="text-[11px] font-mono font-bold tracking-[0.2em] uppercase text-amber-600 dark:text-aurora drop-shadow-sm">
+              <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-amber-600 dark:text-aurora drop-shadow-sm">
                 {currentSlide.tag}
               </span>
 
@@ -398,7 +398,7 @@ export default function WelcomePage() {
                                     <span className="text-xs font-semibold">{tier.label}</span>
                                     <IndianRupee className={`w-3.5 h-3.5 ${isSelected ? 'text-aurora' : 'text-muted-foreground'}`} />
                                   </div>
-                                  <span className="text-[11px] text-muted-foreground font-mono">{tier.range}</span>
+                                  <span className="text-[11px] text-muted-foreground">{tier.range}</span>
                                 </button>
                               );
                             })}

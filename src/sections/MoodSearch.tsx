@@ -18,7 +18,7 @@ export default function MoodSearch() {
     : countries.filter(c => c.purposes.includes(selectedMood));
 
   return (
-    <section id="explore" className="hairline-t section-y relative isolate overflow-hidden cv-auto">
+    <section id="explore" className="section-y relative isolate overflow-hidden cv-auto">
       {/* Background Elements — Zero-cost GPU Gradient */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="aurora-wash absolute inset-0" />

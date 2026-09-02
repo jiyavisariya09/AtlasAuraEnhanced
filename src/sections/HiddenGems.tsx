@@ -251,7 +251,7 @@ export default function HiddenGems() {
   };
 
   return (
-    <section id="gems" className="hairline-t section-y relative isolate overflow-hidden cv-auto">
+    <section id="gems" className="section-y relative isolate overflow-hidden cv-auto">
       {/* Optimized Background Gradient (GPU friendly) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         <div className="aurora-wash absolute inset-0" />
@@ -361,10 +361,10 @@ export default function HiddenGems() {
             { value: '50K', label: 'Community Tips', icon: TreePine },
             { value: '98%', label: 'Verified', icon: Landmark },
           ].map((stat, i) => (
-            <div key={i} className="p-4 rounded-2xl glass text-center">
-              <stat.icon className="w-5 h-5 text-aurora mx-auto mb-2" />
-              <div className="t-data text-xl sm:text-2xl font-bold text-foreground">{stat.value}</div>
-              <div className="t-label text-xs mt-1 text-muted-foreground">{stat.label}</div>
+            <div key={i} className="p-5 rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm text-center shadow-sm">
+              <stat.icon className="w-5 h-5 text-aurora mx-auto mb-2.5" />
+              <div className="font-sans text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">{stat.value}</div>
+              <div className="text-[11px] mt-1 font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</div>
             </div>
           ))}
         </motion.div>

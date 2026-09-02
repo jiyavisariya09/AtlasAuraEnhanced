@@ -806,7 +806,7 @@ export default function ThreeGlobeExplorer({
       <header className="absolute top-4 left-4 right-4 z-[400] flex flex-col md:flex-row items-center justify-between gap-3 pointer-events-none">
         {/* Left: Brand Badge & Mode Switcher */}
         <div className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-[#090d1a]/95 border border-white/20 backdrop-blur-xl shadow-2xl pointer-events-auto">
-          <Link href="/destinations" className="flex items-center gap-1.5 text-xs font-mono text-white/80 hover:text-aurora transition-colors px-2 py-1">
+          <Link href="/destinations" className="flex items-center gap-1.5 text-xs text-white/80 hover:text-aurora transition-colors px-2 py-1">
             <ChevronLeft className="w-4 h-4" />
             <span>Sanctuaries</span>
           </Link>
@@ -855,13 +855,13 @@ export default function ThreeGlobeExplorer({
                 setSearchOrCoordInput(e.target.value);
                 if (errorMessage) setErrorMessage(null);
               }}
-              className="w-full h-11 pl-10 pr-4 rounded-2xl bg-[#090d1a]/95 border border-white/20 text-white placeholder-white/40 text-xs font-mono backdrop-blur-xl focus:outline-none focus:border-aurora shadow-2xl"
+              className="w-full h-11 pl-10 pr-4 rounded-2xl bg-[#090d1a]/95 border border-white/20 text-white placeholder-white/40 text-xs backdrop-blur-xl focus:outline-none focus:border-aurora shadow-2xl"
             />
           </div>
 
           <button
             type="submit"
-            className="h-11 px-4 rounded-2xl bg-aurora hover:bg-aurora-hover text-ink-void font-bold text-xs font-mono flex items-center gap-1.5 transition-all active:scale-95 shadow-lg"
+            className="h-11 px-4 rounded-2xl bg-aurora hover:bg-aurora-hover text-ink-void font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-lg"
           >
             <Navigation className="w-3.5 h-3.5" />
             <span>Teleport</span>
@@ -871,7 +871,7 @@ export default function ThreeGlobeExplorer({
         {/* Right Status Badges */}
         <div className="hidden md:flex items-center gap-2 pointer-events-auto">
           {/* Coordinates readout */}
-          <div className="px-3.5 py-2 rounded-2xl bg-[#090d1a]/95 border border-white/20 backdrop-blur-xl text-xs font-mono shadow-2xl flex items-center gap-2">
+          <div className="px-3.5 py-2 rounded-2xl bg-[#090d1a]/95 border border-white/20 backdrop-blur-xl text-xs shadow-2xl flex items-center gap-2">
             <Crosshair className="w-3.5 h-3.5 text-aurora" />
             <span className="text-white/90">
               {targetCoords.lat.toFixed(4)}° N, {targetCoords.lng.toFixed(4)}° E
@@ -879,7 +879,7 @@ export default function ThreeGlobeExplorer({
           </div>
 
           {/* Departure distance */}
-          <div className="px-3.5 py-2 rounded-2xl bg-[#090d1a]/95 border border-white/20 backdrop-blur-xl text-xs font-mono shadow-2xl flex items-center gap-1.5">
+          <div className="px-3.5 py-2 rounded-2xl bg-[#090d1a]/95 border border-white/20 backdrop-blur-xl text-xs shadow-2xl flex items-center gap-1.5">
             <Plane className="w-3.5 h-3.5 text-orchid" />
             <span className="text-white/70">From {userOrigin.split(',')[0]}:</span>
             <strong className="text-white font-bold">{flightDistanceKm.toLocaleString()} km</strong>
@@ -894,7 +894,7 @@ export default function ThreeGlobeExplorer({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-20 left-1/2 -translate-x-1/2 z-[410] px-4 py-2 rounded-xl bg-rose-500/90 border border-rose-400 text-white text-xs font-mono flex items-center gap-2 shadow-2xl pointer-events-auto"
+            className="absolute top-20 left-1/2 -translate-x-1/2 z-[410] px-4 py-2 rounded-xl bg-rose-500/90 border border-rose-400 text-white text-xs flex items-center gap-2 shadow-2xl pointer-events-auto"
           >
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMessage}</span>
@@ -923,7 +923,7 @@ export default function ThreeGlobeExplorer({
           <div className="absolute bottom-6 right-6 z-30 flex items-center gap-2 pointer-events-auto">
             <button
               onClick={() => setAutoRotate((prev) => !prev)}
-              className="p-3 rounded-2xl bg-[#090d1a]/90 border border-white/20 backdrop-blur-xl text-white hover:border-aurora hover:text-aurora transition-colors shadow-2xl flex items-center gap-2 text-xs font-mono"
+              className="p-3 rounded-2xl bg-[#090d1a]/90 border border-white/20 backdrop-blur-xl text-white hover:border-aurora hover:text-aurora transition-colors shadow-2xl flex items-center gap-2 text-xs"
             >
               {autoRotate ? <Pause className="w-4 h-4 text-aurora" /> : <Play className="w-4 h-4" />}
               <span>{autoRotate ? 'Pause Orbit' : 'Auto Orbit'}</span>
@@ -935,7 +935,7 @@ export default function ThreeGlobeExplorer({
                 targetPitchRef.current = targetCoords.lat * D2R * 0.75;
                 setGlobeZoom(1);
               }}
-              className="p-3 rounded-2xl bg-[#090d1a]/90 border border-white/20 backdrop-blur-xl text-white hover:border-aurora hover:text-aurora transition-colors shadow-2xl flex items-center gap-2 text-xs font-mono"
+              className="p-3 rounded-2xl bg-[#090d1a]/90 border border-white/20 backdrop-blur-xl text-white hover:border-aurora hover:text-aurora transition-colors shadow-2xl flex items-center gap-2 text-xs"
               title="Reset View to Target"
             >
               <RotateCcw className="w-4 h-4" />
@@ -953,7 +953,7 @@ export default function ThreeGlobeExplorer({
                   triggerId: Date.now(),
                 });
               }}
-              className="px-4 py-3 rounded-2xl bg-aurora hover:bg-aurora-hover text-ink-void font-bold transition-all shadow-2xl flex items-center gap-2 text-xs font-mono active:scale-95"
+              className="px-4 py-3 rounded-2xl bg-aurora hover:bg-aurora-hover text-ink-void font-bold transition-all shadow-2xl flex items-center gap-2 text-xs active:scale-95"
             >
               <Satellite className="w-4 h-4" />
               <span>Dive to Satellite Surface</span>
@@ -991,7 +991,7 @@ export default function ThreeGlobeExplorer({
                 icon={createTargetIcon(selectedDestination.name, false)}
               >
                 <Popup>
-                  <div className="p-2 text-slate-900 text-xs font-mono">
+                  <div className="p-2 text-slate-900 text-xs">
                     <strong className="block text-sm font-serif">{selectedDestination.name}</strong>
                     <p>{selectedDestination.country} · {selectedDestination.elevation}</p>
                     <p className="text-[10px] text-muted-foreground mt-1">Satellite Lock Active</p>
@@ -1007,7 +1007,7 @@ export default function ThreeGlobeExplorer({
                 icon={createTargetIcon(customLocationName || `${aiPlaceInfo.country.split('(')[0].trim()}`, true)}
               >
                 <Popup>
-                  <div className="p-2 text-slate-900 text-xs font-mono">
+                  <div className="p-2 text-slate-900 text-xs">
                     <strong className="block text-sm font-serif">{aiPlaceInfo.country}</strong>
                     <p>{targetCoords.lat.toFixed(4)}°, {targetCoords.lng.toFixed(4)}°</p>
                     <p className="text-[10px] text-muted-foreground mt-1">{aiPlaceInfo.terrainType}</p>
@@ -1020,7 +1020,7 @@ export default function ThreeGlobeExplorer({
       )}
 
       {/* ── Optical Zoom Telemetry Controls (Right Floating) ───────────────── */}
-      <div className="absolute top-24 right-4 sm:right-6 z-30 p-3.5 rounded-2xl bg-[#090d1a]/95 border border-white/20 backdrop-blur-xl text-xs font-mono shadow-2xl flex flex-col gap-2.5 pointer-events-auto">
+      <div className="absolute top-24 right-4 sm:right-6 z-30 p-3.5 rounded-2xl bg-[#090d1a]/95 border border-white/20 backdrop-blur-xl text-xs shadow-2xl flex flex-col gap-2.5 pointer-events-auto">
         <div className="flex items-center justify-between gap-3 text-[10px] text-white/60 uppercase font-bold">
           <span>Explore Level</span>
           <span className="text-aurora font-bold">{viewMode === 'globe' ? '3D Globe' : `${satelliteZoom}x`}</span>
@@ -1038,25 +1038,25 @@ export default function ThreeGlobeExplorer({
           {/* Preset Buttons */}
           <button
             onClick={() => setZoomPreset(3)}
-            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-mono transition-colors ${viewMode === 'globe' ? 'bg-aurora text-ink-void font-bold' : 'bg-white/10 text-white/80'}`}
+            className={`px-2.5 py-1.5 rounded-lg text-[10px] transition-colors ${viewMode === 'globe' ? 'bg-aurora text-ink-void font-bold' : 'bg-white/10 text-white/80'}`}
           >
             🌐 3D Globe
           </button>
           <button
             onClick={() => setZoomPreset(6)}
-            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-mono transition-colors ${viewMode === 'satellite' && satelliteZoom >= 5 && satelliteZoom <= 7 ? 'bg-aurora text-ink-void font-bold' : 'bg-white/10 text-white/80'}`}
+            className={`px-2.5 py-1.5 rounded-lg text-[10px] transition-colors ${viewMode === 'satellite' && satelliteZoom >= 5 && satelliteZoom <= 7 ? 'bg-aurora text-ink-void font-bold' : 'bg-white/10 text-white/80'}`}
           >
             Region
           </button>
           <button
             onClick={() => setZoomPreset(11)}
-            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-mono transition-colors ${viewMode === 'satellite' && satelliteZoom >= 8 && satelliteZoom <= 13 ? 'bg-aurora text-ink-void font-bold' : 'bg-white/10 text-white/80'}`}
+            className={`px-2.5 py-1.5 rounded-lg text-[10px] transition-colors ${viewMode === 'satellite' && satelliteZoom >= 8 && satelliteZoom <= 13 ? 'bg-aurora text-ink-void font-bold' : 'bg-white/10 text-white/80'}`}
           >
             Terrain
           </button>
           <button
             onClick={() => setZoomPreset(16)}
-            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-mono transition-colors ${viewMode === 'satellite' && satelliteZoom >= 14 ? 'bg-aurora text-ink-void font-bold' : 'bg-white/10 text-white/80'}`}
+            className={`px-2.5 py-1.5 rounded-lg text-[10px] transition-colors ${viewMode === 'satellite' && satelliteZoom >= 14 ? 'bg-aurora text-ink-void font-bold' : 'bg-white/10 text-white/80'}`}
           >
             Surface
           </button>
@@ -1085,14 +1085,14 @@ export default function ThreeGlobeExplorer({
           {/* Header Badge */}
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aurora/20 border border-aurora/40 text-aurora text-[10px] font-mono uppercase font-bold mb-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aurora/20 border border-aurora/40 text-aurora text-[10px] uppercase font-bold mb-2">
                 <Sparkles className="w-3 h-3" />
                 <span>{selectedDestination ? selectedDestination.region : 'AI Orbital Dossier'}</span>
               </div>
               <h2 className="font-serif text-2xl font-medium text-white tracking-tight">
                 {selectedDestination ? selectedDestination.name : aiPlaceInfo.country}
               </h2>
-              <p className="text-xs text-white/70 font-mono mt-0.5 flex items-center gap-1">
+              <p className="text-xs text-white/70 mt-0.5 flex items-center gap-1">
                 <MapPin className="w-3 h-3 text-aurora" /> 
                 {selectedDestination ? `${selectedDestination.country} · ${selectedDestination.elevation}` : `${aiPlaceInfo.elevation} · ${targetCoords.lat.toFixed(4)}°, ${targetCoords.lng.toFixed(4)}°`}
               </p>
@@ -1115,7 +1115,7 @@ export default function ThreeGlobeExplorer({
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#090d1a] via-transparent to-transparent" />
-              <div className="absolute bottom-2 left-3 text-[11px] font-mono text-white/90">
+              <div className="absolute bottom-2 left-3 text-[11px] text-white/90">
                 ⭐ {selectedDestination.rating} Explorer Score
               </div>
             </div>
@@ -1123,7 +1123,7 @@ export default function ThreeGlobeExplorer({
 
           {/* Place Description & Geography */}
           <div>
-            <span className="text-[10px] uppercase font-mono text-white/50 block font-bold mb-1">
+            <span className="text-[10px] uppercase text-white/50 block font-bold mb-1">
               {selectedDestination ? 'Overview' : 'AI Geographic & Terrain Telemetry'}
             </span>
             <p className="text-xs text-white/80 leading-relaxed font-normal">
@@ -1132,7 +1132,7 @@ export default function ThreeGlobeExplorer({
           </div>
 
           {/* Telemetry Stats Grid */}
-          <div className="grid grid-cols-2 gap-2 pt-1 text-xs font-mono">
+          <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
             <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
               <span className="text-[10px] uppercase text-white/50 block font-bold">Flight Distance</span>
               <span className="text-white font-bold text-sm mt-0.5 block">{flightDistanceKm.toLocaleString()} km</span>
@@ -1149,13 +1149,13 @@ export default function ThreeGlobeExplorer({
           {/* Cultural Lore & Flavor */}
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-xs space-y-2">
             <div>
-              <span className="text-[10px] uppercase text-aurora font-bold block font-mono">Cultural Lore & History</span>
+              <span className="text-[10px] uppercase text-aurora font-bold block">Cultural Lore & History</span>
               <p className="text-[11px] text-white/80 mt-0.5 leading-snug">
                 {selectedDestination ? selectedDestination.culture : aiPlaceInfo.culture}
               </p>
             </div>
             <div className="pt-2 border-t border-white/10">
-              <span className="text-[10px] uppercase text-orchid font-bold block font-mono">Authentic Local Flavor</span>
+              <span className="text-[10px] uppercase text-orchid font-bold block">Authentic Local Flavor</span>
               <p className="text-[11px] text-white/80 mt-0.5 leading-snug">
                 {selectedDestination ? selectedDestination.localDelicacy : aiPlaceInfo.localFlavor}
               </p>
@@ -1201,7 +1201,7 @@ export default function ThreeGlobeExplorer({
       {!dossierOpen && (
         <button
           onClick={() => setDossierOpen(true)}
-          className="absolute top-24 left-4 z-30 p-3 rounded-2xl bg-[#090d1a]/90 border border-white/20 text-white backdrop-blur-xl shadow-2xl flex items-center gap-2 text-xs font-mono font-bold hover:border-aurora hover:text-aurora pointer-events-auto"
+          className="absolute top-24 left-4 z-30 p-3 rounded-2xl bg-[#090d1a]/90 border border-white/20 text-white backdrop-blur-xl shadow-2xl flex items-center gap-2 text-xs font-bold hover:border-aurora hover:text-aurora pointer-events-auto"
         >
           <Maximize2 className="w-4 h-4 text-aurora" />
           <span>Open Dossier</span>
@@ -1225,14 +1225,14 @@ export default function ThreeGlobeExplorer({
               {/* Modal Header */}
               <div className="p-6 sm:p-8 border-b border-white/15 flex items-center justify-between">
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aurora/20 text-aurora text-[10px] font-mono uppercase font-bold mb-1">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aurora/20 text-aurora text-[10px] uppercase font-bold mb-1">
                     <Bot className="w-3.5 h-3.5" />
                     <span>Gemini AI Spatial Intelligence (Ready for Live Key)</span>
                   </div>
                   <h2 className="font-serif text-2xl sm:text-3xl font-medium tracking-tight text-white">
                     {aiPlaceInfo.country}
                   </h2>
-                  <p className="text-xs font-mono text-white/60 mt-0.5">
+                  <p className="text-xs text-white/60 mt-0.5">
                     Coordinates: {targetCoords.lat.toFixed(4)}° N, {targetCoords.lng.toFixed(4)}° E · Elevation: {aiPlaceInfo.elevation}
                   </p>
                 </div>
@@ -1248,13 +1248,13 @@ export default function ThreeGlobeExplorer({
               <div className="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1 text-xs">
                 {/* AI Terrain & Geography Dossier */}
                 <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                  <span className="text-xs font-mono uppercase font-bold text-aurora block">
+                  <span className="text-xs uppercase font-bold text-aurora block">
                     1. Geographic Anatomy & Terrain Classification
                   </span>
                   <p className="text-sm text-white/90 leading-relaxed">
                     {aiPlaceInfo.description}
                   </p>
-                  <div className="pt-2 flex flex-wrap gap-2 text-[11px] font-mono text-white/70">
+                  <div className="pt-2 flex flex-wrap gap-2 text-[11px] text-white/70">
                     <span className="px-2.5 py-1 rounded-lg bg-white/10">Terrain: {aiPlaceInfo.terrainType}</span>
                     <span className="px-2.5 py-1 rounded-lg bg-white/10">Peak Elevation: {aiPlaceInfo.elevation}</span>
                     <span className="px-2.5 py-1 rounded-lg bg-white/10">Optimal Season: {aiPlaceInfo.bestSeason}</span>
@@ -1263,7 +1263,7 @@ export default function ThreeGlobeExplorer({
 
                 {/* Cultural Context & Indigenous Lore */}
                 <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                  <span className="text-xs font-mono uppercase font-bold text-orchid block">
+                  <span className="text-xs uppercase font-bold text-orchid block">
                     2. Human Settlement & Cultural Lineage
                   </span>
                   <p className="text-sm text-white/90 leading-relaxed">
@@ -1277,19 +1277,19 @@ export default function ThreeGlobeExplorer({
                 {/* Travel Feasibility & Logistics */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
-                    <span className="text-[10px] font-mono uppercase text-white/50 block font-bold">Safety Index</span>
+                    <span className="text-[10px] uppercase text-white/50 block font-bold">Safety Index</span>
                     <span className="text-xl font-bold text-aurora mt-1 block">{aiPlaceInfo.safetyScore} / 100</span>
                     <span className="text-[10px] text-white/60">Low Hazard Territory</span>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
-                    <span className="text-[10px] font-mono uppercase text-white/50 block font-bold">Distance from {userOrigin.split(',')[0]}</span>
+                    <span className="text-[10px] uppercase text-white/50 block font-bold">Distance from {userOrigin.split(',')[0]}</span>
                     <span className="text-xl font-bold text-white mt-1 block">{flightDistanceKm.toLocaleString()} km</span>
                     <span className="text-[10px] text-white/60">Estimated 8-12 hrs flight</span>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
-                    <span className="text-[10px] font-mono uppercase text-white/50 block font-bold">Est. 7-Day Land Cost</span>
+                    <span className="text-[10px] uppercase text-white/50 block font-bold">Est. 7-Day Land Cost</span>
                     <span className="text-xl font-bold text-emerald-400 mt-1 block">{formatPrice(aiPlaceInfo.estimatedCostUSD)}</span>
                     <span className="text-[10px] text-white/60">Explorer tier baseline</span>
                   </div>

@@ -20,8 +20,8 @@ module.exports = {
         shorter: { raw: '(max-height: 420px)' },
       },
       fontFamily: {
-        serif: ['var(--font-serif)', 'Playfair Display', 'Georgia', 'serif'],
-        display: ['var(--font-serif)', 'var(--font-display)', 'Playfair Display', 'Georgia', 'serif'],
+        serif: ['var(--font-serif)', 'Cormorant Garamond', 'Georgia', 'serif'],
+        display: ['var(--font-serif)', 'var(--font-display)', 'Cormorant Garamond', 'Georgia', 'serif'],
         sans: ['var(--font-manrope)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['var(--font-jetbrains)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },

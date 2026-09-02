@@ -61,8 +61,12 @@ const downloads = [
     dest: 'public/memories/japan.jpg'
   },
   {
-    url: 'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=600&auto=format&fit=crop&q=80',
+    url: 'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=1600&auto=format&fit=crop&q=85',
     dest: 'public/memories/morocco.jpg'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=1600&auto=format&fit=crop&q=85',
+    dest: 'public/memories/morocco-night.jpg'
   },
   {
     url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=600&auto=format&fit=crop&q=80',

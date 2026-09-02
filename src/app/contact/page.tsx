@@ -71,7 +71,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aurora/10 border border-aurora/25 text-aurora text-xs font-mono font-semibold tracking-wider uppercase mb-6"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aurora/10 border border-aurora/25 text-aurora text-xs font-semibold tracking-wider uppercase mb-6"
           >
             <Mail className="w-3.5 h-3.5" />
             <span>The Dispatch Desk</span>
@@ -127,7 +127,7 @@ export default function ContactPage() {
                           setSubmitted(false);
                           setMessage('');
                         }}
-                        className="mt-6 px-6 py-2.5 rounded-full bg-muted hover:bg-muted/80 text-foreground font-semibold text-xs font-mono transition-colors"
+                        className="mt-6 px-6 py-2.5 rounded-full bg-muted hover:bg-muted/80 text-foreground font-semibold text-xs transition-colors"
                       >
                         Send Another Dispatch
                       </button>
@@ -136,7 +136,7 @@ export default function ContactPage() {
                     <form onSubmit={handleSubmit} className="space-y-6">
                       {/* Topic Selection */}
                       <div>
-                        <label className="block text-xs font-mono font-bold uppercase text-muted-foreground tracking-wider mb-3">
+                        <label className="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-3">
                           Select Dispatch Category
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -165,7 +165,7 @@ export default function ContactPage() {
                       {/* Name & Email */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-mono font-bold uppercase text-muted-foreground tracking-wider mb-2">
+                          <label className="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-2">
                             Your Name
                           </label>
                           <input
@@ -179,7 +179,7 @@ export default function ContactPage() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-mono font-bold uppercase text-muted-foreground tracking-wider mb-2">
+                          <label className="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-2">
                             Your Email
                           </label>
                           <input
@@ -195,7 +195,7 @@ export default function ContactPage() {
 
                       {/* Message */}
                       <div>
-                        <label className="block text-xs font-mono font-bold uppercase text-muted-foreground tracking-wider mb-2">
+                        <label className="block text-xs font-bold uppercase text-muted-foreground tracking-wider mb-2">
                           Your Message / Coordinates
                         </label>
                         <textarea
@@ -231,7 +231,7 @@ export default function ContactPage() {
             {/* Right: Global Guild Bureaus & Direct Channels */}
             <div className="lg:col-span-5 space-y-6">
               <div className="p-8 rounded-3xl bg-card border border-border/80 shadow-sm space-y-6">
-                <span className="text-xs font-mono font-bold text-aurora tracking-widest uppercase">
+                <span className="text-xs font-bold text-aurora tracking-widest uppercase">
                   Global Guild Bureaus
                 </span>
 
@@ -242,11 +242,11 @@ export default function ContactPage() {
                         <h4 className="font-serif text-lg font-bold text-foreground">
                           {bureau.city}
                         </h4>
-                        <span className="text-[11px] font-mono text-muted-foreground">
+                        <span className="text-[11px] text-muted-foreground">
                           {bureau.country}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs font-mono text-aurora">
+                      <div className="flex items-center gap-1.5 text-xs text-aurora">
                         <MapPin className="w-3.5 h-3.5 shrink-0" />
                         <span>{bureau.coord}</span>
                       </div>
@@ -262,7 +262,7 @@ export default function ContactPage() {
               <div className="p-6 rounded-3xl bg-muted/20 border border-border/60 flex items-start gap-4">
                 <Clock className="w-5 h-5 text-violet shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
                     Human Response Guarantee
                   </h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">

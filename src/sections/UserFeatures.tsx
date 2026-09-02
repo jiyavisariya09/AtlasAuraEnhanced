@@ -224,33 +224,18 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
       <div className="shell relative">
         {/* Section Header */}
         <div className="flex flex-col items-center text-center mb-10">
-          {/* Live Journey Badge + Hover-Pause Indicator */}
+          {/* Clean Eyebrow Header */}
           <motion.div
             initial={{ opacity: 0, y: -12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="flex flex-wrap items-center justify-center gap-2 mb-4"
+            className="flex items-center gap-2 mb-3"
           >
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-aurora/30 bg-aurora/10 backdrop-blur-md shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-aurora opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-aurora" />
-              </span>
-              <span className="text-[11px] font-mono font-semibold uppercase tracking-[0.2em] text-aurora">
-                LIVE JOURNEY FEED
-              </span>
-            </div>
-
-            {/* Hover to pause status pill */}
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono transition-all duration-300 border ${
-              isPaused 
-                ? 'bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400' 
-                : 'bg-muted/60 border-border text-muted-foreground'
-            }`}>
-              {isPaused ? <Pause className="w-3 h-3 animate-pulse" /> : <Play className="w-3 h-3" />}
-              <span>{isPaused ? 'Paused for reading' : 'Hover anywhere to pause'}</span>
-            </div>
+            <span className="h-1.5 w-1.5 rounded-full bg-aurora animate-pulse" />
+            <span className="t-label text-aurora font-semibold uppercase tracking-[0.22em] text-xs">
+              Live Journey Feed
+            </span>
           </motion.div>
 
           <motion.h2
@@ -330,7 +315,7 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
                     <span className="text-xs font-semibold text-white">
                       {activeJourney.origin.name}, {activeJourney.origin.country}
                     </span>
-                    <span className="hidden sm:inline text-[10px] font-mono text-white/70 border-l border-white/20 pl-2">
+                    <span className="hidden sm:inline text-[10px] text-white/70 border-l border-white/20 pl-2">
                       {activeJourney.origin.coords}
                     </span>
                   </motion.div>
@@ -345,7 +330,7 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
                     <span className="text-xs font-semibold text-white">
                       {activeJourney.destination.name}, {activeJourney.destination.country}
                     </span>
-                    <span className="hidden sm:inline text-[10px] font-mono text-white/70 border-l border-white/20 pl-2">
+                    <span className="hidden sm:inline text-[10px] text-white/70 border-l border-white/20 pl-2">
                       {activeJourney.destination.coords}
                     </span>
                   </motion.div>
@@ -408,9 +393,9 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
                   <div>
                     <p className="text-sm font-semibold text-white flex items-center gap-1.5">
                       {activeJourney.explorer.name}
-                      <span className="text-xs font-normal text-white/85 font-mono">({activeJourney.explorer.role})</span>
+                      <span className="text-xs font-normal text-white/85">({activeJourney.explorer.role})</span>
                     </p>
-                    <p className="text-xs font-mono text-emerald-300 font-medium">
+                    <p className="text-xs text-emerald-300 font-medium">
                       {activeJourney.status} · {activeJourney.dayCount} · {activeJourney.explorer.location}
                     </p>
                   </div>
@@ -448,11 +433,11 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-aurora/15 border border-aurora/30 text-aurora text-xs font-mono">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-aurora/15 border border-aurora/30 text-aurora text-xs">
                     <Radio className="w-3 h-3 animate-pulse" />
                     <span>{activeJourney.title}</span>
                   </div>
-                  <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                     {activeJourney.distanceTrend}
                   </span>
                 </div>
@@ -469,13 +454,13 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
                     <span className="text-aurora font-sans font-light">➔</span>
                     <span>{activeJourney.destination.name}</span>
                   </span>
-                  <span className="text-xs font-mono font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full border border-border">
+                  <span className="text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full border border-border">
                     {activeJourney.distanceKm}
                   </span>
                 </motion.h3>
 
                 {/* Waypoints line */}
-                <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono text-muted-foreground mt-2">
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-2">
                   {activeJourney.waypoints.map((wp, i) => (
                     <span key={wp} className="flex items-center gap-1.5">
                       <span className={i === 0 ? 'text-aurora font-semibold' : i === activeJourney.waypoints.length - 1 ? 'text-orchid font-semibold' : 'text-foreground/80'}>
@@ -498,7 +483,7 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
               </div>
 
               {/* Mini visual indicator */}
-              <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground font-mono">
+              <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5 text-aurora">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   GPS High Precision
@@ -520,11 +505,11 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
                   <div className="w-9 h-9 rounded-xl bg-orchid/15 text-orchid flex items-center justify-center border border-orchid/20 shadow-sm">
                     <Wallet className="w-5 h-5" />
                   </div>
-                  <span className="text-xs font-mono font-medium text-muted-foreground uppercase tracking-wider">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     EXPEDITION BUDGET
                   </span>
                 </div>
-                <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-muted border border-border text-muted-foreground">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted border border-border text-muted-foreground">
                   DAY-BY-DAY
                 </span>
               </div>
@@ -554,7 +539,7 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
                     className="h-full rounded-full bg-gradient-to-r from-aurora via-teal-400 to-orchid"
                   />
                 </div>
-                <div className="flex items-center justify-between text-xs font-mono text-muted-foreground">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{activeJourney.budgetPercentage}% utilized</span>
                   <span>Daily Pace: {activeJourney.dailyAvgRupees}</span>
                 </div>
@@ -582,7 +567,7 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
                       New memory pinned
                       <Sparkles className="w-3.5 h-3.5 text-aurora fill-aurora" />
                     </p>
-                    <span className="text-[11px] font-mono text-aurora bg-aurora/10 px-2 py-0.5 rounded-full">
+                    <span className="text-[11px] text-aurora bg-aurora/10 px-2 py-0.5 rounded-full">
                       {activeJourney.latestMemory.timeAgo}
                     </span>
                   </div>
@@ -591,7 +576,7 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
                   </p>
 
                   <div className="mt-3 flex items-center gap-2">
-                    <span className="text-[11px] font-mono font-medium px-2.5 py-1 rounded-full bg-muted/80 text-foreground border border-border">
+                    <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-muted/80 text-foreground border border-border">
                       {activeJourney.latestMemory.mood}
                     </span>
                     <span className="text-[11px] font-medium text-aurora flex items-center gap-1 hover:underline ml-auto">
@@ -647,7 +632,7 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">120+ countries mapped</p>
-                <p className="text-xs text-muted-foreground font-mono">Global coordinate indexing</p>
+                <p className="text-xs text-muted-foreground">Global coordinate indexing</p>
               </div>
             </div>
 
@@ -657,7 +642,7 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">Synced every 30s</p>
-                <p className="text-xs text-muted-foreground font-mono">Real-time memory sync</p>
+                <p className="text-xs text-muted-foreground">Real-time memory sync</p>
               </div>
             </div>
 
@@ -667,7 +652,7 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">End-to-end encrypted</p>
-                <p className="text-xs text-muted-foreground font-mono">Zero-knowledge location</p>
+                <p className="text-xs text-muted-foreground">Zero-knowledge location</p>
               </div>
             </div>
           </div>

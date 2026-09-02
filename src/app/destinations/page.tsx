@@ -255,7 +255,7 @@ export default function DestinationsPage() {
           {/* Header Banner */}
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-border/60">
             <div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-aurora/15 border border-aurora/30 text-aurora text-xs font-mono uppercase tracking-wider mb-3">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-aurora/15 border border-aurora/30 text-aurora text-xs uppercase tracking-wider mb-3">
                 <Globe className="w-3.5 h-3.5" />
                 <span>Curated World Sanctuaries</span>
               </div>
@@ -271,7 +271,7 @@ export default function DestinationsPage() {
             <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-card border border-border/80 shadow-sm">
               <Plane className="w-4 h-4 text-orchid shrink-0" />
               <div className="text-xs">
-                <span className="text-muted-foreground block text-[10px] uppercase font-mono font-bold">Departure City</span>
+                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Departure City</span>
                 <span className="font-semibold text-foreground">{userOrigin}</span>
               </div>
             </div>
@@ -341,7 +341,7 @@ export default function DestinationsPage() {
             {/* Active Filter Chips Strip */}
             {activeFilterCount > 0 && (
               <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                <span className="text-[11px] font-mono uppercase font-bold text-muted-foreground">Active Filters:</span>
+                <span className="text-[11px] uppercase font-bold text-muted-foreground">Active Filters:</span>
 
                 {selectedRegion !== 'All' && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aurora/15 text-aurora border border-aurora/30 font-medium text-xs">
@@ -388,7 +388,7 @@ export default function DestinationsPage() {
             )}
 
             {/* Results Counter & Items-Per-Page Selector */}
-            <div ref={gridTopRef} className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border/60 text-xs font-mono">
+            <div ref={gridTopRef} className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border/60 text-xs">
               <span className="text-muted-foreground">
                 Showing <strong className="text-foreground">{paginatedDestinations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} – {Math.min(currentPage * itemsPerPage, totalItems)}</strong> of <strong className="text-foreground">{totalItems}</strong> destinations
               </span>
@@ -465,7 +465,7 @@ export default function DestinationsPage() {
 
                         {/* Top Rating & Location Floating Badges */}
                         <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between z-10 pointer-events-none">
-                          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 border border-white/20 text-white text-[11px] font-mono backdrop-blur-md shadow-md">
+                          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 border border-white/20 text-white text-[11px] backdrop-blur-md shadow-md">
                             <MapPin className="w-3 h-3 text-aurora" />
                             {dest.country} · {dest.region}
                           </span>
@@ -497,7 +497,7 @@ export default function DestinationsPage() {
                       <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                         <div className="space-y-3">
                           {/* Elevation & Season Badges Strip */}
-                          <div className="flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground">
+                          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                             <span className="bg-muted border border-border/80 px-2.5 py-0.5 rounded-lg text-foreground/80 font-medium">
                               ⛰️ {dest.elevation}
                             </span>
@@ -541,7 +541,7 @@ export default function DestinationsPage() {
                                     className="absolute left-0 bottom-full mb-2.5 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-card border border-border dark:border-aurora/40 text-card-foreground text-xs shadow-2xl backdrop-blur-xl"
                                   >
                                     <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-border dark:border-white/10">
-                                      <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-aurora uppercase tracking-wider">
+                                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-aurora uppercase tracking-wider">
                                         <Sparkles className="w-3.5 h-3.5" />
                                         <span>Full Description</span>
                                       </div>
@@ -572,7 +572,7 @@ export default function DestinationsPage() {
                             {dest.highlights.slice(0, 2).map((h, i) => (
                               <span
                                 key={i}
-                                className="text-[10px] font-mono font-medium rounded-full bg-muted px-2.5 py-1 text-muted-foreground border border-border/80"
+                                className="text-[10px] font-medium rounded-full bg-muted px-2.5 py-1 text-muted-foreground border border-border/80"
                               >
                                 {h}
                               </span>
@@ -584,8 +584,8 @@ export default function DestinationsPage() {
                         <div className="pt-4 border-t border-border/60">
                           <div className="flex items-center justify-between gap-2">
                             <div>
-                              <span className="text-[10px] uppercase font-mono text-muted-foreground block font-bold tracking-wider">Est. 7-Day Land</span>
-                              <span className="text-aurora font-bold text-base font-mono">
+                              <span className="text-[10px] uppercase text-muted-foreground block font-bold tracking-wider">Est. 7-Day Land</span>
+                              <span className="text-aurora font-bold text-base">
                                 {formatPrice(dest.budgetUSD)}
                               </span>
                             </div>
@@ -626,7 +626,7 @@ export default function DestinationsPage() {
           {/* ── Variable Pagination Controls Bar ──────────────────────────── */}
           {totalPages > 1 && (
             <div className="pt-8 pb-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/60">
-              <div className="text-xs font-mono text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 Page <strong className="text-foreground">{currentPage}</strong> of <strong className="text-foreground">{totalPages}</strong>
               </div>
 
@@ -646,7 +646,7 @@ export default function DestinationsPage() {
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`w-9 h-9 rounded-full text-xs font-mono font-bold transition-all ${
+                    className={`w-9 h-9 rounded-full text-xs font-bold transition-all ${
                       currentPage === page
                         ? 'bg-aurora text-ink-void shadow-md scale-105'
                         : 'bg-card border border-border text-muted-foreground hover:text-foreground'
@@ -689,7 +689,7 @@ export default function DestinationsPage() {
               {/* Modal Header */}
               <div className="p-6 sm:p-8 border-b border-border/80 flex items-center justify-between">
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aurora/15 text-aurora text-[10px] font-mono uppercase font-bold mb-1">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aurora/15 text-aurora text-[10px] uppercase font-bold mb-1">
                     <SlidersHorizontal className="w-3 h-3" />
                     <span>Expedition Discovery Filters</span>
                   </div>
@@ -708,7 +708,7 @@ export default function DestinationsPage() {
               <div className="p-6 sm:p-8 overflow-y-auto space-y-8 flex-1">
                 {/* Section 1: Continents & Regions */}
                 <div>
-                  <span className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-3">1. Continent / Region</span>
+                  <span className="text-xs uppercase font-bold text-muted-foreground block mb-3">1. Continent / Region</span>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
                     {REGIONS.map((region) => {
                       const isSelected = selectedRegion === region;
@@ -732,7 +732,7 @@ export default function DestinationsPage() {
 
                 {/* Section 2: Landscapes & Terrains */}
                 <div>
-                  <span className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-3">2. Landscape & Vibe</span>
+                  <span className="text-xs uppercase font-bold text-muted-foreground block mb-3">2. Landscape & Vibe</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                     {VIBES.map((vibe) => {
                       const Icon = vibe.icon;
@@ -761,7 +761,7 @@ export default function DestinationsPage() {
 
                 {/* Section 3: Budget Tiers */}
                 <div>
-                  <span className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-3">3. 7-Day Land Budget Tier</span>
+                  <span className="text-xs uppercase font-bold text-muted-foreground block mb-3">3. 7-Day Land Budget Tier</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                     {BUDGET_TIERS.map((tier) => {
                       const isSelected = selectedBudgetTier === tier.id;
@@ -789,7 +789,7 @@ export default function DestinationsPage() {
 
                 {/* Section 4: Sort Preference */}
                 <div>
-                  <span className="text-xs font-mono uppercase font-bold text-muted-foreground block mb-3">4. Sorting Order</span>
+                  <span className="text-xs uppercase font-bold text-muted-foreground block mb-3">4. Sorting Order</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                     {SORT_OPTIONS.map((opt) => {
                       const isSelected = sortBy === opt.id;

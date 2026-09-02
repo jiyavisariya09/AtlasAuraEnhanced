@@ -75,7 +75,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="hairline-t relative isolate pt-24 pb-8 overflow-hidden">
+    <footer className="relative isolate pt-24 pb-8 overflow-hidden">
       {/* Background aurora gradient (Zero GPU blur passes) */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="aurora-wash absolute inset-0 opacity-80" />
@@ -88,7 +88,7 @@ export default function Footer() {
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-card/95 border border-aurora/40 text-aurora text-xs font-mono shadow-2xl backdrop-blur-md flex items-center gap-2"
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-card/95 border border-aurora/40 text-aurora text-xs shadow-2xl backdrop-blur-md flex items-center gap-2"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>{socialToast}</span>
@@ -135,7 +135,7 @@ export default function Footer() {
                     <Icon className="w-4 h-4" />
                   </motion.button>
                   {/* Floating tooltip */}
-                  <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-card border border-border/80 text-[10px] font-mono text-muted-foreground whitespace-nowrap opacity-0 group-hover/social:opacity-100 transition-opacity shadow-sm">
+                  <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-card border border-border/80 text-[10px] text-muted-foreground whitespace-nowrap opacity-0 group-hover/social:opacity-100 transition-opacity shadow-sm">
                     Coming Soon
                   </span>
                 </div>

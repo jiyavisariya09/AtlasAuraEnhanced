@@ -25,7 +25,7 @@ export default function PrivacyPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aurora/10 border border-aurora/25 text-aurora text-xs font-mono font-semibold tracking-wider uppercase mb-6"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aurora/10 border border-aurora/25 text-aurora text-xs font-semibold tracking-wider uppercase mb-6"
           >
             <Lock className="w-3.5 h-3.5" />
             <span>Data Privacy & Telemetry Ethics</span>
@@ -41,7 +41,7 @@ export default function PrivacyPage() {
             <span className="font-serif-italic text-aurora">Data Protection.</span>
           </motion.h1>
 
-          <p className="text-xs font-mono text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Effective Date: January 1, 2026 · Version 2.4
           </p>
         </div>
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
               <Shield className="w-5 h-5 text-aurora" />
               <span>Our Core Privacy Pledge</span>
             </h3>
-            <ul className="space-y-2 text-xs font-mono text-foreground/90">
+            <ul className="space-y-2 text-xs text-foreground/90">
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-aurora shrink-0" />
                 <span>Zero third-party advertising tracking or data broking.</span>

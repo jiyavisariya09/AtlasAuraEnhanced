@@ -1,324 +1,339 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { MapPin, Filter, Search, Globe, Navigation, ZoomIn, ZoomOut } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { memoryPins as initialPins } from '@/data/mockData';
+import { useRef } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
-import { getAuthorAvatar, getPinImage } from '@/lib/utils';
-import type { MemoryPin } from '@/types';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { MapPin } from 'lucide-react';
 
-/* Same entrance curve as `.lift`, the hero reveal, MoodSearch and
-   CountryStories — one hand across the whole page. */
-const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+/* ── Memory Data ───────────────────────────────────────────────────────────
+   Five travel memories that assemble into a masonry grid as the user scrolls.
+   The primary memory starts full-screen and shrinks; the other four fly in
+   from off-screen edges.                                                    */
 
-const DefaultIcon = L.icon({ iconUrl: '/leaflet/marker-icon.png', shadowUrl: '/leaflet/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
-L.Marker.prototype.options.icon = DefaultIcon;
-
-/* Leaflet takes an HTML string, so these cannot be Tailwind classes — but they
-   can still be tokens. Reading the CSS variables keeps the markers on palette
-   and lets them flip with the theme; the halo was hardcoded amber (245,158,11)
-   for user pins and sky (14,165,233) for the rest, and the placeholder behind
-   the photo was a fixed navy that stayed navy on cool paper. */
-const iconCache = new Map<string, L.DivIcon>();
-
-const createCustomIcon = (imageUrl: string, isNew = false) => {
-  const cacheKey = `${imageUrl}-${isNew}`;
-  if (iconCache.has(cacheKey)) {
-    return iconCache.get(cacheKey)!;
-  }
-  const icon = L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="width:44px;height:44px;border-radius:50%;overflow:hidden;box-shadow:0 4px 15px ${isNew ? 'hsl(var(--violet) / 0.55)' : 'hsl(var(--aurora) / 0.45)'};border:3px solid hsl(var(--card));cursor:pointer;background:hsl(var(--muted));"><img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;" /></div>`,
-    iconSize: [44, 44],
-    iconAnchor: [22, 44],
-    popupAnchor: [0, -44],
-  });
-  iconCache.set(cacheKey, icon);
-  return icon;
-};
-
-function MapController({ center, zoom }: { center: [number, number]; zoom: number }) {
-  const map = useMap();
-  useEffect(() => { map.setView(center, zoom, { animate: true, duration: 1 }); }, [center, zoom, map]);
-  return null;
+interface Memory {
+  id: string;
+  country: string;
+  city: string;
+  location: string;
+  coordinates: string;
+  author: string;
+  date: string;
+  quote: string;
+  dayImage: string;
+  nightImage: string;
 }
 
+const MEMORIES: Memory[] = [
+  {
+    id: 'japan',
+    country: 'Japan',
+    city: 'Kyoto',
+    location: 'Kyoto & Ueno Dawn',
+    coordinates: '35.6762° N, 139.6503° E',
+    author: 'Sarah Chen',
+    date: 'April 2024',
+    quote:
+      'First cherry blossom dawn in Ueno. As the morning mist lifted off the pond, the petals fell with quiet, breathless grace.',
+    dayImage:
+      'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1600&q=85',
+    nightImage:
+      'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1600&q=85',
+  },
+  {
+    id: 'morocco',
+    country: 'Morocco',
+    city: 'Chefchaouen',
+    location: 'Blue Medina Twilight',
+    coordinates: '35.1688° N, 5.2636° W',
+    author: 'Elena Vasquez',
+    date: 'March 2024',
+    quote:
+      'Lost for three hours in blue-painted alleyways. That was the best part of the whole trip.',
+    dayImage:
+      'https://images.unsplash.com/photo-1553603227-2358aabe821e?auto=format&fit=crop&w=1600&q=85',
+    nightImage:
+      'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?auto=format&fit=crop&w=1600&q=85',
+  },
+  {
+    id: 'norway',
+    country: 'Norway',
+    city: 'Lofoten',
+    location: 'Arctic Fjord Silence',
+    coordinates: '68.2094° N, 13.6103° E',
+    author: 'Lars Eriksson',
+    date: 'June 2024',
+    quote:
+      'At two in the morning it was still bright enough to read a map. Nobody else was awake.',
+    dayImage:
+      'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=1600&q=85',
+    nightImage:
+      'https://images.unsplash.com/photo-1520769669658-f07657f5a307?auto=format&fit=crop&w=1600&q=85',
+  },
+  {
+    id: 'greece',
+    country: 'Greece',
+    city: 'Santorini',
+    location: 'Aegean Golden Hour',
+    coordinates: '36.3932° N, 25.4615° E',
+    author: 'Maia Kostas',
+    date: 'September 2024',
+    quote:
+      'The domes turned gold at sunset. Nobody on the terrace spoke for a full minute.',
+    dayImage:
+      'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1600&q=85',
+    nightImage:
+      'https://images.unsplash.com/photo-1504512485720-7d83a16ee930?auto=format&fit=crop&w=1600&q=85',
+  },
+  {
+    id: 'indonesia',
+    country: 'Indonesia',
+    city: 'Bali',
+    location: 'Tegallalang Terraces',
+    coordinates: '8.4312° S, 115.2792° E',
+    author: 'Ravi Patel',
+    date: 'November 2024',
+    quote:
+      'Emerald steps carved into the mountain, old as the island itself. Time moved differently here.',
+    dayImage:
+      'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1600&q=85',
+    nightImage:
+      'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=1600&q=85',
+  },
+];
+
+/* ── Fly-in vectors per secondary tile ─────────────────────────────────── */
+const FLY_IN = [
+  { x: 320, y: -240 },  // Morocco:   from top-right
+  { x: 380, y: 0 },     // Norway:    from right
+  { x: -320, y: 260 },  // Greece:    from bottom-left
+  { x: 320, y: 260 },   // Indonesia: from bottom-right
+];
+
+/* ── Spring config shared across all scroll-driven motion values ───────── */
+const SPRING = { stiffness: 60, damping: 26, mass: 0.65, restDelta: 0.0001 };
+
 export default function WorldMap() {
-  /* `theme` is still needed here after the token pass — not for colours, but to
-     pick the basemap tile set and scope the Leaflet CSS below. */
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const sectionRef = useRef<HTMLElement>(null);
 
-  const [pins, setPins] = useState<MemoryPin[]>(initialPins);
-  const [showAllMemories, setShowAllMemories] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([20, 0]);
-  const [mapZoom, setMapZoom] = useState(2);
-
-  // Load user-added pins from MongoDB (with localStorage fallback)
-  useEffect(() => {
-    fetch('/api/user/pins')
-      .then(r => r.json())
-      .then(data => {
-        if (data.pins?.length) {
-          setPins([...initialPins, ...data.pins]);
-          localStorage.setItem('atlasaura-user-pins', JSON.stringify(data.pins));
-        }
-      })
-      .catch(() => {
-        const saved = localStorage.getItem('atlasaura-user-pins');
-        if (saved) setPins([...initialPins, ...JSON.parse(saved)]);
-      });
-  }, []);
-
-  // Listen for focus-map event from CountryStories
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const { lat, lng } = (e as CustomEvent).detail;
-      setMapCenter([lat, lng]);
-      setMapZoom(5);
-    };
-    window.addEventListener('atlasaura-focus-map', handler);
-    return () => window.removeEventListener('atlasaura-focus-map', handler);
-  }, []);
-
-  // Also check sessionStorage on mount (for page reload case)
-  useEffect(() => {
-    const stored = sessionStorage.getItem('atlasaura-map-focus');
-    if (stored) {
-      const { lat, lng } = JSON.parse(stored);
-      setMapCenter([lat, lng]);
-      setMapZoom(5);
-      sessionStorage.removeItem('atlasaura-map-focus');
-    }
-  }, []);
-
-  const filteredPins = pins.filter(pin => {
-    const matchesSearch = pin.country.toLowerCase().includes(searchQuery.toLowerCase()) || pin.note.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesMood = !selectedMood || pin.mood === selectedMood;
-    return matchesSearch && matchesMood;
+  /* ── Scroll tracking ─────────────────────────────────────────────────── */
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end end'],
   });
 
-  const focusOnPin = useCallback((pin: MemoryPin) => {
-    setMapCenter([pin.lat, pin.lng]);
-    setMapZoom(6);
-  }, []);
+  /* Fluid Spring Physics Damper: converts discrete mousewheel notches
+     into buttery-smooth continuous momentum — slightly weighted for luxurious gliding. */
+  const smooth = useSpring(scrollYProgress, SPRING);
 
-  /* `color` is the selected-chip surface, not a gradient ramp any more: a tint
-     plus accent text, which is the one construction that holds contrast in both
-     themes (the same move costMeta makes in CountryStories). Teal carries three
-     of the five moods; violet and rose are spent on the two they actually mean. */
-  const moods = [
-    { id: 'solo', label: 'Solo', color: 'border-orchid/30 bg-orchid/15 text-orchid' },
-    { id: 'honeymoon', label: 'Romance', color: 'border-blush/30 bg-blush/15 text-blush' },
-    { id: 'adventure', label: 'Adventure', color: 'border-aurora/30 bg-aurora/15 text-aurora' },
-    { id: 'culture', label: 'Culture', color: 'border-aurora/30 bg-aurora/15 text-aurora' },
-    { id: 'calm', label: 'Peace', color: 'border-aurora/30 bg-aurora/15 text-aurora' },
-  ];
+  /* ═══════════════════════════════════════════════════════════════════════
+     PHASE MAP  (all values are scroll progress 0 → 1)
+     ───────────────────────────────────────────────────────────────────────
+     0.00 – 0.04  Section enters viewport
+     0.02 – 0.12  Section header fades in
+     0.00 – 0.16  Full hero image holds
+     0.12 – 0.28  Full hero fades out
+     0.10 – 0.26  Primary masonry tile fades in + slight scale-down
+     0.18 – 0.36  Morocco tile flies in from top-right
+     0.225 – 0.405 Norway tile flies in from right
+     0.27 – 0.45  Greece tile flies in from bottom-left
+     0.315 – 0.495 Indonesia tile flies in from bottom-right
+     0.50 – 0.64  Text overlays + location badges fade in on all tiles
+     0.64 – 1.00  Hold — masonry complete, serene rest
+     ═══════════════════════════════════════════════════════════════════════ */
 
-  const chipOff = 'border-transparent bg-muted/60 text-muted-foreground hover:text-foreground';
+  // ── Section Header ──────────────────────────────────────────────────
+  const headerOpacity = useTransform(smooth, [0, 0.02, 0.12], [0, 0, 1]);
+  const headerY = useTransform(smooth, [0, 0.02, 0.12], [25, 25, 0]);
+
+  // ── Full Hero Image (Layer 1 — fades away) ──────────────────────────
+  const heroOpacity = useTransform(smooth, [0, 0.12, 0.28], [1, 1, 0]);
+  const heroScale = useTransform(smooth, [0, 0.28], [1, 1.03]);
+
+  // ── Primary Masonry Tile (Japan — fades in) ─────────────────────────
+  const primaryOpacity = useTransform(smooth, [0.10, 0.26], [0, 1]);
+  const primaryScale = useTransform(smooth, [0.10, 0.28], [1.08, 1]);
+
+  // ── Secondary Tiles: staggered fly-in custom hook ──────────────────
+  const useSecondaryTile = (i: number) => {
+    const start = 0.18 + i * 0.045;
+    const end = start + 0.18;
+    return {
+      opacity: useTransform(smooth, [start, start + 0.09], [0, 1]),
+      x: useTransform(smooth, [start, end], [FLY_IN[i].x, 0]),
+      y: useTransform(smooth, [start, end], [FLY_IN[i].y, 0]),
+      scale: useTransform(smooth, [start, end], [0.85, 1]),
+    };
+  };
+
+  const sec0 = useSecondaryTile(0);
+  const sec1 = useSecondaryTile(1);
+  const sec2 = useSecondaryTile(2);
+  const sec3 = useSecondaryTile(3);
+
+  const secondaryStyles = [sec0, sec1, sec2, sec3];
+
+  // ── Text Overlay Phase ──────────────────────────────────────────────
+  const overlayOpacity = useTransform(smooth, [0.50, 0.64], [0, 1]);
+  const overlayY = useTransform(smooth, [0.50, 0.64], [14, 0]);
 
   return (
-    <section id="world-map" className="hairline-t section-y relative isolate overflow-hidden">
-      {/* The old bloom only half worked: its day-theme tint asked for an /8
-          alpha, which is not a step Tailwind emits, so outside the night theme
-          it drew nothing at all. `.aurora-wash` plus one drifting teal bloom,
-          both cool by construction. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-        <div className="aurora-wash absolute inset-0" />
-      </div>
+    <section
+      ref={sectionRef}
+      id="world-map"
+      className="relative h-[340svh] bg-[#FBF9F5] dark:bg-[#0B0F14] text-foreground transition-colors duration-300"
+    >
+      {/* ── Sticky Viewport Window ─────────────────────────────────────── */}
+      <div className="sticky top-0 h-[100svh] w-full overflow-hidden flex flex-col items-center justify-center pt-14 sm:pt-16 lg:pt-20 pb-6 sm:pb-10">
+        <div className="shell flex flex-col items-center w-full max-w-7xl h-full">
 
-      <div className="shell relative">
-        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-80px" }} transition={{ duration: 0.8, ease: EASE }} className="text-center mb-8">
-          <h2 className="t-title mb-4 text-foreground">
-            Explore the <span className="text-aurora">World</span>
-          </h2>
-          <p className="t-lead mx-auto max-w-2xl">
-            Discover stories from travelers around the globe. Click on markers to read their memories.
-          </p>
-        </motion.div>
+          {/* ── Section Header ─────────────────────────────────────────── */}
+          <motion.div
+            style={{ opacity: headerOpacity, y: headerY }}
+            className="text-center mb-6 sm:mb-8 max-w-xl mx-auto z-30 shrink-0 select-none transform-gpu"
+          >
+            <span className="t-label text-aurora font-semibold uppercase tracking-[0.22em] text-xs">
+              Living Chronicles &bull; Atlas Memory
+            </span>
+            <h2 className="t-title mt-1.5 text-foreground text-2xl sm:text-3xl lg:text-4xl font-normal leading-tight">
+              Some places become{' '}
+              <span className="font-serif italic text-aurora">memories.</span>
+            </h2>
+          </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, delay: 0.15, ease: EASE }} className="mb-6 flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            {/* The Input primitive already resolves border/ring/placeholder from
-                the token set — only the icon inset and a defined field surface
-                need stating. */}
-            <Input placeholder="Search countries, memories..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 bg-card" />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedMood(null)}
-              aria-pressed={!selectedMood}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors duration-200 ${!selectedMood ? 'border-aurora/30 bg-aurora/15 text-aurora' : chipOff}`}
+          {/* ── Animation Container ────────────────────────────────────── */}
+          <div className="relative w-full max-w-6xl flex-1 min-h-0 max-h-[68svh]">
+
+            {/* ─── Layer 1: Full Hero Image (fades out) ─────────────────
+                 This is the original single-image hero state. It sits on
+                 top so the user sees the full photo first, then it fades
+                 away to reveal the assembling masonry underneath.         */}
+            <motion.div
+              style={{ opacity: heroOpacity, scale: heroScale }}
+              className="absolute inset-0 rounded-3xl sm:rounded-[32px] overflow-hidden bg-card shadow-2xl transform-gpu will-change-transform z-20"
             >
-              <Filter className="w-4 h-4 inline mr-1" />All
-            </button>
-            {moods.map((mood) => (
-              <button
-                key={mood.id}
-                onClick={() => setSelectedMood(mood.id === selectedMood ? null : mood.id)}
-                aria-pressed={selectedMood === mood.id}
-                className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors duration-200 ${selectedMood === mood.id ? mood.color : chipOff}`}
-              >
-                {mood.label}
-              </button>
-            ))}
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, scale: 0.97 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.8, ease: EASE }} className="relative">
-          <div className="rounded-3xl overflow-hidden border border-border shadow-cast" style={{ height: '600px' }}>
-            <MapContainer center={mapCenter} zoom={mapZoom} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }} className={isDark ? 'map-dark' : 'map-light'}>
-              <MapController center={mapCenter} zoom={mapZoom} />
-              <TileLayer
-                attribution='&copy; <a href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">Esri</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
-                url={
-                  isDark
-                    ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
-                    : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}'
-                }
+              <img
+                src={isDark ? MEMORIES[0].nightImage : MEMORIES[0].dayImage}
+                alt={MEMORIES[0].country}
+                className="w-full h-full object-cover"
               />
-              {filteredPins.map((pin) => (
-                <Marker key={pin.id} position={[pin.lat, pin.lng]} icon={createCustomIcon(getPinImage(pin), pin.id.startsWith('user-'))} eventHandlers={{ click: () => focusOnPin(pin) }}>
-                  <Popup>
-                    <div className="p-3 rounded-xl min-w-[220px] bg-card">
-                      <div className="flex items-center gap-3 mb-2">
-                        <img src={getPinImage(pin)} alt={pin.country} className="w-10 h-10 rounded-lg object-cover shrink-0 border border-border" />
-                        <div>
-                          <p className="font-semibold text-foreground">{pin.country}</p>
-                          <p className="t-data text-muted-foreground">{pin.date}</p>
-                        </div>
-                      </div>
-                      <p className="text-sm italic text-muted-foreground">&ldquo;{pin.note}&rdquo;</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <img src={getAuthorAvatar(pin.author)} alt={pin.author} className="w-5 h-5 rounded-full object-cover shrink-0" />
-                        <span className="text-xs text-muted-foreground">{pin.author}</span>
-                      </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30" />
 
-            {/* Icon-only controls, so each one carries its own label. */}
-            <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
-              {[
-                { icon: ZoomIn, label: 'Zoom in', action: () => setMapZoom(p => Math.min(p + 1, 18)) },
-                { icon: ZoomOut, label: 'Zoom out', action: () => setMapZoom(p => Math.max(p - 1, 2)) },
-                { icon: Navigation, label: 'Reset the view', action: () => { setMapCenter([20, 0]); setMapZoom(2); } },
-              ].map(({ icon: Icon, label, action }, i) => (
-                <button key={i} onClick={action} aria-label={label} className="w-10 h-10 rounded-xl flex items-center justify-center border border-border bg-card/90 text-foreground backdrop-blur-sm transition-colors duration-200 hover:border-aurora hover:text-aurora">
-                  <Icon className="w-5 h-5" />
-                </button>
-              ))}
-            </div>
-
-            {/* `.glass` sets the `border` shorthand, so nothing here adds a
-                `border-*` alongside it. */}
-            <div className="glass absolute bottom-4 left-4 z-[400] px-4 py-2 rounded-full">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-aurora" />
-                <span className="t-data text-foreground">{filteredPins.length} memories visible</span>
+              {/* Floating Location Tag */}
+              <div className="absolute top-5 left-5 text-xs font-mono text-white/90 bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
+                <span>{MEMORIES[0].country} &bull; {MEMORIES[0].city}</span>
               </div>
+
+              {/* Bottom Chronicle Content */}
+              <div className="absolute bottom-6 sm:bottom-8 left-6 sm:left-8 right-6 sm:right-8 text-white max-w-2xl">
+                <span className="text-xs font-mono text-aurora font-semibold uppercase tracking-wider">
+                  {MEMORIES[0].coordinates}
+                </span>
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-normal text-white mt-1 leading-tight">
+                  {MEMORIES[0].location}
+                </h3>
+                <p className="font-serif italic text-sm sm:text-base lg:text-lg text-white/90 mt-1.5 line-clamp-2 leading-relaxed">
+                  &ldquo;{MEMORIES[0].quote}&rdquo;
+                </p>
+                <p className="text-xs font-mono text-white/60 mt-2">
+                  Chronicled by {MEMORIES[0].author} &bull; {MEMORIES[0].date}
+                </p>
+              </div>
+            </motion.div>
+
+            {/* ─── Layer 2: Masonry Grid (tiles assemble) ───────────────
+                 The grid is always rendered in its final layout. Each tile
+                 starts with transforms applied (off-screen / invisible)
+                 and animates to identity as scroll progresses.
+
+                 Layout:
+                 ┌───────────────┬──────────┐
+                 │               │ Morocco  │  row 1
+                 │    Japan      ├──────────┤
+                 │   (primary)   │  Norway  │  row 2
+                 ├───────────────┼──────────┤
+                 │    Greece     │Indonesia │  row 3
+                 └───────────────┴──────────┘                              */}
+            <div className="absolute inset-0 grid grid-cols-[1.35fr_1fr] grid-rows-[1.1fr_0.9fr_0.85fr] gap-2.5 sm:gap-3.5 z-10">
+
+              {/* ── Primary Tile: Japan (tall left, rows 1–2) ─────────── */}
+              <motion.div
+                style={{ opacity: primaryOpacity, scale: primaryScale }}
+                className="row-span-2 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl transform-gpu will-change-transform relative group"
+              >
+                <img
+                  src={isDark ? MEMORIES[0].nightImage : MEMORIES[0].dayImage}
+                  alt={MEMORIES[0].country}
+                  className="w-full h-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-[1.03]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-black/10 pointer-events-none" />
+
+                {/* Text overlay — fades in during the final phase */}
+                <motion.div
+                  style={{ opacity: overlayOpacity, y: overlayY }}
+                  className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 text-white transform-gpu"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <MapPin className="w-3 h-3 text-aurora shrink-0" />
+                    <span className="text-[10px] sm:text-xs font-mono text-aurora font-semibold uppercase tracking-wider">
+                      {MEMORIES[0].coordinates}
+                    </span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl lg:text-2xl font-serif font-normal text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                    {MEMORIES[0].location}
+                  </h3>
+                  <p className="font-serif italic text-xs sm:text-sm text-white/85 mt-1 line-clamp-2 leading-relaxed hidden sm:block drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]">
+                    &ldquo;{MEMORIES[0].quote}&rdquo;
+                  </p>
+                  <p className="text-[10px] font-mono text-white/50 mt-1.5 hidden sm:block">
+                    {MEMORIES[0].author} &bull; {MEMORIES[0].date}
+                  </p>
+                </motion.div>
+              </motion.div>
+
+              {/* ── Secondary Tiles (fly in from edges) ────────────────── */}
+              {[MEMORIES[1], MEMORIES[2], MEMORIES[3], MEMORIES[4]].map(
+                (memory, i) => (
+                  <motion.div
+                    key={memory.id}
+                    style={secondaryStyles[i]}
+                    className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl transform-gpu will-change-transform relative group"
+                  >
+                    <img
+                      src={isDark ? memory.nightImage : memory.dayImage}
+                      alt={memory.country}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-[1.04]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent pointer-events-none" />
+
+                    {/* Text overlay */}
+                    <motion.div
+                      style={{ opacity: overlayOpacity, y: overlayY }}
+                      className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white transform-gpu"
+                    >
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-aurora shrink-0" />
+                        <span className="text-[9px] sm:text-[10px] font-mono text-aurora font-semibold uppercase tracking-wider">
+                          {memory.city}, {memory.country}
+                        </span>
+                      </div>
+                      <h3 className="text-sm sm:text-base lg:text-lg font-serif font-normal text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
+                        {memory.location}
+                      </h3>
+                      <p className="font-serif italic text-[10px] sm:text-xs text-white/80 mt-0.5 line-clamp-1 leading-relaxed hidden sm:block drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">
+                        &ldquo;{memory.quote}&rdquo;
+                      </p>
+                    </motion.div>
+                  </motion.div>
+                ),
+              )}
             </div>
           </div>
-        </motion.div>
-
-        {/* Recent Memories */}
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.4, ease: EASE }} className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="t-sub text-foreground">
-              Recent Memories
-              <span className="t-data ml-2 text-muted-foreground">({filteredPins.length})</span>
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(showAllMemories ? filteredPins : filteredPins.slice(0, 6)).map((pin, index) => (
-              /* `.lift` owns the hover rise, the shadow and its own transition
-                 shorthand — the old `transition-all hover:scale-[1.02]` would
-                 cancel against it on stylesheet order. The surface is spelt out
-                 instead of `.ink-panel` because the border animates on hover. */
-              <motion.div
-                key={pin.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05, ease: EASE }}
-                onClick={() => focusOnPin(pin)}
-                className="lift group cursor-pointer rounded-xl border border-border bg-card p-4 shadow-cast hover:border-aurora"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-border">
-                    <img src={getPinImage(pin)} alt={pin.country} className="w-full h-full object-cover transition-transform duration-500 ease-smooth group-hover:scale-110" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-3 h-3 text-aurora" />
-                      <span className="t-label text-aurora">{pin.country}</span>
-                      {/* Violet marks your own pins here and in the map marker
-                          halo, so the two readings agree. */}
-                      {pin.id.startsWith('user-') && <span className="t-label rounded-full bg-orchid/15 px-1.5 py-0.5 text-orchid">You</span>}
-                    </div>
-                    <p className="text-sm mt-1 line-clamp-2 text-muted-foreground">&ldquo;{pin.note}&rdquo;</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <img src={getAuthorAvatar(pin.author)} alt={pin.author} className="w-5 h-5 rounded-full object-cover shrink-0" />
-                      <span className="t-data text-muted-foreground">{pin.author} • {pin.date}</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {filteredPins.length > 6 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 flex justify-center">
-              <button
-                onClick={() => setShowAllMemories(v => !v)}
-                className="flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium text-foreground transition-colors duration-200 hover:border-aurora hover:text-aurora"
-              >
-                <span>{showAllMemories ? 'Show Less' : `More Memories (${filteredPins.length - 6} more)`}</span>
-                <motion.span aria-hidden="true" animate={{ rotate: showAllMemories ? 180 : 0 }} transition={{ duration: 0.25, ease: EASE }} className="inline-block">↓</motion.span>
-              </button>
-            </motion.div>
-          )}
-        </motion.div>
+        </div>
       </div>
-
-      {/* Leaflet ships its own stylesheet, so its chrome has to be pulled onto
-          the token set here rather than with classes. Selectors are specificity-
-          matched to Leaflet's own so no `!important` is needed. */}
-      <style>{`
-        .leaflet-container { background: hsl(var(--muted)); }
-        .map-dark .leaflet-popup-content-wrapper,
-        .map-light .leaflet-popup-content-wrapper {
-          background: hsl(var(--card));
-          color: hsl(var(--foreground));
-          border-radius: 12px;
-          border: 1px solid hsl(var(--border));
-          box-shadow: var(--shadow-cast);
-        }
-        .leaflet-popup-tip { display: none; }
-        .custom-marker { background: transparent !important; border: none !important; }
-        .leaflet-container a.leaflet-popup-close-button { color: hsl(var(--muted-foreground)); }
-        .leaflet-container .leaflet-bar a {
-          background: hsl(var(--card));
-          color: hsl(var(--foreground));
-          border-bottom-color: hsl(var(--border));
-        }
-        .leaflet-container .leaflet-bar a:hover { background: hsl(var(--muted)); }
-        .leaflet-container .leaflet-control-attribution {
-          background: hsl(var(--card) / 0.85);
-          color: hsl(var(--muted-foreground));
-        }
-        .leaflet-container .leaflet-control-attribution a { color: hsl(var(--aurora)); }
-      `}</style>
     </section>
   );
 }

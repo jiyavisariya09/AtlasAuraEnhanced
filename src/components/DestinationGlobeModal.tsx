@@ -521,7 +521,7 @@ export default function DestinationGlobeModal({
                   </button>
                   <button
                     onClick={resetCamera}
-                    className="px-3 py-2 rounded-xl bg-card/85 border border-border backdrop-blur-md text-foreground hover:border-aurora hover:text-aurora transition-colors shadow-sm flex items-center gap-1.5 text-xs font-mono font-medium"
+                    className="px-3 py-2 rounded-xl bg-card/85 border border-border backdrop-blur-md text-foreground hover:border-aurora hover:text-aurora transition-colors shadow-sm flex items-center gap-1.5 text-xs font-medium"
                     title="Center on Destination"
                   >
                     <RotateCcw className="w-3.5 h-3.5 text-aurora" />
@@ -529,7 +529,7 @@ export default function DestinationGlobeModal({
                   </button>
                   <button
                     onClick={() => setAutoRotate(!autoRotate)}
-                    className={`px-3 py-2 rounded-xl border backdrop-blur-md text-xs font-mono transition-colors ${
+                    className={`px-3 py-2 rounded-xl border backdrop-blur-md text-xs transition-colors ${
                       autoRotate
                         ? 'border-aurora bg-aurora/20 text-aurora font-bold'
                         : 'border-border bg-card/85 text-muted-foreground hover:text-foreground'
@@ -543,7 +543,7 @@ export default function DestinationGlobeModal({
               /* ── View Mode 2: Place Anatomy Topographic & Satellite Map ─── */
               <div className="w-full h-full relative">
                 {/* Map Layer Switcher */}
-                <div className="absolute top-16 left-4 z-[400] flex items-center gap-1 p-1 rounded-xl bg-card/90 border border-border backdrop-blur-md text-[11px] font-mono shadow-md">
+                <div className="absolute top-16 left-4 z-[400] flex items-center gap-1 p-1 rounded-xl bg-card/90 border border-border backdrop-blur-md text-[11px] shadow-md">
                   <button
                     type="button"
                     onClick={() => setMapLayer('streets')}
@@ -606,7 +606,7 @@ export default function DestinationGlobeModal({
                       <div className="p-2 space-y-1 text-slate-900 font-sans text-xs">
                         <strong className="block text-sm font-serif">{destination.name}</strong>
                         <p>{destination.country} · {destination.elevation}</p>
-                        <p className="text-[10px] text-slate-600 font-mono">
+                        <p className="text-[10px] text-slate-600">
                           {destination.coordinates.lat.toFixed(4)}°N, {destination.coordinates.lng.toFixed(4)}°E
                         </p>
                       </div>
@@ -635,7 +635,7 @@ export default function DestinationGlobeModal({
             )}
 
             {/* Top Flight Distance Tag */}
-            <div className="absolute top-4 right-16 z-20 hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-card/85 border border-border backdrop-blur-md shadow-md text-xs font-mono">
+            <div className="absolute top-4 right-16 z-20 hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-card/85 border border-border backdrop-blur-md shadow-md text-xs">
               <Plane className="w-3.5 h-3.5 text-orchid" />
               <span className="text-muted-foreground">{userLocationName.split(',')[0]} ➔ {destination.country}:</span>
               <span className="text-foreground font-bold">{distanceKm.toLocaleString('en-US')} km</span>
@@ -646,21 +646,21 @@ export default function DestinationGlobeModal({
           <div className="w-full lg:w-[380px] p-6 sm:p-7 bg-card border-t lg:border-t-0 lg:border-l border-border flex flex-col justify-between overflow-y-auto">
             <div className="space-y-5">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-aurora/15 border border-aurora/30 text-aurora text-xs font-mono uppercase tracking-wider mb-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-aurora/15 border border-aurora/30 text-aurora text-xs uppercase tracking-wider mb-2">
                   <Compass className="w-3.5 h-3.5" />
                   <span>Geographic Anatomy</span>
                 </div>
                 <h2 className="font-serif text-3xl font-medium text-foreground tracking-tight">
                   {destination.name}
                 </h2>
-                <p className="text-xs font-mono text-muted-foreground mt-1 flex items-center gap-1.5">
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-aurora" />
                   {destination.country} · {destination.region}
                 </p>
               </div>
 
               {/* Coordinates Grid */}
-              <div className="grid grid-cols-2 gap-2.5 p-3 rounded-2xl bg-muted/40 border border-border/80 text-xs font-mono">
+              <div className="grid grid-cols-2 gap-2.5 p-3 rounded-2xl bg-muted/40 border border-border/80 text-xs">
                 <div>
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">Latitude</span>
                   <span className="font-bold text-foreground">{destination.coordinates.lat.toFixed(4)}° N</span>
@@ -682,7 +682,7 @@ export default function DestinationGlobeModal({
               {/* Atmosphere & Anatomy details */}
               <div className="space-y-3">
                 <div>
-                  <h4 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-1">
+                  <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                     Topographic Profile
                   </h4>
                   <p className="text-xs text-foreground/85 leading-relaxed">
@@ -691,7 +691,7 @@ export default function DestinationGlobeModal({
                 </div>
 
                 <div>
-                  <h4 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-1">
+                  <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                     Cultural Lore
                   </h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -702,7 +702,7 @@ export default function DestinationGlobeModal({
 
               {/* Surrounding Waypoints */}
               <div>
-                <h4 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
+                <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5 text-aurora" />
                   Must-Explore Waypoints
                 </h4>

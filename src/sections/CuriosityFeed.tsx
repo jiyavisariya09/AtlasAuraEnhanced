@@ -109,7 +109,7 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
   const inputCls = `bg-card text-foreground`;
 
   return (
-    <section id="curiosity" className="hairline-t section-y relative isolate overflow-hidden cv-auto">
+    <section id="curiosity" className="section-y relative isolate overflow-hidden cv-auto">
       {/* Zero-cost GPU Gradient */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         <div className="aurora-wash absolute inset-0" />

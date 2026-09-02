@@ -127,7 +127,7 @@ export default function AIBudgetEstimatorModal({
                 <h3 className="font-serif text-lg sm:text-2xl font-medium text-foreground">
                   AI Travel Budget Estimator
                 </h3>
-                <p className="text-[11px] sm:text-xs text-muted-foreground font-mono">
+                <p className="text-[11px] sm:text-xs text-muted-foreground">
                   Custom flight & land calculation for {destination.name}, {destination.country}
                 </p>
               </div>
@@ -219,7 +219,7 @@ export default function AIBudgetEstimatorModal({
                     onChange={(e) => setDays(Number(e.target.value))}
                     className="flex-1 accent-aurora h-2 bg-muted rounded-lg"
                   />
-                  <span className="text-xs font-mono font-bold w-12 text-right">{days} Days</span>
+                  <span className="text-xs font-bold w-12 text-right">{days} Days</span>
                 </div>
               </div>
 
@@ -250,11 +250,11 @@ export default function AIBudgetEstimatorModal({
             {/* 3. AI Generated Cost Breakdown Card */}
             <div className="rounded-2xl bg-muted/40 border border-border/80 p-5 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <span className="text-xs font-mono font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-aurora" />
                   Estimated AI Breakdown ({currency})
                 </span>
-                <span className="text-xs font-mono text-aurora">
+                <span className="text-xs text-aurora">
                   Route: {origin.split(',')[0]} ➔ {destination.country}
                 </span>
               </div>
@@ -304,14 +304,14 @@ export default function AIBudgetEstimatorModal({
               {/* Total Banner */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-card border border-aurora/30 shadow-sm gap-2">
                 <div>
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block">
+                  <span className="text-[11px] uppercase tracking-wider text-muted-foreground block">
                     Total Estimated Expedition Budget
                   </span>
                   <span className="text-xs text-muted-foreground">
                     Includes flights, stays, meals, local activities + 10% emergency buffer
                   </span>
                 </div>
-                <div className="text-2xl sm:text-3xl font-mono font-bold text-aurora">
+                <div className="text-2xl sm:text-3xl font-bold text-aurora">
                   {formatPrice(grandTotalUSD)}
                 </div>
               </div>

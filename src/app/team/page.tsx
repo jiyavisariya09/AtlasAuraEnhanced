@@ -83,7 +83,7 @@ export default function TeamPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet/10 border border-violet/25 text-violet text-xs font-mono font-semibold tracking-wider uppercase mb-6"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet/10 border border-violet/25 text-violet text-xs font-semibold tracking-wider uppercase mb-6"
           >
             <Feather className="w-3.5 h-3.5" />
             <span>The Cartography Guild</span>
@@ -126,7 +126,7 @@ export default function TeamPage() {
                 <div className="font-serif text-3xl sm:text-4xl font-bold text-aurora mb-1">
                   {stat.value}
                 </div>
-                <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                <div className="text-xs text-muted-foreground uppercase tracking-wider">
                   {stat.label}
                 </div>
               </motion.div>
@@ -139,7 +139,7 @@ export default function TeamPage() {
       <section className="section-y relative">
         <div className="shell max-w-6xl mx-auto">
           <div className="text-center max-w-xl mx-auto mb-16">
-            <span className="text-xs font-mono font-bold text-aurora tracking-widest uppercase">
+            <span className="text-xs font-bold text-aurora tracking-widest uppercase">
               Core Cartographers
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl mt-3">
@@ -166,7 +166,7 @@ export default function TeamPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full bg-background/90 backdrop-blur-md border border-border/60 text-[11px] font-mono text-aurora font-semibold">
+                    <span className="px-3 py-1 rounded-full bg-background/90 backdrop-blur-md border border-border/60 text-[11px] text-aurora font-semibold">
                       {member.expeditions}
                     </span>
                   </div>
@@ -178,7 +178,7 @@ export default function TeamPage() {
                     <h3 className="font-serif text-xl font-bold text-foreground group-hover:text-aurora transition-colors">
                       {member.name}
                     </h3>
-                    <p className="text-xs font-mono text-violet font-semibold mt-1">
+                    <p className="text-xs text-violet font-semibold mt-1">
                       {member.role}
                     </p>
                     <p className="text-xs text-muted-foreground leading-relaxed mt-3">
@@ -188,10 +188,10 @@ export default function TeamPage() {
 
                   {/* Favorite Coordinate */}
                   <div className="pt-3 border-t border-border/60">
-                    <span className="block text-[10px] font-mono uppercase text-muted-foreground tracking-wider mb-1">
+                    <span className="block text-[10px] uppercase text-muted-foreground tracking-wider mb-1">
                       Favorite Coordinate
                     </span>
-                    <div className="flex items-center gap-1.5 text-xs font-mono text-foreground/90 truncate">
+                    <div className="flex items-center gap-1.5 text-xs text-foreground/90 truncate">
                       <MapPin className="w-3.5 h-3.5 text-aurora shrink-0" />
                       <span className="truncate">{member.favoriteCoord}</span>
                     </div>
