@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      const passwordHash = await bcrypt.hash(newPassword, 12)
+      const passwordHash = await bcrypt.hash(newPassword, 10)
       await prisma.user.update({
         where: { email },
         data: { passwordHash },

@@ -58,53 +58,20 @@ export function smoothScrollTo(target: string, e?: React.MouseEvent) {
     if (e) e.preventDefault();
     const element = document.querySelector(hash);
     if (element) {
-      // Small offset = just enough clearance under the sticky nav.
-      // The section has large top padding (section-y), so a small offset
-      // means we scroll past that padding and land right at the title.
-      const navOffset = 20;
-      const startPosition = window.pageYOffset;
-      const targetPosition = element.getBoundingClientRect().top + startPosition - navOffset;
-      const distance = targetPosition - startPosition;
-      
-      if (Math.abs(distance) < 5) return;
+      const lenis = (window as any).lenis;
+      if (lenis && typeof lenis.scrollTo === 'function') {
+        lenis.scrollTo(element, {
+          offset: -20,
+          duration: 1.2,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        });
+        window.history.pushState(null, '', hash);
+        return;
+      }
 
-      // Dynamic duration based on distance to feel cinematic (800ms - 1500ms)
-      const duration = Math.min(1500, Math.max(800, Math.sqrt(Math.abs(distance)) * 28));
-      let startTime: number | null = null;
-      let userCancelled = false;
-
-      const cancelOnInteraction = () => {
-        userCancelled = true;
-      };
-
-      window.addEventListener('wheel', cancelOnInteraction, { passive: true, once: true });
-      window.addEventListener('touchmove', cancelOnInteraction, { passive: true, once: true });
-
-      // Cubic ease-in-out for graceful acceleration and deceleration through sections
-      const easeInOutCubic = (t: number) => {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      };
-
-      const step = (currentTime: number) => {
-        if (userCancelled) return;
-        if (startTime === null) startTime = currentTime;
-        const timeElapsed = currentTime - startTime;
-        const progress = Math.min(timeElapsed / duration, 1);
-        const ease = easeInOutCubic(progress);
-
-        window.scrollTo(0, startPosition + distance * ease);
-
-        if (timeElapsed < duration) {
-          requestAnimationFrame(step);
-        } else {
-          window.scrollTo(0, targetPosition);
-          window.history.pushState(null, '', hash);
-          window.removeEventListener('wheel', cancelOnInteraction);
-          window.removeEventListener('touchmove', cancelOnInteraction);
-        }
-      };
-
-      requestAnimationFrame(step);
+      // Fallback
+      element.scrollIntoView({ behavior: 'smooth' });
+      window.history.pushState(null, '', hash);
     }
   }
 }
@@ -116,44 +83,17 @@ export function smoothScrollTo(target: string, e?: React.MouseEvent) {
  */
 export function smoothScrollToPosition(targetY: number) {
   if (typeof window === 'undefined') return;
+  const lenis = (window as any).lenis;
+  if (lenis && typeof lenis.scrollTo === 'function') {
+    lenis.scrollTo(targetY, {
+      duration: 1.2,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    });
+    return;
+  }
+  window.scrollTo({ top: targetY, behavior: 'smooth' });
+}
 
-  const startPosition = window.pageYOffset;
-  const distance = targetY - startPosition;
-
-  if (Math.abs(distance) < 5) return;
-
-  const duration = Math.min(1500, Math.max(800, Math.sqrt(Math.abs(distance)) * 28));
-  let startTime: number | null = null;
-  let userCancelled = false;
-
-  const cancelOnInteraction = () => {
-    userCancelled = true;
-  };
-
-  window.addEventListener('wheel', cancelOnInteraction, { passive: true, once: true });
-  window.addEventListener('touchmove', cancelOnInteraction, { passive: true, once: true });
-
-  const easeInOutCubic = (t: number) => {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  };
-
-  const step = (currentTime: number) => {
-    if (userCancelled) return;
-    if (startTime === null) startTime = currentTime;
-    const timeElapsed = currentTime - startTime;
-    const progress = Math.min(timeElapsed / duration, 1);
-    const ease = easeInOutCubic(progress);
-
-    window.scrollTo(0, startPosition + distance * ease);
-
-    if (timeElapsed < duration) {
-      requestAnimationFrame(step);
-    } else {
-      window.scrollTo(0, targetY);
-      window.removeEventListener('wheel', cancelOnInteraction);
-      window.removeEventListener('touchmove', cancelOnInteraction);
-    }
-  };
-
-  requestAnimationFrame(step);
+export function smoothScrollToTop() {
+  smoothScrollToPosition(0);
 }

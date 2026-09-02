@@ -511,6 +511,11 @@ export default function ThreeGlobeExplorer({
     );
 
     const render = () => {
+      if (document.hidden) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+
       const width = canvas.width;
       const height = canvas.height;
       const cx = width / 2;

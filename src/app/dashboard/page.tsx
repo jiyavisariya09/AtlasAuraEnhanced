@@ -9,7 +9,8 @@ import {
   Zap, Settings, LogOut, Plus, Heart, Compass,
   Map, ChevronRight, Bell, Search, Filter, Plane,
   Target, Sparkles, TrendingUp, Clock, PenLine, X, Camera, Check, Save,
-  Luggage, IndianRupee, Calendar, ExternalLink, ShieldCheck, Calculator
+  Luggage, IndianRupee, Calendar, ExternalLink, ShieldCheck, Calculator,
+  Upload, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ import AIBudgetEstimatorModal from '@/components/AIBudgetEstimatorModal';
 import { useAuth } from '@/context/AuthContext';
 import { type AuthUser } from '@/lib/auth';
 import { BorderBeam } from '@/components/ui/border-beam';
+import { useModalLayer } from '@/hooks/use-modal-layer';
 
 const DestinationGlobeModal = dynamic(
   () => import('@/components/DestinationGlobeModal'),
@@ -107,6 +109,9 @@ export default function UserDashboard() {
   const [geocoding, setGeocoding] = useState(false);
   const [geoError, setGeoError] = useState('');
   const [memorySuccess, setMemorySuccess] = useState(false);
+
+  const settingsPanelRef = useModalLayer(showSettings, () => setShowSettings(false));
+  const memoryPanelRef = useModalLayer(showMemoryModal, () => setShowMemoryModal(false));
 
   const TRAVEL_STYLES = [
     { id: 'solo', label: 'Solo Explorer' },
@@ -773,36 +778,50 @@ export default function UserDashboard() {
       </main>
 
       {/* ── Pin Memory Modal ──────────────────────────────────────────────── */}
+      {/* ── Add Memory Modal ──────────────────────────────────────────────── */}
       <AnimatePresence>
         {showMemoryModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
-            onClick={() => setShowMemoryModal(false)}
+          <div
+            data-lenis-prevent="true"
+            className="fixed inset-0 z-50 overflow-y-auto flex min-h-full items-center justify-center p-2 sm:p-4 md:p-6 text-center"
           >
+            {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              className="fixed inset-0 bg-background/80 dark:bg-[#080B14]/80 backdrop-blur-md"
+              onClick={() => setShowMemoryModal(false)}
+              aria-hidden="true"
+            />
+
+            <motion.div
+              ref={memoryPanelRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
               transition={{ duration: 0.35, ease: EASE }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-lg rounded-3xl glass border border-border p-6 sm:p-8 shadow-2xl space-y-5"
+              className="relative z-10 my-auto w-[95vw] sm:w-[90vw] md:max-w-2xl max-h-[88vh] sm:max-h-[90vh] overflow-y-auto rounded-3xl bg-card/95 backdrop-blur-xl border border-border/80 p-5 sm:p-7 md:p-8 shadow-2xl space-y-5 text-left [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              style={{ overscrollBehavior: 'contain' }}
             >
-              <div className="flex items-center justify-between border-b border-border pb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-aurora/15 text-aurora flex items-center justify-center">
-                    <PenLine className="w-4 h-4" />
+              <div className="flex items-center justify-between border-b border-border/80 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-aurora/15 text-aurora flex items-center justify-center shadow-sm">
+                    <PenLine className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-serif font-normal text-foreground">Pin a World Memory</h2>
-                    <p className="text-xs text-muted-foreground">Share your travel reflection with the community</p>
+                    <h2 className="text-xl font-serif font-medium text-foreground">Pin a World Memory</h2>
+                    <p className="text-xs text-muted-foreground">Share your travel reflection with the global community</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowMemoryModal(false)}
-                  className="p-1.5 rounded-full hover:bg-card text-muted-foreground hover:text-foreground"
+                  className="w-9 h-9 flex items-center justify-center rounded-full border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -810,7 +829,7 @@ export default function UserDashboard() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Place / Landmark
                   </label>
                   <div className="relative">
@@ -822,13 +841,13 @@ export default function UserDashboard() {
                         setPlaceInput(e.target.value);
                         setGeoError('');
                       }}
-                      className="pl-10 h-11 bg-card/60 border-border text-foreground"
+                      className="pl-10 h-11 bg-background/70 border-border text-foreground rounded-xl"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Your Memory Note
                   </label>
                   <textarea
@@ -836,12 +855,12 @@ export default function UserDashboard() {
                     placeholder="Describe the aroma, the twilight breeze, the laughter in that quiet café..."
                     value={memoryText}
                     onChange={(e) => setMemoryText(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm bg-card/60 border border-border text-foreground placeholder:text-muted-foreground outline-none resize-none focus:border-aurora"
+                    className="w-full px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm bg-background/70 border border-border text-foreground placeholder:text-muted-foreground outline-none resize-none focus:border-aurora"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
                     Pin Emoji
                   </label>
                   <div className="flex gap-2 flex-wrap">
@@ -853,7 +872,7 @@ export default function UserDashboard() {
                         className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all ${
                           formEmoji === emoji
                             ? 'bg-aurora text-primary-foreground scale-110 shadow-sm'
-                            : 'bg-card border border-border hover:border-aurora/50'
+                            : 'bg-background/80 border border-border hover:border-aurora/50'
                         }`}
                       >
                         {emoji}
@@ -863,7 +882,7 @@ export default function UserDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
                     Travel Mood
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -874,8 +893,8 @@ export default function UserDashboard() {
                         onClick={() => setFormMood(m.id)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
                           formMood === m.id
-                            ? 'bg-aurora/20 text-aurora border border-aurora'
-                            : 'bg-card border border-border text-muted-foreground hover:text-foreground'
+                            ? 'bg-aurora/20 text-aurora border border-aurora shadow-sm'
+                            : 'bg-background/80 border border-border text-muted-foreground hover:text-foreground'
                         }`}
                       >
                         <span>{m.emoji}</span>
@@ -896,7 +915,7 @@ export default function UserDashboard() {
                   <Button
                     variant="outline"
                     onClick={() => setShowMemoryModal(false)}
-                    className="w-1/3 h-11 rounded-full border-border text-xs"
+                    className="w-1/3 h-11 rounded-full border-border text-xs font-semibold"
                   >
                     Cancel
                   </Button>
@@ -910,54 +929,106 @@ export default function UserDashboard() {
                 </div>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
-      {/* ── Settings Modal ────────────────────────────────────────────────── */}
+      {/* ── Settings Modal (Edit Traveler Profile) ────────────────────────── */}
       <AnimatePresence>
         {showSettings && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
-            onClick={() => setShowSettings(false)}
+          <div
+            data-lenis-prevent="true"
+            className="fixed inset-0 z-50 overflow-y-auto flex min-h-full items-center justify-center p-2 sm:p-4 md:p-6 text-center"
           >
+            {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              className="fixed inset-0 bg-background/80 dark:bg-[#080B14]/80 backdrop-blur-md"
+              onClick={() => setShowSettings(false)}
+              aria-hidden="true"
+            />
+
+            <motion.div
+              ref={settingsPanelRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="edit-profile-title"
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ duration: 0.35, ease: EASE }}
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              transition={{ duration: 0.3, ease: EASE }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl glass border border-border p-6 sm:p-8 shadow-2xl space-y-5"
+              className="relative z-10 my-auto w-[96vw] sm:w-[92vw] md:max-w-3xl lg:max-w-4xl max-h-[88vh] sm:max-h-[90vh] overflow-y-auto rounded-3xl bg-card/95 backdrop-blur-xl border border-border/80 shadow-2xl p-5 sm:p-7 md:p-8 text-left [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              style={{ overscrollBehavior: 'contain' }}
             >
-              <div className="flex items-center justify-between border-b border-border pb-4">
-                <h2 className="font-serif text-xl text-foreground">Edit Traveler Profile</h2>
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-border/80 pb-4 mb-6">
+                <div>
+                  <h2 id="edit-profile-title" className="font-serif text-xl sm:text-2xl font-medium text-foreground">
+                    Edit Traveler Profile
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Customize your global explorer dossier, preferences, and avatar
+                  </p>
+                </div>
                 <button
                   onClick={() => setShowSettings(false)}
-                  className="p-1.5 rounded-full hover:bg-card text-muted-foreground hover:text-foreground"
+                  className="w-9 h-9 flex items-center justify-center rounded-full border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Close"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {/* Avatar upload */}
-                <div className="flex items-center gap-4">
+              {/* Responsive 2-Column Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-start">
+                {/* Left Column: Natural Shape Avatar / Photo Preview (5 cols on md/lg) */}
+                <div className="md:col-span-5 space-y-4">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground">
+                      Profile Photograph
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Upload any portrait or scenic photo — takes the full natural shape of the card frame.
+                    </p>
+                  </div>
+
+                  {/* Photo Frame: Stylish Rounded Rectangle (Takes natural shape, NOT a circle) */}
                   <div
                     onClick={() => avatarInputRef.current?.click()}
-                    className="relative w-18 h-18 rounded-full overflow-hidden border-2 border-dashed border-border hover:border-aurora cursor-pointer flex items-center justify-center bg-card group"
+                    className="relative w-full aspect-[4/5] sm:aspect-square md:aspect-[4/5] rounded-3xl overflow-hidden border-2 border-dashed border-border hover:border-aurora bg-muted/40 cursor-pointer group shadow-cast flex items-center justify-center transition-all"
                   >
                     {editAvatar ? (
-                      <img src={editAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                      <img
+                        src={editAvatar}
+                        alt="Traveler Profile Preview"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
                     ) : (
-                      <span className="text-2xl">👤</span>
+                      <div className="flex flex-col items-center justify-center p-6 text-center space-y-3">
+                        <div className="w-16 h-16 rounded-2xl bg-aurora/15 border border-aurora/30 text-aurora flex items-center justify-center shadow-sm">
+                          <Camera className="w-7 h-7" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-semibold text-foreground block">Click to upload photo</span>
+                          <span className="text-[10px] text-muted-foreground">JPG, PNG, WebP or GIF</span>
+                        </div>
+                      </div>
                     )}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <Camera className="w-4 h-4 text-white" />
+
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity duration-300 text-white p-4 text-center">
+                      <Camera className="w-7 h-7 text-aurora" />
+                      <span className="text-xs font-bold">
+                        {editAvatar ? 'Change Photo' : 'Upload Image'}
+                      </span>
                     </div>
                   </div>
+
                   <input
                     ref={avatarInputRef}
                     type="file"
@@ -965,92 +1036,129 @@ export default function UserDashboard() {
                     className="hidden"
                     onChange={handleAvatarUpload}
                   />
-                  <div>
-                    <span className="text-xs font-semibold text-foreground">Avatar Photo</span>
-                    <p className="text-[11px] text-muted-foreground">Click to upload a custom picture</p>
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                    Display Name
-                  </label>
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="h-10 bg-card/60 border-border text-foreground"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                    Travel Bio / Motto
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={editBio}
-                    onChange={(e) => setEditBio(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm bg-card/60 border border-border text-foreground outline-none resize-none focus:border-aurora"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-                    Travel Styles
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {TRAVEL_STYLES.map((s) => (
-                      <button
-                        key={s.id}
+                  {/* Photo Action Buttons */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => avatarInputRef.current?.click()}
+                      className="flex-1 h-9 rounded-full text-xs font-semibold border-border hover:border-aurora"
+                    >
+                      <Upload className="w-3.5 h-3.5 mr-1.5 text-aurora" />
+                      {editAvatar ? 'Replace Photo' : 'Upload Photo'}
+                    </Button>
+                    {editAvatar && (
+                      <Button
                         type="button"
-                        onClick={() => toggleStyle(s.id)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
-                          editTravelStyle.includes(s.id)
-                            ? 'bg-aurora/20 text-aurora border border-aurora'
-                            : 'bg-card border border-border text-muted-foreground hover:text-foreground'
-                        }`}
+                        variant="ghost"
+                        onClick={() => setEditAvatar('')}
+                        className="h-9 px-3 rounded-full text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        title="Remove custom photo"
                       >
-                        {editTravelStyle.includes(s.id) && <Check className="w-3 h-3" />}
-                        {s.label}
-                      </button>
-                    ))}
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                    Dream Destinations
-                  </label>
-                  <Input
-                    value={editDestinations}
-                    onChange={(e) => setEditDestinations(e.target.value)}
-                    placeholder="Japan, Iceland, Patagonia..."
-                    className="h-10 bg-card/60 border-border text-foreground"
-                  />
-                </div>
+                {/* Right Column: Traveler Details (7 cols on md/lg) */}
+                <div className="md:col-span-7 space-y-4">
+                  <div>
+                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground mb-1.5">
+                      Display Name
+                    </label>
+                    <Input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Your explorer name"
+                      className="h-10 bg-background/70 border-border text-foreground rounded-xl"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                    📍 Default Departure City (For AI Location Budgeting)
-                  </label>
-                  <Input
-                    value={editHomeLocation}
-                    onChange={(e) => setEditHomeLocation(e.target.value)}
-                    placeholder="e.g. Mumbai, India or London, UK"
-                    className="h-10 bg-card/60 border-border text-foreground"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground mb-1.5">
+                      Travel Bio / Motto
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={editBio}
+                      onChange={(e) => setEditBio(e.target.value)}
+                      placeholder="e.g. Chasing horizons & collecting quiet sunrises across continents..."
+                      className="w-full px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm bg-background/70 border border-border text-foreground outline-none resize-none focus:border-aurora"
+                    />
+                  </div>
 
-                <Button
-                  onClick={handleSaveSettings}
-                  disabled={saving || saveSuccess}
-                  className="w-full h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-full shadow-cast text-xs mt-2"
-                >
-                  {saveSuccess ? '✓ Profile Updated!' : saving ? 'Saving changes...' : 'Save Profile Changes'}
-                </Button>
+                  <div>
+                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground mb-2">
+                      Travel Styles
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {TRAVEL_STYLES.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => toggleStyle(s.id)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
+                            editTravelStyle.includes(s.id)
+                              ? 'bg-aurora/20 text-aurora border border-aurora shadow-sm'
+                              : 'bg-background/80 border border-border text-muted-foreground hover:text-foreground hover:border-border/80'
+                          }`}
+                        >
+                          {editTravelStyle.includes(s.id) && <Check className="w-3.5 h-3.5" />}
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground mb-1.5">
+                      Dream Destinations
+                    </label>
+                    <Input
+                      value={editDestinations}
+                      onChange={(e) => setEditDestinations(e.target.value)}
+                      placeholder="Japan, Iceland, Patagonia..."
+                      className="h-10 bg-background/70 border-border text-foreground rounded-xl"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono uppercase font-bold tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1">
+                      <span>📍 Default Departure City</span>
+                      <span className="text-[10px] text-aurora normal-case">(For AI Location Budgeting)</span>
+                    </label>
+                    <Input
+                      value={editHomeLocation}
+                      onChange={(e) => setEditHomeLocation(e.target.value)}
+                      placeholder="e.g. Mumbai, India or London, UK"
+                      className="h-10 bg-background/70 border-border text-foreground rounded-xl"
+                    />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-2 flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowSettings(false)}
+                      className="h-11 px-5 rounded-full text-xs font-semibold border-border"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSaveSettings}
+                      disabled={saving || saveSuccess}
+                      className="flex-1 h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-full shadow-cast text-xs"
+                    >
+                      {saveSuccess ? '✓ Profile Updated!' : saving ? 'Saving changes...' : 'Save Profile Changes'}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

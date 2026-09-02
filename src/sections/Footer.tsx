@@ -76,9 +76,9 @@ export default function Footer() {
 
   return (
     <footer className="hairline-t relative isolate pt-24 pb-8 overflow-hidden">
-      {/* Background aurora bloom */}
+      {/* Background aurora gradient (Zero GPU blur passes) */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="animate-aurora-drift absolute bottom-0 left-1/2 -translate-x-1/2 w-[820px] h-[420px] rounded-full bg-aurora/5 blur-3xl" />
+        <div className="aurora-wash absolute inset-0 opacity-80" />
       </div>
 
       {/* Social Toast Alert */}

@@ -212,15 +212,11 @@ export default function UserFeatures({ isLoggedIn }: UserFeaturesProps) {
   return (
     <section 
       id="journey-feed" 
-      className="hairline-t section-y relative isolate overflow-hidden bg-background text-foreground transition-colors duration-500"
+      className="hairline-t section-y relative isolate overflow-hidden bg-background text-foreground transition-colors duration-500 cv-auto"
     >
-      {/* Decorative Aurora Glow Blooms */}
+      {/* Decorative Aurora Glow Background (Zero-Cost GPU Radial Gradients) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="animate-aurora-drift absolute -top-40 -left-20 h-[500px] w-[500px] rounded-full bg-aurora/10 blur-[120px]" />
-        <div 
-          className="animate-aurora-drift absolute -bottom-40 -right-20 h-[500px] w-[500px] rounded-full bg-orchid/10 blur-[140px]" 
-          style={{ animationDelay: '5s' }}
-        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,hsl(var(--aurora)/0.08),transparent_55%),radial-gradient(ellipse_at_bottom_right,hsl(var(--violet)/0.08),transparent_55%)]" />
         {/* Coordinate Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--foreground)/0.03)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--foreground)/0.03)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-70" />
       </div>

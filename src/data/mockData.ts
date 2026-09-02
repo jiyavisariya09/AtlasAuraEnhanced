@@ -222,7 +222,7 @@ export const questions: Question[] = [
 
 export const hiddenGems: HiddenGem[] = [
   {
-    id: '1',
+    id: 'rio-celeste',
     name: 'Rio Celeste Waterfall',
     country: 'Costa Rica',
     image: '/hidden-gem-1.jpg',
@@ -237,7 +237,7 @@ export const hiddenGems: HiddenGem[] = [
     coordinates: '10.7°N, 85.0°W'
   },
   {
-    id: '2',
+    id: 'vardzia',
     name: 'Vardzia Cave City',
     country: 'Georgia',
     image: '/hidden-gem-2.jpg',
@@ -252,7 +252,7 @@ export const hiddenGems: HiddenGem[] = [
     coordinates: '41.4°N, 43.3°E'
   },
   {
-    id: '3',
+    id: 'mosquito-bay',
     name: 'Mosquito Bay',
     country: 'Puerto Rico',
     image: '/hidden-gem-3.jpg',

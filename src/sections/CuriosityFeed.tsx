@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, ThumbsUp, CheckCircle, Tag, Search, Plus, X } from 'lucide-react';
 import { questions as initialQuestions } from '@/data/mockData';
@@ -108,11 +109,10 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
   const inputCls = `bg-card text-foreground`;
 
   return (
-    <section id="curiosity" className="hairline-t section-y relative isolate overflow-hidden">
-      {/* One cool bloom. The original was a stock cyan tint that belonged to
-          neither theme's palette; this reads from --aurora, so it flips. */}
+    <section id="curiosity" className="hairline-t section-y relative isolate overflow-hidden cv-auto">
+      {/* Zero-cost GPU Gradient */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-        <div className="animate-aurora-drift absolute bottom-0 left-0 h-[560px] w-[560px] rounded-full bg-aurora/5 blur-3xl" />
+        <div className="aurora-wash absolute inset-0" />
       </div>
 
       {/* `.shell` owns width, gutters and centring. It sets the `max-width`
@@ -238,35 +238,39 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
 
       {/* Question Detail Modal */}
       <AnimatePresence>
-        {selectedQuestion && (
-          /* Same scrim as CountryStories' modal, HiddenGems' modal and the
-             command palette: --ink-void is only declared on :root, so it stays
-             deep navy in the day theme too, which is what a dialog over cool
-             paper needs. */
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-            style={{ background: 'hsl(var(--ink-void) / 0.72)' }}
-            onClick={closeQuestion}
+        {selectedQuestion && typeof document !== 'undefined' && createPortal(
+          <div
+            data-lenis-prevent="true"
+            className="fixed inset-0 z-[99999] overflow-y-auto flex min-h-full items-center justify-center p-3 sm:p-6 text-center"
           >
-            {/* `.ink-panel` supplies surface, hairline and cast shadow in one,
-                so there is no `border-*`/`shadow-*` here to fight it. */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              className="fixed inset-0 bg-black/85 dark:bg-[#03060f]/92 backdrop-blur-md"
+              onClick={closeQuestion}
+              aria-hidden="true"
+            />
             <motion.div
               ref={questionPanelRef}
               tabIndex={-1}
               role="dialog"
               aria-modal="true"
               aria-labelledby="question-modal-title"
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.4, ease: EASE }}
-              className="ink-panel relative w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl"
+              initial={{ scale: 0.94, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 16 }}
+              transition={{ duration: 0.35, ease: EASE }}
+              className="relative z-10 my-auto w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl bg-card border border-border/80 shadow-2xl text-left"
+              style={{ overscrollBehavior: 'contain' }}
               onClick={e => e.stopPropagation()}
             >
               <button type="button" onClick={closeQuestion} aria-label="Close question" className={CLOSE_BUTTON}>
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="p-8">
+              <div className="p-6 sm:p-8">
                 <div className="flex flex-wrap gap-2 mb-4">
                   {selectedQuestion.tags.map(tag => (
                     <span key={tag} className="rounded-full border border-aurora/20 bg-aurora/10 px-3 py-1 text-xs font-medium capitalize text-aurora">{tag}</span>
@@ -274,7 +278,6 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
                 </div>
                 <h2 id="question-modal-title" className="t-sub mb-4 text-foreground">{selectedQuestion.title}</h2>
                 <p className="t-body mb-6">{selectedQuestion.content}</p>
-                {/* `.hairline-b` sets `border-bottom`; no `border-b` beside it. */}
                 <div className="hairline-b flex items-center gap-3 mb-8 pb-6">
                   <img
                     src={getAuthorAvatar(selectedQuestion.author)}
@@ -287,8 +290,6 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
                   </div>
                 </div>
 
-                {/* Answers — the modal's section headings use the map-label
-                    vernacular, same as CountryStories' modal. */}
                 <h3 className="t-label mb-4 text-aurora">Answers ({selectedQuestion.answers.length})</h3>
                 <div className="space-y-4">
                   {selectedQuestion.answers.length === 0 && (
@@ -297,8 +298,6 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
                   {selectedQuestion.answers.map(answer => (
                     <div key={answer.id} className="p-4 rounded-xl bg-muted">
                       <div className="flex items-start gap-3">
-                        {/* Answer authors carry the section's one violet note,
-                            so they read apart from the asker above. */}
                         <img
                           src={getAuthorAvatar(answer.author)}
                           alt={answer.author}
@@ -329,7 +328,6 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
                   ))}
                 </div>
 
-                {/* Answer input */}
                 {isLoggedIn ? (
                   <div className="hairline-t mt-6 pt-6">
                     <div className="flex gap-3">
@@ -367,28 +365,39 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
                 )}
               </div>
             </motion.div>
-          </motion.div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
 
       {/* Ask Question Modal */}
       <AnimatePresence>
-        {showAskModal && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-            style={{ background: 'hsl(var(--ink-void) / 0.72)' }}
-            onClick={closeAsk}
+        {showAskModal && typeof document !== 'undefined' && createPortal(
+          <div
+            data-lenis-prevent="true"
+            className="fixed inset-0 z-[99999] overflow-y-auto flex min-h-full items-center justify-center p-3 sm:p-6 text-center"
           >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              className="fixed inset-0 bg-black/85 dark:bg-[#03060f]/92 backdrop-blur-md"
+              onClick={closeAsk}
+              aria-hidden="true"
+            />
             <motion.div
               ref={askPanelRef}
               tabIndex={-1}
               role="dialog"
               aria-modal="true"
               aria-labelledby="ask-modal-title"
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.4, ease: EASE }}
-              className="ink-panel relative w-full max-w-lg rounded-2xl p-8"
+              initial={{ scale: 0.94, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 16 }}
+              transition={{ duration: 0.35, ease: EASE }}
+              className="relative z-10 my-auto w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-card border border-border/80 shadow-2xl p-6 sm:p-8 text-left"
+              style={{ overscrollBehavior: 'contain' }}
               onClick={e => e.stopPropagation()}
             >
               <button type="button" onClick={closeAsk} aria-label="Close" className={CLOSE_BUTTON}>
@@ -436,7 +445,8 @@ export default function CuriosityFeed({ isLoggedIn }: CuriosityFeedProps) {
                 </Button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
     </section>

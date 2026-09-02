@@ -199,7 +199,7 @@ function SignInContent() {
 
       {/* ── CENTER: Fixed-Size Auth Card with High-Contrast BorderBeam ────── */}
       <main className="relative z-20 w-full max-w-[440px] px-4 sm:px-0 my-auto py-12">
-        <div className="relative overflow-hidden w-full min-h-[580px] flex flex-col justify-between rounded-3xl p-8 sm:p-9 bg-card/90 dark:bg-card/85 backdrop-blur-2xl border border-black/10 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.45)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.75)]">
+        <div className="relative overflow-hidden w-full min-h-[580px] flex flex-col justify-between rounded-3xl p-8 sm:p-9 bg-card/95 dark:bg-card/90 backdrop-blur-md border border-black/10 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.45)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.75)]">
           {/* Animated High-Contrast Glowing Border Beam (Day & Night Adaptive) */}
           <BorderBeam
             size={180}

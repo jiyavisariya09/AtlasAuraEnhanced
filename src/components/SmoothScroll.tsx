@@ -8,12 +8,34 @@ function LenisSyncHandler() {
   const pathname = usePathname();
   const lenis = useLenis();
 
+  // Expose global Lenis instance for seamless programmatic scrolling across components
+  useEffect(() => {
+    if (!lenis) return;
+    (window as any).lenis = lenis;
+
+    const handleControl = (e: Event) => {
+      const customEvent = e as CustomEvent<{ action: 'stop' | 'start' }>;
+      if (customEvent.detail?.action === 'stop') {
+        lenis.stop();
+      } else if (customEvent.detail?.action === 'start') {
+        lenis.start();
+      }
+    };
+
+    window.addEventListener('atlasaura-lenis-control', handleControl);
+    return () => {
+      window.removeEventListener('atlasaura-lenis-control', handleControl);
+      if ((window as any).lenis === lenis) {
+        delete (window as any).lenis;
+      }
+    };
+  }, [lenis]);
+
   useEffect(() => {
     if (!lenis) return;
 
-    // Recalculate dimensions on route change and scroll to top
+    // Recalculate dimensions on route change
     lenis.resize();
-    lenis.scrollTo(0, { immediate: true });
 
     let resizeTimeout: NodeJS.Timeout | null = null;
     const resizeObserver = new ResizeObserver(() => {
@@ -27,14 +49,9 @@ function LenisSyncHandler() {
       resizeObserver.observe(document.body);
     }
 
-    const timer = setTimeout(() => {
-      lenis.resize();
-    }, 250);
-
     return () => {
       if (resizeTimeout) clearTimeout(resizeTimeout);
       resizeObserver.disconnect();
-      clearTimeout(timer);
     };
   }, [pathname, lenis]);
 
@@ -47,11 +64,13 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
       root
       options={{
         lerp: 0.08,
-        duration: 1.25,
+        duration: 1.2,
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: 'vertical',
+        gestureOrientation: 'vertical',
         smoothWheel: true,
-        wheelMultiplier: 1.12,
-        touchMultiplier: 1.35,
+        wheelMultiplier: 0.85,
+        touchMultiplier: 1.3,
         syncTouch: false,
         autoRaf: true,
       }}
@@ -61,3 +80,4 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
     </ReactLenis>
   );
 }
+

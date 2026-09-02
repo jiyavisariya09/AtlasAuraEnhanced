@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { DestinationItem } from '@/data/destinationsData';
 import { useTheme } from '@/context/ThemeContext';
+import { useModalLayer } from '@/hooks/use-modal-layer';
 import { Button } from '@/components/ui/button';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -142,6 +143,8 @@ export default function DestinationGlobeModal({
   const isDark = theme === 'dark';
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const panelRef = useModalLayer(Boolean(destination), onClose);
+
   // Dual-view state: 3D Orbital Globe vs Topographic Place Anatomy Map
   const [viewMode, setViewMode] = useState<'globe' | 'anatomy'>('globe');
   const [mapLayer, setMapLayer] = useState<'streets' | 'satellite'>('streets');
@@ -194,6 +197,11 @@ export default function DestinationGlobeModal({
     );
 
     const render = () => {
+      if (document.hidden) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+
       const width = canvas.width;
       const height = canvas.height;
       const cx = width / 2;
@@ -424,12 +432,21 @@ export default function DestinationGlobeModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/85 backdrop-blur-xl">
+      <div 
+        data-lenis-prevent="true"
+        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/85 backdrop-blur-xl"
+        onClick={onClose}
+      >
         <motion.div
+          ref={panelRef}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
           initial={{ opacity: 0, scale: 0.95, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
           transition={{ duration: 0.35 }}
+          onClick={(e) => e.stopPropagation()}
           className="relative w-full max-w-5xl rounded-3xl bg-card border border-border overflow-hidden shadow-2xl flex flex-col lg:flex-row h-[92vh] max-h-[860px]"
         >
           {/* Close Button */}
@@ -564,11 +581,11 @@ export default function DestinationGlobeModal({
 
                   {mapLayer === 'streets' ? (
                     <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      attribution='&copy; <a href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">Esri</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
                       url={
                         isDark
-                          ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-                          : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                          ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+                          : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}'
                       }
                     />
                   ) : (

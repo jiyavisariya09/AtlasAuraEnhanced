@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs'
+import { createHash, timingSafeEqual } from 'node:crypto'
 import { sendMail, generateCinematicOtpEmail } from '@/lib/server/mailer'
 
 interface OtpRecord {
@@ -30,6 +30,10 @@ function getCacheKey(email: string, purpose: 'signup' | 'forgot_password'): stri
   return `${email.toLowerCase().trim()}:${purpose}`
 }
 
+function hashOtp(otp: string): string {
+  return createHash('sha256').update(otp).digest('hex')
+}
+
 /**
  * Generates a cryptographically secure 6-digit numeric OTP.
  */
@@ -52,7 +56,7 @@ export async function createAndSendOtp({
   try {
     const cleanEmail = email.toLowerCase().trim()
     const otp = generateOtpCode()
-    const otpHash = await bcrypt.hash(otp, 8)
+    const otpHash = hashOtp(otp)
     const expiresAt = Date.now() + 10 * 60 * 1000 // 10 minutes
 
     // Store in cache
@@ -112,7 +116,10 @@ export async function verifyOtp({
     return false
   }
 
-  const isMatch = await bcrypt.compare(cleanOtp, record.otpHash)
+  const computedHash = hashOtp(cleanOtp)
+  const isMatch = computedHash.length === record.otpHash.length &&
+    timingSafeEqual(Buffer.from(computedHash), Buffer.from(record.otpHash))
+
   if (!isMatch) {
     return false
   }

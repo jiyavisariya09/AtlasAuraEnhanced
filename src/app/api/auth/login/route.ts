@@ -28,7 +28,7 @@ const REJECTED = 'Invalid email or password.'
    there to provide. Memoised, so only the first miss pays for it. */
 let decoyHash: Promise<string> | null = null
 function decoy() {
-  if (!decoyHash) decoyHash = bcrypt.hash(randomUUID(), 12)
+  if (!decoyHash) decoyHash = bcrypt.hash(randomUUID(), 10)
   return decoyHash
 }
 

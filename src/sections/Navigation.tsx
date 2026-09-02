@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -18,6 +19,7 @@ import {
 import AITravelAssistantModal from '@/components/AITravelAssistantModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
+import { useModalLayer } from '@/hooks/use-modal-layer';
 import { countries } from '@/data/mockData';
 import { getAuthorAvatar, smoothScrollTo } from '@/lib/utils';
 
@@ -78,7 +80,17 @@ export default function Navigation({ isLoggedIn: propIsLoggedIn, onLoginToggle }
   });
 
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 24);
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const next = window.scrollY > 24;
+          setIsScrolled(prev => (prev !== next ? next : prev));
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -132,24 +144,7 @@ export default function Navigation({ isLoggedIn: propIsLoggedIn, onLoginToggle }
     return () => document.removeEventListener('mousedown', onDown);
   }, [menuOpen]);
 
-  // A body-scroll lock, so the search overlay doesn't scroll the page behind it.
-  //
-  // This is the one place on the site that puts an `overflow` on `body`, and it
-  // is deliberately temporary. A permanent one would make `body` an
-  // intermediate scroll container, and every `position: sticky` element on the
-  // site would then resolve against `body` instead of the viewport and silently
-  // stop pinning — see the comment on the `html` rule in globals.css. It is
-  // harmless here because the page cannot be scrolled while the overlay is up
-  // anyway, and the previous value is restored on close. If this ever needs to
-  // become a persistent lock, use a class on `html` instead.
-  useEffect(() => {
-    if (!showSearch) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [showSearch]);
+  useModalLayer(showSearch, closeSearch);
 
   const handleSignOut = () => {
     setMenuOpen(false);
@@ -201,10 +196,10 @@ export default function Navigation({ isLoggedIn: propIsLoggedIn, onLoginToggle }
       initial={{ y: -72 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 border-none outline-none ${
         isScrolled
-          ? 'bg-background/90 backdrop-blur-md border-b border-border shadow-sm'
-          : 'bg-transparent border-b-0'
+          ? 'bg-background/90 backdrop-blur-md shadow-sm'
+          : 'bg-transparent'
       }`}
     >
       {/* Seamless Feathered Mist Gradient — No hard borders, softly dissolves into the sky */}
@@ -411,26 +406,31 @@ export default function Navigation({ isLoggedIn: propIsLoggedIn, onLoginToggle }
 
       {/* ── Search ─────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {showSearch && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="fixed inset-0 z-[200] flex items-start justify-center px-4 pt-[12vh] backdrop-blur-sm"
-            style={{ background: 'hsl(var(--ink-void) / 0.72)' }}
-            onClick={closeSearch}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Search countries"
+        {showSearch && typeof document !== 'undefined' && createPortal(
+          <div
+            data-lenis-prevent="true"
+            className="fixed inset-0 z-[99999] overflow-y-auto flex min-h-full items-start justify-center px-4 pt-[10vh] sm:pt-[12vh] pb-6 text-center"
           >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="fixed inset-0 bg-black/85 dark:bg-[#03060f]/92 backdrop-blur-md"
+              onClick={closeSearch}
+              aria-hidden="true"
+            />
             <motion.div
               initial={{ opacity: 0, y: -12, scale: 0.985 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -12, scale: 0.985 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="ink-panel w-full max-w-xl overflow-hidden rounded-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Search countries"
+              className="relative z-10 my-auto w-full max-w-xl overflow-hidden rounded-2xl bg-card border border-border/80 shadow-2xl text-left"
+              style={{ overscrollBehavior: 'contain' }}
             >
               <div className="flex items-center gap-3 border-b border-border px-4 py-3.5">
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -503,7 +503,8 @@ export default function Navigation({ isLoggedIn: propIsLoggedIn, onLoginToggle }
                 )}
               </div>
             </motion.div>
-          </motion.div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
 

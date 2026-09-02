@@ -1,19 +1,11 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
+import { useScroll, useMotionValueEvent } from 'framer-motion';
 
 /* ============================================================================
    The passage — the page's one cinematic set-piece.
-
-   WHY THE TYPE IS NOT ON THE PHOTOGRAPH
-   The picture is left completely unscrimmed and the words sit beside it on solid
-   `--background`, where the token contrast is already verified in both themes.
-
-   WHY IT IS PINNED
-   Four accounts share one frame: the photograph and words transition smoothly as
-   the reader scrolls through the pinned runway. This relies on `position: sticky`
-   reaching the viewport.
+   Four accounts share one frame with silky-smooth concurrent cross-fading.
    ========================================================================== */
 
 const VIDEOS = (process.env.NEXT_PUBLIC_PASSAGE_VIDEOS ?? '')
@@ -71,7 +63,6 @@ const ACCOUNTS: Account[] = [
 ];
 
 const TOTAL = ACCOUNTS.length;
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 export default function Passage() {
   const ref = useRef<HTMLElement>(null);
@@ -86,8 +77,9 @@ export default function Passage() {
   const updateFromProgress = useCallback((latest: number) => {
     const clamped = Math.max(0, Math.min(0.9999, latest));
     setProgressVal(clamped);
+    // Smooth, stable segmentation giving generous 185svh scroll runway per story
     const nextIndex = Math.min(TOTAL - 1, Math.max(0, Math.floor(clamped * TOTAL)));
-    setActive(nextIndex);
+    setActive((prev) => (prev !== nextIndex ? nextIndex : prev));
   }, []);
 
   useMotionValueEvent(scrollYProgress, 'change', (latest) => {
@@ -102,23 +94,20 @@ export default function Passage() {
     (index: number) => {
       const el = ref.current;
       if (!el) return;
-      const top = el.getBoundingClientRect().top + window.scrollY;
+      const rect = el.getBoundingClientRect();
+      const top = window.scrollY + rect.top;
       const travel = el.offsetHeight - window.innerHeight;
       const targetScroll = top + travel * ((index + 0.5) / TOTAL);
-      const prefersReduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       window.scrollTo({
         top: targetScroll,
-        behavior: prefersReduced ? 'auto' : 'smooth',
+        behavior: 'smooth',
       });
     },
     [],
   );
 
-  const currentAccount = ACCOUNTS[active] ?? ACCOUNTS[0];
-  const currentVideo = VIDEOS[active];
-
   return (
-    <section ref={ref} id="passage" className="hairline-t relative h-[570svh]">
+    <section ref={ref} id="passage" className="hairline-t relative h-[750svh]">
       <div className="sticky top-0 h-[100svh] pt-16 pb-6 lg:pb-10 short:pb-3 flex flex-col justify-between">
         <div className="shell flex h-full flex-col justify-between gap-4 lg:gap-8 short:gap-2">
           {/* Eyebrow Header */}
@@ -131,79 +120,86 @@ export default function Passage() {
 
           {/* Core Content Grid */}
           <div className="flex min-h-0 flex-1 flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-14 short:gap-y-3 items-center">
-            {/* ── Left Column: Words with AnimatePresence (No Overlap) ──────── */}
-            <div className="relative w-full flex min-h-[260px] sm:min-h-[300px] flex-col justify-center">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentAccount.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.4, ease: EASE }}
-                  className="w-full"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-aurora animate-pulse" aria-hidden="true" />
-                    <p className="t-data font-mono text-xs sm:text-sm tracking-wider text-muted-foreground">
-                      {currentAccount.coord}
+            {/* ── Left Column: Words with Smooth Parallel Fade (Zero Blank Frames) ──────── */}
+            <div className="relative w-full min-h-[260px] sm:min-h-[300px] flex items-center">
+              {ACCOUNTS.map((account, i) => {
+                const isActive = i === active;
+                return (
+                  <div
+                    key={account.id}
+                    className={`w-full transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      isActive
+                        ? 'opacity-100 translate-y-0 relative pointer-events-auto z-10'
+                        : 'opacity-0 translate-y-3 absolute inset-x-0 pointer-events-none z-0'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-aurora animate-pulse" aria-hidden="true" />
+                      <p className="t-data font-mono text-xs sm:text-sm tracking-wider text-muted-foreground">
+                        {account.coord}
+                      </p>
+                    </div>
+
+                    <blockquote className="mt-4 font-serif text-2xl sm:text-3xl lg:text-4xl xl:text-[2.6rem] font-normal leading-[1.2] text-foreground text-balance">
+                      <span aria-hidden="true" className="text-aurora mr-1 font-serif">&ldquo;</span>
+                      {account.quote}
+                      <span aria-hidden="true" className="text-aurora ml-1 font-serif">&rdquo;</span>
+                    </blockquote>
+
+                    <div className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="t-label text-base sm:text-lg font-semibold tracking-tight text-foreground">
+                        {account.place}
+                      </span>
+                      <span className="text-sm text-muted-foreground">· {account.country}</span>
+                    </div>
+
+                    <p className="t-data mt-2 text-xs sm:text-sm text-muted-foreground font-mono">
+                      {account.meta}
                     </p>
                   </div>
-
-                  <blockquote className="mt-4 font-serif text-2xl sm:text-3xl lg:text-4xl xl:text-[2.6rem] font-normal leading-[1.2] text-foreground text-balance">
-                    <span aria-hidden="true" className="text-aurora mr-1 font-serif">&ldquo;</span>
-                    {currentAccount.quote}
-                    <span aria-hidden="true" className="text-aurora ml-1 font-serif">&rdquo;</span>
-                  </blockquote>
-
-                  <div className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="t-label text-base sm:text-lg font-semibold tracking-tight text-foreground">
-                      {currentAccount.place}
-                    </span>
-                    <span className="text-sm text-muted-foreground">· {currentAccount.country}</span>
-                  </div>
-
-                  <p className="t-data mt-2 text-xs sm:text-sm text-muted-foreground font-mono">
-                    {currentAccount.meta}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
+                );
+              })}
             </div>
 
-            {/* ── Right Column: Photographic Frame with Smooth Cross-Fade ───── */}
+            {/* ── Right Column: Photographic Frame with Smooth Hardware Cross-Fade ───── */}
             <div className="relative w-full h-[280px] sm:h-[360px] lg:h-[480px] xl:h-[540px] max-h-[62svh] min-h-0 flex-1 overflow-hidden rounded-3xl border border-border bg-card/60 shadow-cast shorter:hidden">
-              <AnimatePresence mode="popLayout">
-                <motion.div
-                  key={currentAccount.id}
-                  initial={{ opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.6, ease: EASE }}
-                  className="absolute inset-0"
-                >
-                  <img
-                    src={currentAccount.image}
-                    alt={`${currentAccount.place}, ${currentAccount.country}`}
-                    decoding="async"
-                    loading="eager"
-                    className="h-full w-full object-cover"
-                  />
-                  {/* Subtle dark vignette overlay for depth */}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
-
-                  {currentVideo && (
-                    <video
-                      src={currentVideo}
-                      poster={currentAccount.image}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      preload="metadata"
-                      className="absolute inset-0 h-full w-full object-cover"
+              {ACCOUNTS.map((account, i) => {
+                const isActive = i === active;
+                const videoSrc = VIDEOS[i];
+                return (
+                  <div
+                    key={account.id}
+                    className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      isActive
+                        ? 'opacity-100 scale-100 z-10'
+                        : 'opacity-0 scale-[1.03] pointer-events-none z-0'
+                    }`}
+                  >
+                    <img
+                      src={account.image}
+                      alt={`${account.place}, ${account.country}`}
+                      decoding="async"
+                      loading="eager"
+                      className="h-full w-full object-cover"
                     />
-                  )}
-                </motion.div>
-              </AnimatePresence>
+                    {/* Subtle dark vignette overlay for depth */}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
+
+                    {videoSrc && isActive && (
+                      <video
+                        src={videoSrc}
+                        poster={account.image}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -231,7 +227,7 @@ export default function Passage() {
                     >
                       <div className="relative h-1 w-full overflow-hidden rounded-full bg-border transition-colors group-hover:bg-muted">
                         <div
-                          className="absolute inset-y-0 left-0 bg-aurora rounded-full transition-all duration-75"
+                          className="absolute inset-y-0 left-0 bg-aurora rounded-full transition-all duration-100 ease-linear"
                           style={{ width: `${Math.max(0, Math.min(1, fillPct)) * 100}%` }}
                         />
                       </div>

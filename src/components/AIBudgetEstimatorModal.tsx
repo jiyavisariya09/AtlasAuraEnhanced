@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { DestinationItem } from '@/data/destinationsData';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useModalLayer } from '@/hooks/use-modal-layer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -46,6 +47,8 @@ export default function AIBudgetEstimatorModal({
   const [days, setDays] = useState(7);
   const [travelers, setTravelers] = useState(1);
   const [calculating, setCalculating] = useState(false);
+
+  const panelRef = useModalLayer(Boolean(destination), onClose);
 
   if (!destination) return null;
 
@@ -88,25 +91,43 @@ export default function AIBudgetEstimatorModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-xl overflow-y-auto">
+      <div 
+        data-lenis-prevent="true"
+        className="fixed inset-0 z-50 overflow-y-auto flex min-h-full items-center justify-center p-2 sm:p-4 md:p-6 text-center"
+      >
         <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          className="fixed inset-0 bg-background/80 dark:bg-[#080B14]/80 backdrop-blur-md"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+        <motion.div
+          ref={panelRef}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
           initial={{ opacity: 0, scale: 0.95, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
           transition={{ duration: 0.35 }}
-          className="relative w-full max-w-3xl rounded-3xl bg-card border border-border overflow-hidden shadow-2xl my-auto"
+          className="relative z-10 my-auto w-[95vw] sm:w-[90vw] max-w-3xl max-h-[88vh] sm:max-h-[90vh] rounded-3xl bg-card/95 backdrop-blur-xl border border-border/80 overflow-y-auto shadow-2xl text-left"
+          style={{ overscrollBehavior: 'contain' }}
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-6 sm:p-8 border-b border-border bg-card/60 flex items-center justify-between">
+          <div className="p-4 sm:p-6 md:p-8 border-b border-border bg-card/60 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-aurora/15 border border-aurora/30 text-aurora flex items-center justify-center shadow-sm">
-                <Calculator className="w-5 h-5" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-aurora/15 border border-aurora/30 text-aurora flex items-center justify-center shadow-sm shrink-0">
+                <Calculator className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <h3 className="font-serif text-xl sm:text-2xl font-medium text-foreground">
+                <h3 className="font-serif text-lg sm:text-2xl font-medium text-foreground">
                   AI Travel Budget Estimator
                 </h3>
-                <p className="text-xs text-muted-foreground font-mono">
+                <p className="text-[11px] sm:text-xs text-muted-foreground font-mono">
                   Custom flight & land calculation for {destination.name}, {destination.country}
                 </p>
               </div>

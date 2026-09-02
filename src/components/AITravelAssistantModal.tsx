@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, X, Bot, MapPin, ShieldCheck, Utensils } from 'lucide-react'
 import { useCurrency } from '@/context/CurrencyContext'
@@ -43,6 +44,7 @@ const MOOD_OPTIONS = [
 ]
 
 export default function AITravelAssistantModal({ isOpen, onClose }: AITravelAssistantModalProps) {
+  const [mounted, setMounted] = useState(false)
   const { formatPrice } = useCurrency()
 
   const [prompt, setPrompt] = useState('')
@@ -50,6 +52,10 @@ export default function AITravelAssistantModal({ isOpen, onClose }: AITravelAssi
   const [maxBudget, setMaxBudget] = useState('150')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<AssistantResult | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   /* Escape to close, hold the page still underneath, and hand focus in and back
      out again — the contract every dismissible layer here shares, so the whole
@@ -78,21 +84,21 @@ export default function AITravelAssistantModal({ isOpen, onClose }: AITravelAssi
     }
   }
 
-  /* The early `return null` used to sit outside AnimatePresence, which meant the
-     whole tree — presence detector included — unmounted the moment isOpen went
-     false, so none of the exit animations below ever ran. The condition belongs
-     inside instead. */
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+        <div 
+          data-lenis-prevent="true"
+          className="fixed inset-0 z-[99999] overflow-y-auto flex min-h-full items-center justify-center p-3 sm:p-5 md:p-8 text-center"
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25, ease: EASE }}
-            className="absolute inset-0 backdrop-blur-md"
-            style={{ background: 'hsl(var(--ink-void) / 0.72)' }}
+            className="fixed inset-0 bg-black/85 dark:bg-[#03060f]/92 backdrop-blur-md"
             onClick={onClose}
             aria-hidden="true"
           />
@@ -103,27 +109,28 @@ export default function AITravelAssistantModal({ isOpen, onClose }: AITravelAssi
             role="dialog"
             aria-modal="true"
             aria-labelledby="ai-assistant-title"
-            initial={{ opacity: 0, scale: 0.94, y: 20 }}
+            initial={{ opacity: 0, scale: 0.94, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 20 }}
+            exit={{ opacity: 0, scale: 0.94, y: 16 }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="ink-panel relative max-h-[88vh] w-full max-w-4xl overflow-y-auto rounded-3xl"
+            className="relative z-10 my-auto max-h-[88vh] sm:max-h-[90vh] w-[96vw] sm:w-[92vw] max-w-4xl overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden rounded-3xl bg-card border border-border/80 shadow-2xl text-left"
+            style={{ overscrollBehavior: 'contain' }}
           >
-            <div className="hairline-b flex items-center justify-between gap-4 p-6">
-              <div className="flex items-center gap-3">
+            <div className="hairline-b flex items-center justify-between gap-3 p-4 sm:p-6">
+              <div className="flex items-center gap-2.5 sm:gap-3">
                 <span
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
+                  className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
                   aria-hidden="true"
                 >
-                  <Bot className="h-5 w-5" />
+                  <Bot className="h-4 w-4 sm:h-5 sm:w-5" />
                 </span>
                 <div>
                   <h3
                     id="ai-assistant-title"
-                    className="t-sub flex flex-wrap items-center gap-2 text-foreground"
+                    className="t-sub flex flex-wrap items-center gap-2 text-foreground text-sm sm:text-base"
                   >
                     Travel assistant
-                    <span className="t-label rounded-full border border-aurora/30 bg-aurora/10 px-2 py-0.5 text-aurora">
+                    <span className="t-label rounded-full border border-aurora/30 bg-aurora/10 px-2 py-0.5 text-aurora text-[10px]">
                       Beta
                     </span>
                   </h3>
@@ -292,6 +299,7 @@ export default function AITravelAssistantModal({ isOpen, onClose }: AITravelAssi
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }

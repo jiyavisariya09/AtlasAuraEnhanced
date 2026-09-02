@@ -33,7 +33,17 @@ const USER_KEY = 'atlasaura-user'
 // ── Session helpers (client-side only) ───────────────────
 export function setCurrentUser(user: AuthUser) {
   if (typeof window === 'undefined') return
-  localStorage.setItem(USER_KEY, JSON.stringify(user))
+  try {
+    localStorage.setItem(USER_KEY, JSON.stringify(user))
+  } catch {
+    try {
+      // If large image exceeds quota, store lightweight metadata in client storage while MongoDB holds full avatar
+      const lightweight = { ...user, avatar: user.avatar && user.avatar.length < 50000 ? user.avatar : undefined }
+      localStorage.setItem(USER_KEY, JSON.stringify(lightweight))
+    } catch {
+      // Ignore if localStorage completely full
+    }
+  }
 }
 
 export function getCurrentUser(): AuthUser | null {

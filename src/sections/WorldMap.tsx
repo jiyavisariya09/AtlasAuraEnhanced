@@ -24,14 +24,23 @@ L.Marker.prototype.options.icon = DefaultIcon;
    and lets them flip with the theme; the halo was hardcoded amber (245,158,11)
    for user pins and sky (14,165,233) for the rest, and the placeholder behind
    the photo was a fixed navy that stayed navy on cool paper. */
-const createCustomIcon = (imageUrl: string, isNew = false) =>
-  L.divIcon({
+const iconCache = new Map<string, L.DivIcon>();
+
+const createCustomIcon = (imageUrl: string, isNew = false) => {
+  const cacheKey = `${imageUrl}-${isNew}`;
+  if (iconCache.has(cacheKey)) {
+    return iconCache.get(cacheKey)!;
+  }
+  const icon = L.divIcon({
     className: 'custom-marker',
     html: `<div style="width:44px;height:44px;border-radius:50%;overflow:hidden;box-shadow:0 4px 15px ${isNew ? 'hsl(var(--violet) / 0.55)' : 'hsl(var(--aurora) / 0.45)'};border:3px solid hsl(var(--card));cursor:pointer;background:hsl(var(--muted));"><img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;" /></div>`,
     iconSize: [44, 44],
     iconAnchor: [22, 44],
     popupAnchor: [0, -44],
   });
+  iconCache.set(cacheKey, icon);
+  return icon;
+};
 
 function MapController({ center, zoom }: { center: [number, number]; zoom: number }) {
   const map = useMap();
@@ -123,7 +132,6 @@ export default function WorldMap() {
           both cool by construction. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         <div className="aurora-wash absolute inset-0" />
-        <div className="animate-aurora-drift absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[620px] h-[620px] rounded-full bg-aurora/5 blur-3xl" />
       </div>
 
       <div className="shell relative">
@@ -170,8 +178,12 @@ export default function WorldMap() {
             <MapContainer center={mapCenter} zoom={mapZoom} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }} className={isDark ? 'map-dark' : 'map-light'}>
               <MapController center={mapCenter} zoom={mapZoom} />
               <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url={isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'}
+                attribution='&copy; <a href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">Esri</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
+                url={
+                  isDark
+                    ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+                    : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+                }
               />
               {filteredPins.map((pin) => (
                 <Marker key={pin.id} position={[pin.lat, pin.lng]} icon={createCustomIcon(getPinImage(pin), pin.id.startsWith('user-'))} eventHandlers={{ click: () => focusOnPin(pin) }}>

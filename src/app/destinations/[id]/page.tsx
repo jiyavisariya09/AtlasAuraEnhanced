@@ -8,7 +8,8 @@ import {
   MapPin, Star, Calendar, DollarSign, ShieldCheck, Utensils, 
   Compass, ChevronLeft, Heart, Share2, Sparkles, MessageSquare, 
   ThumbsUp, Check, AlertCircle, Globe, Award, Bus, Send, Plus, 
-  Calculator, Plane, Mountain
+  Calculator, Plane, Mountain, Hotel, CloudSun, HelpCircle,
+  ThumbsDown, ChevronDown, CheckCircle2, Luggage, Coffee, BookOpen, Clock
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -17,6 +18,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import CurrencySelector from '@/components/CurrencySelector';
 import AIBudgetEstimatorModal from '@/components/AIBudgetEstimatorModal';
 import { DESTINATIONS, type DestinationItem } from '@/data/destinationsData';
+import { getEnrichedDestinationData, type DestinationEnrichedData } from '@/data/destinationDetails';
 import { Button } from '@/components/ui/button';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -26,6 +28,8 @@ const DestinationGlobeModal = dynamic(
 );
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+
+type ActiveTab = 'overview' | 'roadmap' | 'hotels' | 'seasons' | 'culinary' | 'faq' | 'reviews';
 
 export default function DestinationDetailPage() {
   const params = useParams();
@@ -37,9 +41,12 @@ export default function DestinationDetailPage() {
   const isDark = theme === 'dark';
 
   const [destination, setDestination] = useState<any | null>(null);
+  const [enriched, setEnriched] = useState<DestinationEnrichedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'culture' | 'food' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+  const [activeRoadmapDay, setActiveRoadmapDay] = useState(1);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   // Modals
   const [showGlobe, setShowGlobe] = useState(false);
@@ -58,12 +65,13 @@ export default function DestinationDetailPage() {
     if (!destinationId) return;
     setLoading(true);
 
-    // 1. Check local rich dataset first
     const matched = DESTINATIONS.find(
       (d) => d.id === destinationId || d.name.toLowerCase().includes(destinationId.toLowerCase())
     );
 
     if (matched) {
+      const enrichedData = getEnrichedDestinationData(matched);
+      setEnriched(enrichedData);
       setDestination({
         ...matched,
         bestTimeToVisit: matched.bestSeason,
@@ -96,7 +104,6 @@ export default function DestinationDetailPage() {
       });
       setLoading(false);
     } else {
-      // 2. Fetch from backend API
       fetch(`/api/destinations/${destinationId}`)
         .then((res) => {
           if (!res.ok) throw new Error('Destination not found');
@@ -104,6 +111,7 @@ export default function DestinationDetailPage() {
         })
         .then((data) => {
           setDestination(data.destination);
+          setEnriched(getEnrichedDestinationData(data.destination));
         })
         .catch((err) => {
           setError(err.message);
@@ -113,7 +121,6 @@ export default function DestinationDetailPage() {
         });
     }
 
-    // Check wishlist state
     try {
       const favs = JSON.parse(localStorage.getItem('atlasaura-favorite-destinations') || '[]');
       setIsSaved(favs.includes(destinationId));
@@ -151,7 +158,7 @@ export default function DestinationDetailPage() {
 
     setSubmittingReview(true);
     try {
-      const res = await fetch('/api/reviews', {
+      await fetch('/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -211,6 +218,8 @@ export default function DestinationDetailPage() {
     );
   }
 
+  const data = enriched || getEnrichedDestinationData(destination);
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top Header */}
@@ -238,17 +247,17 @@ export default function DestinationDetailPage() {
         </div>
       </header>
 
-      {/* Hero Banner Section — Seamless Cinematic Hero & Integrated Telemetry (No Harsh Background Dividing Bar) */}
-      <section className="relative min-h-[560px] w-full overflow-hidden bg-black flex flex-col justify-end pb-8">
+      {/* Hero Banner Section */}
+      <section className="relative min-h-[520px] sm:min-h-[580px] w-full overflow-hidden bg-black flex flex-col justify-end pb-8">
         <img
           src={destination.image}
           alt={destination.name}
           className="absolute inset-0 w-full h-full object-cover"
           decoding="async"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/25" />
 
-        <div className="relative shell z-10 flex flex-col justify-end space-y-6 pt-28">
+        <div className="relative shell z-10 flex flex-col justify-end space-y-6 pt-24">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3.5 py-1 rounded-full text-xs font-mono font-bold bg-aurora text-ink-void shadow-md">
@@ -265,7 +274,7 @@ export default function DestinationDetailPage() {
               )}
             </div>
 
-            <h1 className="font-serif text-4xl sm:text-6xl font-medium text-white tracking-tight drop-shadow-md">
+            <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl font-medium text-white tracking-tight drop-shadow-md">
               {destination.name}
             </h1>
             <p className="text-sm sm:text-base text-white/90 max-w-3xl leading-relaxed drop-shadow-sm font-normal">
@@ -293,25 +302,25 @@ export default function DestinationDetailPage() {
             </div>
           </div>
 
-          {/* Integrated Seamless Telemetry Strip (NO harsh solid background bar!) */}
+          {/* Integrated Telemetry Strip */}
           <div className="pt-6 border-t border-white/20 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
             <div>
               <span className="text-white/60 block text-[10px] uppercase font-bold tracking-wider">Base 7-Day Land Cost</span>
-              <span className="text-lg font-bold text-aurora">{formatPrice(destination.budgetUSD || 850)}</span>
+              <span className="text-base sm:text-lg font-bold text-aurora">{formatPrice(destination.budgetUSD || 850)}</span>
             </div>
             <div>
               <span className="text-white/60 block text-[10px] uppercase font-bold tracking-wider">Best Visiting Season</span>
-              <span className="text-white font-semibold">{destination.bestTimeToVisit || destination.bestSeason}</span>
+              <span className="text-white font-semibold text-xs sm:text-sm">{destination.bestTimeToVisit || destination.bestSeason}</span>
             </div>
             <div>
               <span className="text-white/60 block text-[10px] uppercase font-bold tracking-wider">Safety Score</span>
-              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+              <span className="text-emerald-400 font-semibold flex items-center gap-1 text-xs sm:text-sm">
                 <ShieldCheck className="w-3.5 h-3.5" /> {destination.safetyScore || 4.9} / 5.0
               </span>
             </div>
             <div>
               <span className="text-white/60 block text-[10px] uppercase font-bold tracking-wider">Coordinates</span>
-              <span className="text-white/90 font-mono">
+              <span className="text-white/90 font-mono text-xs">
                 {destination.coordinates?.lat ? `${destination.coordinates.lat.toFixed(2)}°N, ${destination.coordinates.lng.toFixed(2)}°E` : 'Global'}
               </span>
             </div>
@@ -324,48 +333,88 @@ export default function DestinationDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Left 2 Cols: Tabs & Details */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Tabs */}
-            <div className="flex items-center gap-6 border-b border-border text-xs font-mono uppercase tracking-wider pb-3">
+            {/* Responsive Tab Bar */}
+            <div className="flex items-center gap-3 sm:gap-6 border-b border-border text-[11px] sm:text-xs font-mono uppercase tracking-wider pb-3 overflow-x-auto no-scrollbar">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`transition-colors font-bold ${
+                className={`whitespace-nowrap transition-colors font-bold pb-3 -mb-3 ${
                   activeTab === 'overview'
-                    ? 'text-aurora border-b-2 border-aurora pb-3 -mb-3'
+                    ? 'text-aurora border-b-2 border-aurora'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Overview & Highlights
+                Overview
               </button>
               <button
-                onClick={() => setActiveTab('culture')}
-                className={`transition-colors font-bold ${
-                  activeTab === 'culture'
-                    ? 'text-aurora border-b-2 border-aurora pb-3 -mb-3'
+                onClick={() => setActiveTab('roadmap')}
+                className={`whitespace-nowrap transition-colors font-bold pb-3 -mb-3 flex items-center gap-1.5 ${
+                  activeTab === 'roadmap'
+                    ? 'text-aurora border-b-2 border-aurora'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Culture & Heritage
+                <Compass className="w-3.5 h-3.5" /> Roadmap & Itinerary
+              </button>
+              <button
+                onClick={() => setActiveTab('hotels')}
+                className={`whitespace-nowrap transition-colors font-bold pb-3 -mb-3 flex items-center gap-1.5 ${
+                  activeTab === 'hotels'
+                    ? 'text-aurora border-b-2 border-aurora'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Hotel className="w-3.5 h-3.5" /> Hotels & Stays
+              </button>
+              <button
+                onClick={() => setActiveTab('seasons')}
+                className={`whitespace-nowrap transition-colors font-bold pb-3 -mb-3 flex items-center gap-1.5 ${
+                  activeTab === 'seasons'
+                    ? 'text-aurora border-b-2 border-aurora'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <CloudSun className="w-3.5 h-3.5" /> Best Time
+              </button>
+              <button
+                onClick={() => setActiveTab('culinary')}
+                className={`whitespace-nowrap transition-colors font-bold pb-3 -mb-3 flex items-center gap-1.5 ${
+                  activeTab === 'culinary'
+                    ? 'text-aurora border-b-2 border-aurora'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Utensils className="w-3.5 h-3.5" /> Food & Dining
+              </button>
+              <button
+                onClick={() => setActiveTab('faq')}
+                className={`whitespace-nowrap transition-colors font-bold pb-3 -mb-3 flex items-center gap-1.5 ${
+                  activeTab === 'faq'
+                    ? 'text-aurora border-b-2 border-aurora'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <HelpCircle className="w-3.5 h-3.5" /> FAQ & Guide
               </button>
               <button
                 onClick={() => setActiveTab('reviews')}
-                className={`transition-colors font-bold ${
+                className={`whitespace-nowrap transition-colors font-bold pb-3 -mb-3 flex items-center gap-1.5 ${
                   activeTab === 'reviews'
-                    ? 'text-aurora border-b-2 border-aurora pb-3 -mb-3'
+                    ? 'text-aurora border-b-2 border-aurora'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Traveler Stories ({destination.reviews?.length || 2})
+                <MessageSquare className="w-3.5 h-3.5" /> Stories ({destination.reviews?.length || 2})
               </button>
             </div>
 
-            {/* Tab: Overview */}
+            {/* Tab 1: Overview & Highlights */}
             {activeTab === 'overview' && (
               <div className="space-y-6">
                 <div>
                   <h3 className="font-serif text-2xl font-medium text-foreground mb-3">
                     Atmospheric Essence
                   </h3>
-                  <p className="text-sm text-foreground/85 leading-relaxed">
+                  <p className="text-sm sm:text-base text-foreground/85 leading-relaxed">
                     {destination.description}
                   </p>
                 </div>
@@ -377,14 +426,62 @@ export default function DestinationDetailPage() {
                       <Sparkles className="w-3.5 h-3.5 text-aurora" />
                       Must-Experience Waypoints
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                       {destination.highlights.map((h: string, i: number) => (
-                        <div key={i} className="flex items-center gap-2 text-xs text-foreground/90">
-                          <span className="w-1.5 h-1.5 rounded-full bg-aurora shrink-0" />
+                        <div key={i} className="flex items-center gap-2.5 text-xs sm:text-sm text-foreground/90">
+                          <span className="w-2 h-2 rounded-full bg-aurora shrink-0" />
                           <span>{h}</span>
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* Honest Pros & Cons Assessment Matrix */}
+                {data.prosAndCons && (
+                  <div className="p-6 sm:p-8 rounded-3xl bg-card border border-border/80 space-y-5">
+                    <h4 className="font-serif text-xl text-foreground font-medium flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-aurora" />
+                      Honest Traveler Assessment
+                    </h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Pros */}
+                      <div className="space-y-3">
+                        <span className="text-xs font-mono uppercase font-bold text-emerald-500 tracking-wider flex items-center gap-1.5">
+                          <ThumbsUp className="w-3.5 h-3.5" /> What You Will Love
+                        </span>
+                        <ul className="space-y-2.5">
+                          {data.prosAndCons.pros.map((pro: string, i: number) => (
+                            <li key={i} className="flex items-start gap-2.5 text-xs text-foreground/85">
+                              <span className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-500 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</span>
+                              <span>{pro}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Cons */}
+                      <div className="space-y-3">
+                        <span className="text-xs font-mono uppercase font-bold text-amber-500 tracking-wider flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5" /> What to Prepare For
+                        </span>
+                        <ul className="space-y-2.5">
+                          {data.prosAndCons.cons.map((con: string, i: number) => (
+                            <li key={i} className="flex items-start gap-2.5 text-xs text-foreground/85">
+                              <span className="w-4 h-4 rounded-full bg-amber-500/15 text-amber-500 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">!</span>
+                              <span>{con}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {data.prosAndCons.verdict && (
+                      <div className="p-4 rounded-2xl bg-muted/60 border border-border/60 text-xs text-foreground/90 italic">
+                        <strong>Expert Verdict:</strong> &ldquo;{data.prosAndCons.verdict}&rdquo;
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -400,30 +497,360 @@ export default function DestinationDetailPage() {
               </div>
             )}
 
-            {/* Tab: Culture */}
-            {activeTab === 'culture' && (
+            {/* Tab 2: Expedition Roadmap */}
+            {activeTab === 'roadmap' && (
               <div className="space-y-6">
-                <div className="p-6 rounded-3xl bg-card border border-border/80 space-y-4">
-                  <h3 className="font-serif text-2xl font-medium text-foreground">
-                    Cultural Lore & Heritage
+                <div>
+                  <h3 className="font-serif text-2xl font-medium text-foreground mb-2">
+                    Curated Expedition Roadmap
                   </h3>
-                  <p className="text-sm text-foreground/85 leading-relaxed">
-                    {destination.culturalInfo?.history || destination.culture}
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Day-by-day tactical itinerary designed for immersive discovery, optimal pacing, and unforgettable moments.
                   </p>
+                </div>
 
-                  <div className="pt-4 border-t border-border space-y-2">
-                    <h4 className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-bold">
-                      Traveler Etiquette
-                    </h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {destination.culturalInfo?.etiquette || 'Respect local customs, environmental balance, and sanctuary spaces.'}
-                    </p>
+                {/* Day selector tabs */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+                  {data.roadmap.map((r) => (
+                    <button
+                      key={r.day}
+                      onClick={() => setActiveRoadmapDay(r.day)}
+                      className={`px-4 py-2 rounded-full text-xs font-mono font-bold transition-all ${
+                        activeRoadmapDay === r.day
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'bg-card border border-border text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Day {r.day}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Active Day Card */}
+                {data.roadmap.find((r) => r.day === activeRoadmapDay) && (() => {
+                  const day = data.roadmap.find((r) => r.day === activeRoadmapDay)!;
+                  return (
+                    <div className="p-6 sm:p-8 rounded-3xl bg-card border border-border/80 shadow-cast space-y-6">
+                      <div className="border-b border-border pb-4">
+                        <span className="text-xs font-mono font-bold text-aurora uppercase tracking-wider">
+                          Day {day.day} • {day.subtitle}
+                        </span>
+                        <h4 className="font-serif text-2xl font-medium text-foreground mt-1">
+                          {day.title}
+                        </h4>
+                        <p className="text-xs sm:text-sm text-foreground/85 mt-2 leading-relaxed">
+                          {day.description}
+                        </p>
+                      </div>
+
+                      {/* Day Breakdown: Morning, Afternoon, Evening */}
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3">
+                          <span className="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-500 font-mono text-[10px] font-bold shrink-0 mt-0.5">
+                            MORNING
+                          </span>
+                          <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed">{day.morning}</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="px-2.5 py-1 rounded-md bg-aurora/15 text-aurora font-mono text-[10px] font-bold shrink-0 mt-0.5">
+                            AFTERNOON
+                          </span>
+                          <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed">{day.afternoon}</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="px-2.5 py-1 rounded-md bg-violet/15 text-violet font-mono text-[10px] font-bold shrink-0 mt-0.5">
+                            EVENING
+                          </span>
+                          <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed">{day.evening}</p>
+                        </div>
+                      </div>
+
+                      {/* Day Metadata footer */}
+                      <div className="pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+                        <div className="p-3 rounded-xl bg-muted/60">
+                          <span className="text-[10px] text-muted-foreground block uppercase font-bold">Transit Mode</span>
+                          <span className="font-semibold text-foreground">{day.transitMode}</span>
+                        </div>
+                        <div className="p-3 rounded-xl bg-muted/60">
+                          <span className="text-[10px] text-muted-foreground block uppercase font-bold">Recommended Stay</span>
+                          <span className="font-semibold text-foreground">{day.stayRecommendation}</span>
+                        </div>
+                        <div className="p-3 rounded-xl bg-muted/60">
+                          <span className="text-[10px] text-muted-foreground block uppercase font-bold">Meal Highlight</span>
+                          <span className="font-semibold text-foreground">{day.mealHighlight}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Tab 3: Hotels & Stays */}
+            {activeTab === 'hotels' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-serif text-2xl font-medium text-foreground mb-2">
+                    Handpicked Stays & Sanctuaries
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Curated accommodations vetted for character, view, location, and authentic hospitality.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {data.hotels.map((hotel) => (
+                    <div key={hotel.id} className="p-6 rounded-3xl bg-card border border-border/80 shadow-cast flex flex-col justify-between space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-aurora/15 text-aurora border border-aurora/30">
+                            {hotel.tier}
+                          </span>
+                          <div className="flex items-center gap-1 text-xs font-mono font-bold text-foreground">
+                            <Star className="w-3.5 h-3.5 fill-aurora text-aurora" />
+                            <span>{hotel.rating}</span>
+                          </div>
+                        </div>
+
+                        <h4 className="font-serif text-xl font-medium text-foreground">{hotel.name}</h4>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-aurora shrink-0" />
+                          {hotel.location}
+                        </p>
+
+                        {/* Feature pills */}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {hotel.features.map((f, i) => (
+                            <span key={i} className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-foreground/80 font-mono">
+                              {f}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-border space-y-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground font-mono">From / night</span>
+                          <span className="text-base font-bold text-aurora font-mono">{formatPrice(hotel.priceUSD)}</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-muted/50 text-[11px] text-muted-foreground italic">
+                          <strong>Tip:</strong> {hotel.bookingTip}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tab 4: Best Time & Seasons */}
+            {activeTab === 'seasons' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-serif text-2xl font-medium text-foreground mb-2">
+                    Seasonality & Weather Intelligence
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Comprehensive climate overview, crowd levels, and 12-month travel matrix.
+                  </p>
+                </div>
+
+                {/* 3 Season Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-5 rounded-2xl bg-card border border-border/80 space-y-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">Peak Season</span>
+                    <h5 className="font-serif text-lg text-foreground font-medium">{data.seasonality.peakSeason.months}</h5>
+                    <p className="text-xs text-foreground/80">{data.seasonality.peakSeason.weather}</p>
+                    <p className="text-[11px] text-muted-foreground"><strong>Crowds:</strong> {data.seasonality.peakSeason.crowds}</p>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-card border border-border/80 space-y-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-aurora">Shoulder Season</span>
+                    <h5 className="font-serif text-lg text-foreground font-medium">{data.seasonality.shoulderSeason.months}</h5>
+                    <p className="text-xs text-foreground/80">{data.seasonality.shoulderSeason.weather}</p>
+                    <p className="text-[11px] text-muted-foreground"><strong>Crowds:</strong> {data.seasonality.shoulderSeason.crowds}</p>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-card border border-border/80 space-y-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">Quiet Season</span>
+                    <h5 className="font-serif text-lg text-foreground font-medium">{data.seasonality.offSeason.months}</h5>
+                    <p className="text-xs text-foreground/80">{data.seasonality.offSeason.weather}</p>
+                    <p className="text-[11px] text-muted-foreground"><strong>Crowds:</strong> {data.seasonality.offSeason.crowds}</p>
+                  </div>
+                </div>
+
+                {/* 12-Month Matrix */}
+                <div className="p-6 rounded-3xl bg-card border border-border/80 space-y-4">
+                  <h4 className="font-serif text-lg font-medium text-foreground">12-Month Traveler Calendar</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-xs">
+                    {data.seasonality.monthlyMatrix.map((m) => (
+                      <div key={m.month} className="p-3 rounded-2xl bg-muted/60 border border-border/50 space-y-1">
+                        <div className="flex items-center justify-between font-mono font-bold">
+                          <span className="text-foreground">{m.month}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            m.status === 'Peak' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-aurora/10 text-aurora'
+                          }`}>
+                            {m.status}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-muted-foreground font-mono">🌡️ {m.tempC}</div>
+                        <div className="text-[11px] text-muted-foreground font-mono">🌧️ {m.rainfall}</div>
+                        <p className="text-[11px] text-foreground/85 line-clamp-2 pt-1">{m.highlights}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Tab: Reviews */}
+            {/* Tab 5: Food & Culinary */}
+            {activeTab === 'culinary' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-serif text-2xl font-medium text-foreground mb-2">
+                    Gastronomic Lore & Iconic Dishes
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Signature regional recipes, street food culture, and culinary customs.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {data.culinary.signatureDishes.map((dish, i) => (
+                    <div key={i} className="p-5 rounded-2xl bg-card border border-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-rose/15 text-rose">
+                            {dish.type}
+                          </span>
+                          <h4 className="font-serif text-lg font-medium text-foreground">{dish.name}</h4>
+                          {dish.localName && (
+                            <span className="text-xs font-mono text-muted-foreground">({dish.localName})</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-foreground/85 leading-relaxed">{dish.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-5 rounded-2xl bg-card border border-border/80 space-y-2">
+                    <span className="text-xs font-mono font-bold uppercase text-aurora">Street Food & Dining Tips</span>
+                    <p className="text-xs text-foreground/85 leading-relaxed">{data.culinary.streetFoodAdvice}</p>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-card border border-border/80 space-y-2">
+                    <span className="text-xs font-mono font-bold uppercase text-aurora">Iconic Local Beverage</span>
+                    <p className="text-xs text-foreground/85 leading-relaxed">{data.culinary.iconicDrink}</p>
+                    <span className="text-[11px] font-mono text-muted-foreground block pt-1">
+                      Avg. Daily Food Cost: <strong>{formatPrice(data.culinary.avgDailyFoodUSD)}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 6: FAQ & Essential Guide */}
+            {activeTab === 'faq' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-serif text-2xl font-medium text-foreground mb-2">
+                    Frequently Asked Questions & Field Guide
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Everything you need to know about visas, health, gear, and cultural etiquette.
+                  </p>
+                </div>
+
+                {/* Accordion FAQ */}
+                <div className="space-y-3">
+                  {data.faq.map((faq, i) => (
+                    <div key={i} className="rounded-2xl bg-card border border-border/80 overflow-hidden">
+                      <button
+                        onClick={() => setOpenFaqIndex(openFaqIndex === i ? null : i)}
+                        className="w-full p-5 text-left flex items-center justify-between gap-4 text-xs sm:text-sm font-semibold text-foreground hover:bg-muted/40 transition-colors"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-aurora/15 text-aurora flex items-center justify-center text-xs font-bold shrink-0">Q</span>
+                          {faq.question}
+                        </span>
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${openFaqIndex === i ? 'rotate-180 text-aurora' : ''}`} />
+                      </button>
+                      {openFaqIndex === i && (
+                        <div className="px-5 pb-5 pt-1 text-xs text-foreground/85 leading-relaxed border-t border-border/40">
+                          {faq.answer}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Packing List */}
+                <div className="p-6 rounded-3xl bg-card border border-border/80 space-y-4">
+                  <h4 className="font-serif text-lg font-medium text-foreground flex items-center gap-2">
+                    <Luggage className="w-4 h-4 text-aurora" /> Packing & Gear Essentials
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <span className="font-mono font-bold text-muted-foreground uppercase text-[10px] block mb-2">Apparel & Footwear</span>
+                      <ul className="space-y-1.5">
+                        {data.packingList.clothing.map((c, i) => (
+                          <li key={i} className="flex items-center gap-2 text-foreground/85">
+                            <span className="w-1.5 h-1.5 rounded-full bg-aurora" /> {c}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <span className="font-mono font-bold text-muted-foreground uppercase text-[10px] block mb-2">Technical Gear & Optics</span>
+                      <ul className="space-y-1.5">
+                        {data.packingList.gear.map((g, i) => (
+                          <li key={i} className="flex items-center gap-2 text-foreground/85">
+                            <span className="w-1.5 h-1.5 rounded-full bg-aurora" /> {g}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  {data.packingList.insiderPackingTip && (
+                    <div className="p-3 rounded-xl bg-muted/60 text-xs text-muted-foreground italic">
+                      <strong>Insider Tip:</strong> {data.packingList.insiderPackingTip}
+                    </div>
+                  )}
+                </div>
+
+                {/* Cultural Etiquette & Key Phrases */}
+                <div className="p-6 rounded-3xl bg-card border border-border/80 space-y-4">
+                  <h4 className="font-serif text-lg font-medium text-foreground flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-aurora" /> Cultural Lore & Etiquette
+                  </h4>
+                  <ul className="space-y-2 text-xs text-foreground/85">
+                    {data.culturalEtiquette.customs.map((custom, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <span className="w-4 h-4 rounded-full bg-aurora/15 text-aurora flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">•</span>
+                        <span>{custom}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Useful Phrases */}
+                  {data.culturalEtiquette.keyPhrases?.length > 0 && (
+                    <div className="pt-3 border-t border-border space-y-2">
+                      <span className="font-mono font-bold text-[10px] uppercase text-muted-foreground">Useful Local Phrases</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {data.culturalEtiquette.keyPhrases.map((phrase, i) => (
+                          <div key={i} className="p-2.5 rounded-xl bg-muted/50 text-xs">
+                            <div className="font-bold text-foreground">{phrase.phrase}</div>
+                            <div className="text-[11px] text-muted-foreground">{phrase.translation}</div>
+                            <div className="text-[10px] text-aurora font-mono italic">/{phrase.pronunciation}/</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tab 7: Traveler Stories & Reviews */}
             {activeTab === 'reviews' && (
               <div className="space-y-6">
                 {/* Submit review */}
@@ -494,7 +921,7 @@ export default function DestinationDetailPage() {
 
           {/* Right Col: Quick Actions & Trip Planner Card */}
           <div className="space-y-6">
-            <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-cast space-y-5">
+            <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-cast space-y-5 sticky top-24">
               <h3 className="font-serif text-xl font-medium text-foreground">
                 Plan Expedition
               </h3>
@@ -560,3 +987,4 @@ export default function DestinationDetailPage() {
     </div>
   );
 }
+

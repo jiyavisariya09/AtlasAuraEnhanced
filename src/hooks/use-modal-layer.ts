@@ -2,27 +2,56 @@
 
 import { useEffect, useRef } from 'react';
 
+// Global counter to coordinate stacked/nested modals and scroll lock state
+let activeModalsCount = 0;
+let previousBodyOverflow = '';
+let previousHtmlOverflow = '';
+let previousTouchAction = '';
+
+function lockBackgroundScroll() {
+  if (typeof document === 'undefined') return;
+
+  if (activeModalsCount === 0) {
+    previousBodyOverflow = document.body.style.overflow;
+    previousHtmlOverflow = document.documentElement.style.overflow;
+    previousTouchAction = document.body.style.touchAction;
+
+    document.documentElement.classList.add('lenis-stopped');
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    // Dispatch event to pause Lenis smooth scroll instances
+    window.dispatchEvent(
+      new CustomEvent('atlasaura-lenis-control', { detail: { action: 'stop' } })
+    );
+  }
+  activeModalsCount++;
+}
+
+function unlockBackgroundScroll() {
+  if (typeof document === 'undefined') return;
+
+  activeModalsCount = Math.max(0, activeModalsCount - 1);
+  if (activeModalsCount === 0) {
+    document.documentElement.classList.remove('lenis-stopped');
+    document.documentElement.style.overflow = previousHtmlOverflow;
+    document.body.style.overflow = previousBodyOverflow;
+    document.body.style.touchAction = previousTouchAction;
+
+    // Dispatch event to resume Lenis smooth scroll instances
+    window.dispatchEvent(
+      new CustomEvent('atlasaura-lenis-control', { detail: { action: 'start' } })
+    );
+  }
+}
+
 /**
- * The behaviour every dismissible layer on the site owes the reader: Escape
- * closes it, the page underneath holds still, and focus moves into the layer
- * and returns to whatever opened it.
- *
- * The AI assistant modal spelt this out by hand and four other overlays — the
- * gem detail, the country detail, the question detail and the ask form — had
- * none of it: no Escape, no scroll lock, and `aria-modal` nowhere. Collecting
- * it here means the next correction reaches all of them rather than the one
- * file being edited.
- *
- * Deliberately *not* a focus trap. Tab can still walk out of the panel and into
- * the page behind, which `aria-modal="true"` tells assistive tech it cannot.
- * Closing that gap properly means enumerating focusable descendants and cycling
- * them, which is a real amount of code with real edge cases; the far larger win
- * is that focus starts inside the dialog and comes back afterwards, which is
- * what this does. Radix's Dialog is already a dependency here if a full trap is
- * ever wanted — these four overlays predate that choice.
- *
- * Returns a ref for the panel element, which needs `tabIndex={-1}`: a plain
- * `div` does not accept focus, so without it the focus() call does nothing.
+ * Universal hook for dismissible layers and modals:
+ * 1. Locks background scroll completely (body, document, and Lenis virtual scroll).
+ * 2. Handles Escape key dismissals.
+ * 3. Restores focus when closing.
+ * 4. Safely stacks when multiple dialogs/layers are open.
  */
 export function useModalLayer<T extends HTMLElement = HTMLDivElement>(
   isOpen: boolean,
@@ -30,9 +59,6 @@ export function useModalLayer<T extends HTMLElement = HTMLDivElement>(
 ) {
   const panelRef = useRef<T | null>(null);
 
-  /* Held in a ref so that an inline `onClose={() => setThing(null)}` — a new
-     function identity on every parent render — does not tear the effect down
-     and rebuild it on each render while the layer is open. */
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
@@ -46,23 +72,17 @@ export function useModalLayer<T extends HTMLElement = HTMLDivElement>(
     };
     window.addEventListener('keydown', onKey);
 
-    /* Read back rather than assumed to be '': restoring a hard-coded empty
-       string would unlock the page while an outer layer is still open. Capturing
-       the previous value means stacked layers unwind in the order they opened. */
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    lockBackgroundScroll();
 
-    /* preventScroll because the panel lives inside a `fixed inset-0` layer —
-       without it the browser scrolls the document behind to reveal something
-       that is already centred on screen. */
     panelRef.current?.focus({ preventScroll: true });
 
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
+      unlockBackgroundScroll();
       returnFocusTo?.focus?.();
     };
   }, [isOpen]);
 
   return panelRef;
 }
+

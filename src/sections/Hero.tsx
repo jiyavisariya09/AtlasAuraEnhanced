@@ -108,10 +108,9 @@ export default function Hero() {
       >
         <div className="max-w-[46rem]">
           <div className="animate-rise-in flex items-center gap-4" style={{ animationDelay: '80ms' }}>
-            {/* The thesis, stated flatly. It is the one claim that separates
-                this from every other travel site, so it goes first and it goes
-                in the smallest type on the screen. */}
-            <span className="t-label text-aurora font-bold drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">A travel atlas with no star ratings</span>
+            <span className="t-label text-aurora font-bold drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+              A travel atlas with no star ratings
+            </span>
             <span className="h-px flex-1 bg-white/20" />
           </div>
 
@@ -137,14 +136,14 @@ export default function Hero() {
             <Link
               href="#explore"
               onClick={(e) => smoothScrollTo('#explore', e)}
-              className="lift group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover shadow-md"
+              className="lift group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover shadow-md hover:scale-105 transition-all duration-300"
             >
               Start with a feeling
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
             <Link
               href="/signup"
-              className="inline-flex items-center gap-2 rounded-full glass px-6 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:text-aurora hover:border-aurora/40 shadow-sm"
+              className="inline-flex items-center gap-2 rounded-full glass px-6 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:text-aurora hover:border-aurora/40 hover:scale-105 shadow-sm"
             >
               Start your own atlas
             </Link>

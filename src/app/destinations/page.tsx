@@ -450,16 +450,18 @@ export default function DestinationsPage() {
                   >
                     <div className="lift relative rounded-3xl overflow-hidden bg-card border border-border/80 shadow-sm hover:shadow-xl hover:border-aurora/40 flex flex-col justify-between h-full transition-all duration-300">
                       
-                      {/* Image Top Half — 100% Bright, Crisp, Natural */}
+                      {/* Image Top Half — Click to Open Destination Detail */}
                       <div className="relative h-64 w-full overflow-hidden bg-muted">
-                        <img
-                          src={dest.image}
-                          alt={dest.name}
-                          className="w-full h-full object-cover transition-transform duration-700 ease-smooth will-change-transform group-hover:scale-[1.04]"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
+                        <Link href={`/destinations/${dest.id}`} className="block w-full h-full cursor-pointer">
+                          <img
+                            src={dest.image}
+                            alt={dest.name}
+                            className="w-full h-full object-cover transition-transform duration-700 ease-smooth will-change-transform group-hover:scale-[1.04]"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
+                        </Link>
 
                         {/* Top Rating & Location Floating Badges */}
                         <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between z-10 pointer-events-none">
@@ -491,7 +493,7 @@ export default function DestinationsPage() {
                         </div>
                       </div>
 
-                      {/* Card Content Body (Spacious & Cleanly Hierarchical) */}
+                      {/* Card Content Body */}
                       <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                         <div className="space-y-3">
                           {/* Elevation & Season Badges Strip */}
@@ -504,11 +506,14 @@ export default function DestinationsPage() {
                             </span>
                           </div>
 
-                          {/* Title & Description with Full Popover on Click */}
+                          {/* Destination Title (Clicking name opens detail page) */}
                           <div>
-                            <h3 className="font-serif text-2xl font-semibold text-foreground group-hover:text-aurora transition-colors">
-                              {dest.name}
-                            </h3>
+                            <Link href={`/destinations/${dest.id}`} className="group/title block">
+                              <h3 className="font-serif text-2xl font-semibold text-foreground group-hover/title:text-aurora transition-colors inline-flex items-center gap-2">
+                                {dest.name}
+                                <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover/title:opacity-100 group-hover/title:translate-x-0 text-aurora transition-all duration-300" />
+                              </h3>
+                            </Link>
                             
                             {/* Description (Click to view full description) */}
                             <div className="relative mt-1.5">
@@ -524,7 +529,7 @@ export default function DestinationsPage() {
                                 </p>
                               </button>
 
-                              {/* Floating Popover on Click (Day & Night Mode Supported) */}
+                              {/* Floating Popover on Click */}
                               <AnimatePresence>
                                 {activeDescriptionId === dest.id && (
                                   <motion.div
@@ -555,7 +560,6 @@ export default function DestinationsPage() {
                                     <p className="text-xs text-foreground/90 leading-relaxed font-normal">
                                       {dest.description}
                                     </p>
-                                    {/* Tooltip Downward Arrow Pointer */}
                                     <div className="absolute top-full left-6 -mt-[1px] w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-card" />
                                   </motion.div>
                                 )}
@@ -577,8 +581,7 @@ export default function DestinationsPage() {
                         </div>
 
                         {/* Bottom Actions & Price Strip (Clean, Spacious, Elegant) */}
-                        <div className="pt-4 border-t border-border/60 space-y-3.5">
-                          {/* Price & Micro Actions Row */}
+                        <div className="pt-4 border-t border-border/60">
                           <div className="flex items-center justify-between gap-2">
                             <div>
                               <span className="text-[10px] uppercase font-mono text-muted-foreground block font-bold tracking-wider">Est. 7-Day Land</span>
@@ -611,16 +614,6 @@ export default function DestinationsPage() {
                               </button>
                             </div>
                           </div>
-
-                          {/* Primary Solid Action Button */}
-                          <Link href={`/destinations/${dest.id}`} className="block group/btn">
-                            <Button
-                              className="w-full py-2.5 px-5 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs flex items-center justify-between shadow-md transition-all duration-300 active:scale-98"
-                            >
-                              <span className="group-hover/btn:translate-x-0.5 transition-transform">Explore Destination Dossier</span>
-                              <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
-                            </Button>
-                          </Link>
                         </div>
                       </div>
                     </div>

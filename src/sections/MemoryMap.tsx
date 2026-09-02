@@ -39,8 +39,8 @@ export default function MemoryMap({ isLoggedIn }: MemoryMapProps) {
 
   return (
     <section id="memory-map" className="relative py-24 overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[560px] h-[560px] rounded-full blur-3xl ${isDark ? 'bg-aurora/5' : 'bg-aurora/5'}`} />
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="aurora-wash absolute inset-0" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -18,16 +18,10 @@ export default function MoodSearch() {
     : countries.filter(c => c.purposes.includes(selectedMood));
 
   return (
-    <section id="explore" className="hairline-t section-y relative isolate overflow-hidden">
-      {/* Background Elements — cool blooms only. Both originals were dead
-          weight: an alpha step of eight is not one Tailwind emits, and the drift
-          animation they named has no keyframe. These use tokens that exist. */}
+    <section id="explore" className="hairline-t section-y relative isolate overflow-hidden cv-auto">
+      {/* Background Elements — Zero-cost GPU Gradient */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="animate-aurora-drift absolute left-1/4 top-0 h-80 w-80 rounded-full bg-aurora/5 blur-3xl" />
-        <div
-          className="animate-aurora-drift absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-orchid/5 blur-3xl"
-          style={{ animationDelay: '4s' }}
-        />
+        <div className="aurora-wash absolute inset-0" />
       </div>
 
       <div className="shell relative">

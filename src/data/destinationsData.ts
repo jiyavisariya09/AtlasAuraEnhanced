@@ -3184,5 +3184,176 @@ export const DESTINATIONS: DestinationItem[] = [
         "comment": "Running down the sheer 300-meter face of Big Daddy dune into the white pan was an absolute blast!"
       }
     ]
+  },
+  {
+    "id": "rio-celeste",
+    "name": "Rio Celeste Waterfall",
+    "country": "Costa Rica",
+    "region": "Americas",
+    "image": "/hidden-gem-1.jpg",
+    "gallery": [
+      "/hidden-gem-1.jpg",
+      "/mood-adventure.jpg",
+      "/mood-solo.jpg"
+    ],
+    "description": "A magical turquoise waterfall hidden deep in the Tenorio Volcano National Park, formed by an extraordinary optical mineral collision.",
+    "culture": "Costa Rican Pura Vida rainforest conservation, indigenous Maleku lore, and volcanic thermal traditions.",
+    "vibe": "Magical, Electric Blue, Emerald Jungle",
+    "rating": 4.95,
+    "reviewCount": 240,
+    "coordinates": {
+      "lat": 10.7167,
+      "lng": -84.9833
+    },
+    "elevation": "700 m (2,296 ft)",
+    "bestSeason": "Dec – Apr (Dry Season & Sparkling Blue Clarity)",
+    "category": "adventure",
+    "purposes": ["adventure", "nature", "photography", "solo"],
+    "budgetUSD": 680,
+    "budgetTier": "explorer",
+    "highlights": [
+      "Rio Celeste 30m Turquoise Plunge Waterfall",
+      "Los Teñideros River Confluence Point",
+      "Borbollones Bubbling Volcanic Thermal Springs",
+      "Tapir & Sloth Rainforest Sanctuary Walks"
+    ],
+    "localDelicacy": "Casado con Pescado & Fresh Tropical Guanábana Batido",
+    "flightBenchmarkUSD": {
+      "mumbai": 980,
+      "delhi": 1020,
+      "newyork": 380,
+      "london": 650,
+      "dubai": 920,
+      "tokyo": 1150,
+      "sydney": 1420,
+      "paris": 680,
+      "singapore": 1250,
+      "toronto": 420,
+      "default": 650
+    },
+    "reviews": [
+      {
+        "id": "rev-rc-1",
+        "author": "Mateo Morales",
+        "rating": 5,
+        "date": "2026-01-18",
+        "travelerType": "Nature Explorer",
+        "comment": "The blue color of Rio Celeste looks completely fake until you see it with your own eyes in the jungle mist. Absolutely stunning."
+      }
+    ]
+  },
+  {
+    "id": "vardzia",
+    "name": "Vardzia Cave City",
+    "country": "Georgia",
+    "region": "Europe",
+    "image": "/hidden-gem-2.jpg",
+    "gallery": [
+      "/hidden-gem-2.jpg",
+      "/mood-honeymoon.jpg",
+      "/mood-adventure.jpg"
+    ],
+    "description": "An ancient subterranean monastery carved into the sheer Erusheti cliffside, spanning 13 subterranean tiers and over 6,000 stone chambers.",
+    "culture": "Golden Age Georgian Orthodox monasticism, Queen Tamar legendary legacy, and ancient 8,000-year-old Qvevri winemaking traditions.",
+    "vibe": "Ancient, Mystical, Cliffside Fortress",
+    "rating": 4.88,
+    "reviewCount": 185,
+    "coordinates": {
+      "lat": 41.3811,
+      "lng": 43.2842
+    },
+    "elevation": "1,300 m (4,265 ft)",
+    "bestSeason": "May – Oct (Warm Alpine Days & Clear Valley Light)",
+    "category": "cultural",
+    "purposes": ["culture", "adventure", "history", "solo"],
+    "budgetUSD": 540,
+    "budgetTier": "explorer",
+    "highlights": [
+      "Church of the Dormition 12th-Century Frescoes",
+      "Secret Tunnels & Royal Throne Chamber",
+      "Khertvisi Fortress Canyon Overlook",
+      "Qvevri Amber Wine Cellar Tasting"
+    ],
+    "localDelicacy": "Khachapuri & Meskhetian Apokhti Dried Beef",
+    "flightBenchmarkUSD": {
+      "mumbai": 420,
+      "delhi": 450,
+      "newyork": 690,
+      "london": 260,
+      "dubai": 220,
+      "tokyo": 880,
+      "sydney": 1250,
+      "paris": 280,
+      "singapore": 680,
+      "toronto": 720,
+      "default": 450
+    },
+    "reviews": [
+      {
+        "id": "rev-var-1",
+        "author": "Sophie Lindqvist",
+        "rating": 5,
+        "date": "2025-09-12",
+        "travelerType": "Historian",
+        "comment": "Standing inside a cliff-carved monastery 13 floors above the Kura river gorge is an unforgettable journey back to the Middle Ages."
+      }
+    ]
+  },
+  {
+    "id": "mosquito-bay",
+    "name": "Mosquito Bay",
+    "country": "Puerto Rico",
+    "region": "Americas",
+    "image": "/hidden-gem-3.jpg",
+    "gallery": [
+      "/hidden-gem-3.jpg",
+      "/mood-solo.jpg",
+      "/mood-honeymoon.jpg"
+    ],
+    "description": "The world’s brightest bioluminescent bay on Vieques Island—paddle through neon electric blue glowing waters beneath starry Caribbean skies.",
+    "culture": "Taino indigenous sea lore, Vieques mangrove maritime sanctuary conservation, and vibrant Caribbean hospitality.",
+    "vibe": "Ethereal, Bioluminescent, Caribbean Glow",
+    "rating": 4.93,
+    "reviewCount": 310,
+    "coordinates": {
+      "lat": 18.1008,
+      "lng": -65.4489
+    },
+    "elevation": "0 m (Sea Level)",
+    "bestSeason": "Year-round (Best on New Moon & Moonless Nights)",
+    "category": "adventure",
+    "purposes": ["adventure", "romantic", "nature", "photography"],
+    "budgetUSD": 920,
+    "budgetTier": "explorer",
+    "highlights": [
+      "Nighttime Clear-Bottom Kayak Starglow Tour",
+      "Sun Bay Pristine White Crescent Beach",
+      "Vieques Wild Horses & Mangrove Sanctuary",
+      "Esperanza Sunset Boardwalk & Rum Tasting"
+    ],
+    "localDelicacy": "Mofongo Relleno de Mariscos (Garlic plantain with Caribbean seafood)",
+    "flightBenchmarkUSD": {
+      "mumbai": 950,
+      "delhi": 980,
+      "newyork": 280,
+      "london": 590,
+      "dubai": 890,
+      "tokyo": 1100,
+      "sydney": 1380,
+      "paris": 620,
+      "singapore": 1150,
+      "toronto": 340,
+      "default": 550
+    },
+    "reviews": [
+      {
+        "id": "rev-mb-1",
+        "author": "Carlos Delgado",
+        "rating": 5,
+        "date": "2026-02-01",
+        "travelerType": "Kayaker",
+        "comment": "Every stroke of your paddle sends showers of electric neon sparkles into the water. It is pure living starlight."
+      }
+    ]
   }
 ];
