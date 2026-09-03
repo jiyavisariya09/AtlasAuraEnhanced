@@ -240,23 +240,31 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      const profileData = {
+      // Map to the API's expected field names (profileUpdateSchema)
+      const apiData: Record<string, unknown> = {
         name,
-        avatar,
-        homeLocation,
-        languages,
         bio: travelTasteBio,
-        tastes: selectedTastes,
+        travelStyle: selectedTastes,
       };
 
-      // 1. Save directly to MongoDB database
-      await fetch('/api/user/profile', {
+      // Only send avatar if it's a URL (not a huge base64 string that exceeds validation)
+      if (avatar && avatar.length < 300) {
+        apiData.avatar = avatar;
+      }
+
+      // 1. Save to database
+      const res = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profileData),
+        body: JSON.stringify(apiData),
       });
 
-      // 2. Safe local preferences storage
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error('Profile save failed:', errData);
+      }
+
+      // 2. Save all preferences to localStorage (including fields not in the DB schema)
       try {
         const localData = {
           name,
@@ -268,7 +276,7 @@ export default function SettingsPage() {
         };
         localStorage.setItem('atlasaura-preferences', JSON.stringify(localData));
       } catch (storageErr) {
-        console.warn('LocalStorage quota limit reached, persisted to MongoDB database.');
+        console.warn('LocalStorage quota limit reached, persisted to database.');
       }
 
       updateUser({ name, avatar });

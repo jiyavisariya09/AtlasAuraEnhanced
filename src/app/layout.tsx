@@ -1,32 +1,32 @@
 import type { Metadata, Viewport } from 'next';
-import { Cormorant_Garamond, DM_Sans, DM_Mono } from 'next/font/google';
+import { Playfair_Display, Inter, Space_Grotesk } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { AuthProvider } from '@/context/AuthContext';
 import SmoothScroll from '@/components/SmoothScroll';
 import '@/styles/globals.css';
 
-/* Display/Serif: Cormorant Garamond — tall x-height, high-contrast editorial serif.
-   Body/UI: DM Sans — clean geometric sans for all body, labels, tags, and UI.
-   Mono: DM Mono — same DM family, used ONLY for geo-coordinates and financial values. */
-const cormorant = Cormorant_Garamond({
+/* Display/Serif: Playfair Display — high-contrast editorial serif with sharp details.
+   Body/UI: Inter — the gold standard for clean, legible UI text with tabular figures.
+   Numbers: Space Grotesk — geometric sans with clear, elegant digits for prices & coordinates. */
+const playfair = Playfair_Display({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
   style: ['normal', 'italic'],
   display: 'swap',
   variable: '--font-serif',
 });
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['300', '400', '500', '600'],
   display: 'swap',
   variable: '--font-manrope',
 });
 
-const dmMono = DM_Mono({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  weight: ['400', '500'],
+  weight: ['300', '400', '500', '600'],
   display: 'swap',
   variable: '--font-jetbrains',
 });
@@ -64,7 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body
-        className={`${cormorant.variable} ${dmSans.variable} ${dmMono.variable} font-sans antialiased`}
+        className={`${playfair.variable} ${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}
       >
         <ThemeProvider>
           <CurrencyProvider>

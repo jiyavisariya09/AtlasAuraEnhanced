@@ -5,206 +5,218 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 interface SeamlessHeroVideoProps {
   src: string;
   className?: string;
-  crossfadeDuration?: number;
   playbackRate?: number;
-  /** Fires once video A begins playing successfully */
+  /** Whether this video's layer is currently visible / active */
+  isActive?: boolean;
+  /** Fires once video begins playing or has decoded frames */
   onPlaying?: () => void;
-  /** Fires if video fails to load or cannot autoplay within timeout */
+  /** Fires ONLY if video source genuinely cannot be found or loaded (e.g. 404) */
   onError?: () => void;
 }
 
 export default function SeamlessHeroVideo({
   src,
   className = '',
-  crossfadeDuration = 1.4,
   playbackRate = 0.75,
+  isActive = true,
   onPlaying,
   onError,
 }: SeamlessHeroVideoProps) {
-  const videoA = useRef<HTMLVideoElement>(null);
-  const videoB = useRef<HTMLVideoElement>(null);
-  const [bOpacity, setBOpacity] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const activeRef = useRef<'A' | 'B'>('A');
-  const transitioningRef = useRef(false);
-  const playFiredRef = useRef(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isReady, setIsReady] = useState(false);
+  const hasPlayedRef = useRef(false);
+  const retryCountRef = useRef(0);
 
   const handlePlaySuccess = useCallback(() => {
-    if (!playFiredRef.current) {
-      playFiredRef.current = true;
-      setIsPlaying(true);
+    if (!hasPlayedRef.current) {
+      hasPlayedRef.current = true;
+      setIsReady(true);
       onPlaying?.();
     }
   }, [onPlaying]);
 
+  // Main playback lifecycle and error handling
   useEffect(() => {
-    const vA = videoA.current;
-    const vB = videoB.current;
-    if (!vA || !vB) return;
+    const video = videoRef.current;
+    if (!video) return;
 
     let isMounted = true;
-    let timer: NodeJS.Timeout | null = null;
-    let fallbackTimeout: NodeJS.Timeout | null = null;
+    let initialTimeout: NodeJS.Timeout | null = null;
 
-    // Apply cinematic playback rate
-    vA.playbackRate = playbackRate;
-    vB.playbackRate = playbackRate;
+    // Reset verification for new source
+    hasPlayedRef.current = false;
+    retryCountRef.current = 0;
+    setIsReady(false);
 
-    // Timeout: if video hasn't started playing within 4 seconds, signal fallback
-    fallbackTimeout = setTimeout(() => {
-      if (isMounted && !playFiredRef.current) {
+    video.playbackRate = playbackRate;
+
+    const onPlayingEvent = () => {
+      if (initialTimeout) clearTimeout(initialTimeout);
+      handlePlaySuccess();
+    };
+
+    const onLoadedData = () => {
+      video.playbackRate = playbackRate;
+      if (video.currentTime > 0 || !video.paused) {
+        handlePlaySuccess();
+      }
+    };
+
+    const handleVideoError = () => {
+      // If the video has already successfully loaded and played, NEVER fall back to image.
+      // Transient decode or network glitches should be recovered, not downgraded.
+      if (hasPlayedRef.current) {
+        console.warn('[HeroVideo] Transient playback disruption encountered. Recovering stream...');
+        try {
+          video.currentTime = 0;
+          video.play().catch(() => {});
+        } catch {
+          /* recovery attempt */
+        }
+        return;
+      }
+
+      // Initial load failure — verify if genuine 404 / unsupported source
+      const err = video.error;
+      const isNotFoundOrUnsupported = err && err.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED;
+
+      if (isNotFoundOrUnsupported) {
+        // Source not found or format unplayable: trigger fallback
+        if (initialTimeout) clearTimeout(initialTimeout);
+        onError?.();
+      } else if (retryCountRef.current < 2) {
+        // Transient network retry
+        retryCountRef.current += 1;
+        setTimeout(() => {
+          if (!isMounted || hasPlayedRef.current) return;
+          video.load();
+          video.play().catch(() => {});
+        }, 800);
+      } else {
+        if (initialTimeout) clearTimeout(initialTimeout);
         onError?.();
       }
-    }, 4000);
-
-    const onPlayingA = () => {
-      if (fallbackTimeout) clearTimeout(fallbackTimeout);
-      handlePlaySuccess();
     };
 
-    const onErrorA = () => {
-      if (fallbackTimeout) clearTimeout(fallbackTimeout);
-      onError?.();
-    };
+    video.addEventListener('playing', onPlayingEvent);
+    video.addEventListener('loadeddata', onLoadedData);
+    video.addEventListener('canplay', onLoadedData);
+    video.addEventListener('error', handleVideoError);
 
-    vA.addEventListener('playing', onPlayingA);
-    vA.addEventListener('error', onErrorA);
+    // Initial timeout (8s): Only triggers fallback if video completely failed to connect/buffer
+    initialTimeout = setTimeout(() => {
+      if (isMounted && !hasPlayedRef.current) {
+        // If readyState is 0 (HAVE_NOTHING) after 8s, server cannot be reached
+        if (video.readyState === 0) {
+          onError?.();
+        }
+      }
+    }, 8000);
 
-    // If already playing
-    if (!vA.paused && vA.currentTime > 0) {
-      handlePlaySuccess();
+    // Initial play attempt if active
+    if (isActive) {
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            if (isMounted) {
+              video.playbackRate = playbackRate;
+              handlePlaySuccess();
+            }
+          })
+          .catch((err) => {
+            // AbortError is normal when pause() interrupts play() (e.g. fast scroll or tab switch).
+            // Do NOT trigger fallback for AbortError!
+            if (err.name === 'AbortError') return;
+            // On autoplay block (rare for muted inline videos), wait for user gesture without showing image
+            console.debug('[HeroVideo] Autoplay policy deferred playback');
+          });
+      }
     }
 
-    // Start Player A
-    vA.play()
-      .then(() => {
-        if (vA) vA.playbackRate = playbackRate;
-        handlePlaySuccess();
-      })
-      .catch(() => {
-        // Autoplay policy or error: trigger error handler
-        onErrorA();
-      });
+    return () => {
+      isMounted = false;
+      if (initialTimeout) clearTimeout(initialTimeout);
+      video.removeEventListener('playing', onPlayingEvent);
+      video.removeEventListener('loadeddata', onLoadedData);
+      video.removeEventListener('canplay', onLoadedData);
+      video.removeEventListener('error', handleVideoError);
+    };
+  }, [src, playbackRate, handlePlaySuccess, onError, isActive]);
 
-    const onTimeUpdateA = () => {
-      if (!isMounted || activeRef.current !== 'A' || transitioningRef.current) return;
-      if (vA.duration && vA.currentTime >= vA.duration - crossfadeDuration) {
-        transitioningRef.current = true;
+  // Synchronize play/pause with isActive to conserve hardware video decoders
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
 
-        vB.preload = 'auto';
-        vB.currentTime = 0;
-        vB.playbackRate = playbackRate;
-        vB.play()
-          .then(() => {
-            if (vB) vB.playbackRate = playbackRate;
-          })
-          .catch(() => {});
+    if (isActive) {
+      video.playbackRate = playbackRate;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          if (err.name !== 'AbortError') {
+            console.debug('[HeroVideo] Play activation deferred:', err.message);
+          }
+        });
+      }
+    } else {
+      video.pause();
+    }
+  }, [isActive, playbackRate]);
 
-        setBOpacity(1);
+  // Pause when scrolled offscreen or when page is hidden to save GPU/battery
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
 
-        timer = setTimeout(() => {
-          if (!isMounted) return;
-          activeRef.current = 'B';
-          vA.pause();
-          vA.currentTime = 0;
-          transitioningRef.current = false;
-        }, crossfadeDuration * 1000);
+    const handleVisibility = () => {
+      if (document.hidden) {
+        video.pause();
+      } else if (isActive) {
+        video.play().catch(() => {});
       }
     };
 
-    const onTimeUpdateB = () => {
-      if (!isMounted || activeRef.current !== 'B' || transitioningRef.current) return;
-      if (vB.duration && vB.currentTime >= vB.duration - crossfadeDuration) {
-        transitioningRef.current = true;
+    document.addEventListener('visibilitychange', handleVisibility);
 
-        vA.currentTime = 0;
-        vA.playbackRate = playbackRate;
-        vA.play()
-          .then(() => {
-            if (vA) vA.playbackRate = playbackRate;
-          })
-          .catch(() => {});
-
-        setBOpacity(0);
-
-        timer = setTimeout(() => {
-          if (!isMounted) return;
-          activeRef.current = 'A';
-          vB.pause();
-          vB.currentTime = 0;
-          transitioningRef.current = false;
-        }, crossfadeDuration * 1000);
-      }
-    };
-
-    vA.addEventListener('timeupdate', onTimeUpdateA);
-    vB.addEventListener('timeupdate', onTimeUpdateB);
-
-    // Pause both players when scrolled far away to save CPU/GPU
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          if (activeRef.current === 'A') {
-            vA.playbackRate = playbackRate;
-            vA.play().catch(() => {});
-          } else {
-            vB.playbackRate = playbackRate;
-            vB.play().catch(() => {});
-          }
+        if (entry.isIntersecting && isActive && !document.hidden) {
+          video.play().catch(() => {});
         } else {
-          vA.pause();
-          vB.pause();
+          video.pause();
         }
       },
       { threshold: 0.05 }
     );
 
-    if (vA.parentElement) {
-      observer.observe(vA.parentElement);
+    if (video.parentElement) {
+      observer.observe(video.parentElement);
     }
 
     return () => {
-      isMounted = false;
-      if (timer) clearTimeout(timer);
-      if (fallbackTimeout) clearTimeout(fallbackTimeout);
-      vA.removeEventListener('playing', onPlayingA);
-      vA.removeEventListener('error', onErrorA);
-      vA.removeEventListener('timeupdate', onTimeUpdateA);
-      vB.removeEventListener('timeupdate', onTimeUpdateB);
+      document.removeEventListener('visibilitychange', handleVisibility);
       observer.disconnect();
     };
-  }, [src, crossfadeDuration, playbackRate, handlePlaySuccess, onError]);
+  }, [isActive]);
 
   return (
     <div
       className={`absolute inset-0 w-full h-full overflow-hidden pointer-events-none bg-transparent ${className}`}
     >
-      {/* Base Layer — Player A (eagerly loaded, fades in smoothly on play) */}
       <video
-        ref={videoA}
+        ref={videoRef}
         src={src}
         autoPlay
         muted
+        loop
         playsInline
         preload="auto"
         aria-hidden="true"
-        style={{ opacity: isPlaying ? 1 : 0 }}
-        className="absolute inset-0 w-full h-full object-cover z-[1] transform-gpu transition-opacity duration-700 ease-out"
-      />
-
-      {/* Overlay Layer — Player B (lazy-loaded, crossfades near loop boundary) */}
-      <video
-        ref={videoB}
-        src={src}
-        muted
-        playsInline
-        preload="metadata"
-        aria-hidden="true"
         style={{
-          opacity: isPlaying ? bOpacity : 0,
-          transition: `opacity ${crossfadeDuration}s cubic-bezier(0.4, 0, 0.2, 1)`,
+          opacity: isReady ? 1 : 0,
         }}
-        className="absolute inset-0 w-full h-full object-cover z-[2] will-change-opacity"
+        className="absolute inset-0 w-full h-full object-cover z-[1] transform-gpu transition-opacity duration-700 ease-out"
       />
     </div>
   );

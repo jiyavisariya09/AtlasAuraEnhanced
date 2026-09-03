@@ -434,146 +434,174 @@ export default function UserDashboard() {
         </div>
       </header>
 
-      {/* ── Main Dashboard Container ──────────────────────────────────────── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* ── Hero Passport Banner ────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: EASE }}
-          className="relative rounded-3xl p-6 sm:p-8 glass border border-border shadow-cast overflow-hidden"
-        >
-          <BorderBeam
-            size={180}
-            duration={12}
-            colorFrom="hsl(var(--aurora))"
-            colorTo="hsl(var(--violet))"
-            borderWidth={1.5}
+      {/* ── Cinematic Hero Section ──────────────────────────────────────── */}
+      <section className="relative w-full overflow-hidden">
+        {/* Cinematic Background Image */}
+        <div className="absolute inset-0 w-full h-full">
+          <img
+            src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80"
+            alt=""
+            className="w-full h-full object-cover object-center"
+            aria-hidden="true"
           />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-aurora/8 via-transparent to-violet/8 mix-blend-overlay" />
+        </div>
 
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 sm:gap-8 relative z-10">
-            {/* Avatar with Progress Ring */}
-            <div className="relative group cursor-pointer" onClick={openSettings}>
-              <CircularProgress value={currentUser.contributionScore} max={2000}>
-                <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden border-2 border-background shadow-cast bg-card flex items-center justify-center">
-                  {userPrefs?.avatar ? (
-                    <img src={userPrefs.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl">🌍</span>
-                  )}
-                </div>
-              </CircularProgress>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-aurora text-primary-foreground flex items-center justify-center shadow-md">
-                <Camera className="w-3 h-3" />
-              </div>
-            </div>
+        <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 space-y-8">
 
-            {/* Profile Info */}
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-center md:justify-start">
-                <span className="t-label text-aurora text-xs">{greeting},</span>
-                <span className="text-xs text-muted-foreground">Passport #AA-2026-904</span>
-              </div>
-              <h1 className="font-serif text-3xl sm:text-4xl font-normal text-foreground mt-1">
-                {userPrefs?.name || authUser?.name || 'Fellow Traveler'}
-              </h1>
-              {userPrefs?.bio ? (
-                <p className="text-sm text-muted-foreground mt-1 max-w-xl italic">
-                  &ldquo;{userPrefs.bio}&rdquo;
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Explorer of hidden trails, quiet coasts, and local street stories.
-                </p>
-              )}
+          {/* ── Profile Card (glassmorphic over cinematic bg) ──────────────── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: EASE }}
+            className="relative rounded-3xl p-6 sm:p-8 bg-card/60 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden"
+          >
+            <BorderBeam
+              size={180}
+              duration={12}
+              colorFrom="hsl(var(--aurora))"
+              colorTo="hsl(var(--violet))"
+              borderWidth={1.5}
+            />
 
-              {/* Badges & Tags */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-aurora/15 border border-aurora/30 text-aurora">
-                  <Zap className="w-3.5 h-3.5" />
-                  Level 5 Wanderer
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card border border-border text-muted-foreground">
-                  <Award className="w-3.5 h-3.5 text-violet" />
-                  {currentUser.badges.length} Badges Earned
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card border border-border text-muted-foreground">
-                  <Target className="w-3.5 h-3.5 text-rose" />
-                  Rank #142 (Top 5%)
-                </span>
-              </div>
-
-              {/* User Selected Styles */}
-              {userPrefs?.travelStyle && userPrefs.travelStyle.length > 0 && (
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 mt-3">
-                  {userPrefs.travelStyle.map((style) => (
-                    <span key={style} className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
-                      {style}
-                    </span>
-                  ))}
-                  {userPrefs.dreamDestinations && (
-                    <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                      🎯 {userPrefs.dreamDestinations}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Quick Action Shortcuts */}
-            <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto shrink-0">
-              <Button
-                onClick={() => setShowMemoryModal(true)}
-                className="h-10 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-full shadow-cast text-xs px-5 flex items-center justify-center gap-2"
-              >
-                <PenLine className="w-3.5 h-3.5" />
-                Pin New Memory
-              </Button>
-              <Link href="/trip-planner" className="w-full">
-                <Button
-                  variant="outline"
-                  className="w-full h-10 rounded-full border-border text-xs font-semibold flex items-center justify-center gap-2"
-                >
-                  <Luggage className="w-3.5 h-3.5 text-aurora" />
-                  Trip Planner (₹)
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* ── Key Metrics Grid ────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: i * 0.08, ease: EASE }}
-                className="lift rounded-2xl p-5 glass border border-border shadow-cast flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-aurora/15 border border-aurora/30 text-aurora flex items-center justify-center">
-                    <Icon className="w-5 h-5" />
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 sm:gap-8 relative z-10">
+              {/* Avatar with Progress Ring */}
+              <div className="relative group cursor-pointer" onClick={openSettings}>
+                <CircularProgress value={currentUser.contributionScore} max={2000}>
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden border-2 border-background shadow-cast bg-card flex items-center justify-center">
+                    {userPrefs?.avatar ? (
+                      <img src={userPrefs.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl">🌍</span>
+                    )}
                   </div>
-                  <span className="text-[11px] text-aurora bg-aurora/10 px-2 py-0.5 rounded-full">
-                    {stat.trend}
+                </CircularProgress>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-aurora text-primary-foreground flex items-center justify-center shadow-md">
+                  <Camera className="w-3 h-3" />
+                </div>
+              </div>
+
+              {/* Profile Info */}
+              <div className="flex-1 text-center md:text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-center md:justify-start">
+                  <span className="text-[11px] uppercase tracking-wider font-medium text-aurora">{greeting},</span>
+                  <span className="text-xs text-muted-foreground">Passport #AA-2026-904</span>
+                </div>
+                <h1 className="font-serif text-3xl sm:text-4xl font-normal text-foreground mt-1">
+                  {userPrefs?.name || authUser?.name || 'Fellow Traveler'}
+                </h1>
+                {userPrefs?.bio ? (
+                  <p className="text-sm text-muted-foreground mt-1 max-w-xl italic">
+                    &ldquo;{userPrefs.bio}&rdquo;
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Explorer of hidden trails, quiet coasts, and local street stories.
+                  </p>
+                )}
+
+                {/* Badges & Tags */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-aurora/15 border border-aurora/30 text-aurora">
+                    <Zap className="w-3.5 h-3.5" />
+                    Level 5 Wanderer
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card/80 border border-border text-muted-foreground">
+                    <Award className="w-3.5 h-3.5 text-violet" />
+                    {currentUser.badges.length} Badges Earned
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card/80 border border-border text-muted-foreground">
+                    <Target className="w-3.5 h-3.5 text-rose" />
+                    Rank #142 (Top 5%)
                   </span>
                 </div>
-                <div>
-                  <div className="font-mono text-2xl font-bold text-foreground">
-                    {stat.value}
+
+                {/* User Selected Styles */}
+                {userPrefs?.travelStyle && userPrefs.travelStyle.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 mt-3">
+                    {userPrefs.travelStyle.map((style) => (
+                      <span key={style} className="text-[11px] px-2.5 py-0.5 rounded-full bg-muted/80 text-muted-foreground capitalize">
+                        {style}
+                      </span>
+                    ))}
+                    {userPrefs.dreamDestinations && (
+                      <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-muted/80 text-muted-foreground">
+                        🎯 {userPrefs.dreamDestinations}
+                      </span>
+                    )}
                   </div>
-                  <div className="text-xs text-muted-foreground font-medium mt-0.5">
-                    {stat.label}
+                )}
+              </div>
+
+              {/* Quick Action Shortcuts */}
+              <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto shrink-0">
+                <Button
+                  onClick={() => setShowMemoryModal(true)}
+                  className="h-10 bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-full shadow-cast text-xs px-5 flex items-center justify-center gap-2"
+                >
+                  <PenLine className="w-3.5 h-3.5" />
+                  Pin New Memory
+                </Button>
+                <Link href="/trip-planner" className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full h-10 rounded-full border-border text-xs font-medium flex items-center justify-center gap-2"
+                  >
+                    <Luggage className="w-3.5 h-3.5 text-aurora" />
+                    Trip Planner (₹)
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* ── Key Metrics — Floating Glass Cards ─────────────────────────── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {stats.map((stat, i) => {
+              const Icon = stat.icon;
+              const accentColors = [
+                'from-aurora/20 to-aurora/5 border-aurora/25',
+                'from-violet/20 to-violet/5 border-violet/25',
+                'from-rose/20 to-rose/5 border-rose/25',
+                'from-blue-400/20 to-blue-400/5 border-blue-400/25',
+              ];
+              return (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: i * 0.08, ease: EASE }}
+                  className={`relative rounded-2xl p-5 bg-card/70 backdrop-blur-lg border shadow-lg overflow-hidden ${accentColors[i]}`}
+                >
+                  {/* Top accent gradient strip */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accentColors[i]}`} />
+
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-foreground" />
+                    </div>
+                    <span className="text-[11px] text-aurora bg-aurora/10 px-2 py-0.5 rounded-full font-medium">
+                      {stat.trend}
+                    </span>
                   </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                  <div>
+                    <div className="font-mono text-2xl font-semibold text-foreground">
+                      {stat.value}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {stat.label}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </main>
+      </section>
+
+      {/* ── Main Content Below Hero ─────────────────────────────────────── */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 space-y-8">
 
         {/* ── Interactive Multi-Tab Section ─────────────────────────────────── */}
         <div className="space-y-6">

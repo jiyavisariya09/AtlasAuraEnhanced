@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import Navigation from '@/sections/Navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import Hero from '@/sections/Hero';
 import MoodSearch from '@/sections/MoodSearch';
 
@@ -45,9 +46,50 @@ interface LoadingScreenProps {
 
 function LoadingScreen({ isReady, onComplete }: LoadingScreenProps) {
   const reduced = useReducedMotion();
+  const { theme } = useTheme();
+  const [resolvedTheme, setResolvedTheme] = useState<'dark' | 'light'>('dark');
+  const [stage, setStage] = useState(0);
   const minTimeElapsedRef = useRef(false);
   const isReadyRef = useRef(isReady);
   isReadyRef.current = isReady;
+
+  // Immediate theme detection prior to hydration
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const attr = document.documentElement.getAttribute('data-theme');
+      if (attr === 'light' || attr === 'dark') {
+        setResolvedTheme(attr);
+        return;
+      }
+      try {
+        const saved = localStorage.getItem('atlasaura-theme');
+        if (saved === 'light' || saved === 'dark') {
+          setResolvedTheme(saved);
+          return;
+        }
+      } catch {}
+      if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+        setResolvedTheme('light');
+        return;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (theme) setResolvedTheme(theme);
+  }, [theme]);
+
+  const isDay = resolvedTheme === 'light';
+
+  // Smart stage messages advancing as resources buffer
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 400);
+    const t2 = setTimeout(() => setStage(2), 900);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
 
   const tryComplete = useCallback(() => {
     onComplete();
@@ -60,12 +102,12 @@ function LoadingScreen({ isReady, onComplete }: LoadingScreenProps) {
       if (isReadyRef.current) {
         tryComplete();
       }
-    }, reduced ? 100 : 1100);
+    }, reduced ? 100 : 1050);
 
-    // Maximum safety timeout (2400ms) so user is never blocked on very slow connections
+    // Maximum safety timeout (2600ms) so user is never blocked on very slow connections
     const maxTimer = setTimeout(() => {
       tryComplete();
-    }, reduced ? 200 : 2400);
+    }, reduced ? 200 : 2600);
 
     const skip = () => tryComplete();
     window.addEventListener('pointerdown', skip);
@@ -93,93 +135,217 @@ function LoadingScreen({ isReady, onComplete }: LoadingScreenProps) {
       ? { duration: 0 }
       : { duration: 0.75, delay, ease: EASE };
 
+  // Smart status label
+  const statusMessage = isReady
+    ? 'Atlas Synchronized'
+    : isDay
+    ? stage === 0
+      ? 'Calibrating Coordinates...'
+      : stage === 1
+      ? 'Mapping Sunlit Horizons...'
+      : 'Buffering Panoramic Media...'
+    : stage === 0
+    ? 'Aligning Celestial Grid...'
+    : stage === 1
+    ? 'Tracing Cosmic Meridians...'
+    : 'Buffering Aurora Chronicles...';
+
+  // Dynamic progress value (0 -> 0.35 -> 0.65 -> 1.0)
+  const progressScale = isReady ? 1 : stage === 0 ? 0.35 : stage === 1 ? 0.65 : 0.88;
+
   return (
     <motion.div
       aria-hidden="true"
       data-splash-veil=""
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 1.015 }}
+      exit={{ opacity: 0, y: -20, scale: 1.015 }}
       transition={{ duration: 0.65, ease: EASE }}
-      className="fixed inset-0 z-[100] grid place-items-center overflow-hidden bg-[#080B14] text-white"
+      className={`fixed inset-0 z-[100] grid place-items-center overflow-hidden select-none transition-colors duration-500 ${
+        isDay ? 'bg-[#F5F8FC] text-[#0B1020]' : 'bg-[#080B14] text-white'
+      }`}
     >
-      <div className="graticule pointer-events-none absolute inset-0 opacity-40" aria-hidden="true" />
-      <div className="aurora-wash pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
+      {/* Ambient background atmosphere */}
+      {isDay ? (
+        <>
+          <div
+            className="pointer-events-none absolute inset-0 opacity-80"
+            style={{
+              background:
+                'radial-gradient(ellipse at 50% 30%, rgba(10, 122, 105, 0.08) 0%, rgba(217, 119, 6, 0.05) 50%, transparent 80%)',
+            }}
+          />
+          <div className="graticule pointer-events-none absolute inset-0 opacity-20 invert" aria-hidden="true" />
+        </>
+      ) : (
+        <>
+          <div
+            className="pointer-events-none absolute inset-0 opacity-80"
+            style={{
+              background:
+                'radial-gradient(ellipse at 50% 30%, rgba(62, 232, 200, 0.12) 0%, rgba(139, 127, 245, 0.08) 50%, transparent 80%)',
+            }}
+          />
+          <div className="graticule pointer-events-none absolute inset-0 opacity-40" aria-hidden="true" />
+          <div className="aurora-wash pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
+        </>
+      )}
 
       <div className="relative flex flex-col items-center px-6 text-center select-none">
-        {/* Animated Emblem: Drawing equator, meridian, axis, and glowing pin */}
-        <div className="relative">
-          <svg viewBox="0 0 32 32" className="h-24 w-24 drop-shadow-[0_0_24px_rgba(62,232,200,0.4)]" aria-hidden="true">
-            <motion.circle
-              cx="16"
-              cy="16"
-              r="11"
-              fill="none"
-              stroke="#3EE8C8"
-              strokeWidth="1.25"
-              opacity="0.6"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={draw(0)}
+        {/* Animated Astrolabe & Meridian Navigation Emblem */}
+        <div className="relative flex items-center justify-center">
+          <motion.div
+            className="relative"
+            animate={reduced ? undefined : { rotate: 360 }}
+            transition={{ duration: 32, repeat: Infinity, ease: 'linear' }}
+          >
+            <svg
+              viewBox="0 0 48 48"
+              className={`h-24 w-24 ${
+                isDay
+                  ? 'drop-shadow-[0_4px_16px_rgba(10,122,105,0.25)]'
+                  : 'drop-shadow-[0_0_24px_rgba(62,232,200,0.4)]'
+              }`}
+              aria-hidden="true"
+            >
+              {/* Outer Azimuth Compass Ring with Graduations */}
+              <circle
+                cx="24"
+                cy="24"
+                r="22"
+                fill="none"
+                stroke={isDay ? '#0A7A69' : '#3EE8C8'}
+                strokeWidth="1"
+                strokeDasharray="2 4"
+                opacity={isDay ? 0.45 : 0.4}
+              />
+              <motion.circle
+                cx="24"
+                cy="24"
+                r="18"
+                fill="none"
+                stroke={isDay ? '#0A7A69' : '#3EE8C8'}
+                strokeWidth="1.3"
+                opacity={isDay ? 0.75 : 0.65}
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={draw(0)}
+              />
+              {/* Inclined Ellipse (Orbital Latitude) */}
+              <motion.ellipse
+                cx="24"
+                cy="24"
+                rx="8"
+                ry="18"
+                fill="none"
+                stroke={isDay ? '#0D9488' : '#3EE8C8'}
+                strokeWidth="1.2"
+                opacity={isDay ? 0.6 : 0.5}
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={draw(0.15)}
+              />
+              {/* Equator Axis */}
+              <motion.line
+                x1="6"
+                y1="24"
+                x2="42"
+                y2="24"
+                stroke={isDay ? '#D97706' : '#818CF8'}
+                strokeWidth="1.2"
+                opacity={isDay ? 0.65 : 0.5}
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={draw(0.25)}
+              />
+            </svg>
+          </motion.div>
+
+          {/* Central Beacon Coordinate Node (Fixed, Pulsing) */}
+          <div className="absolute pointer-events-none">
+            <motion.div
+              className={`h-3 w-3 rounded-full ${
+                isDay ? 'bg-[#0A7A69] shadow-[0_0_12px_#0A7A69]' : 'bg-[#3EE8C8] shadow-[0_0_14px_#3EE8C8]'
+              }`}
+              initial={{ scale: 0 }}
+              animate={
+                reduced
+                  ? { scale: 1 }
+                  : { scale: [1, 1.35, 1], opacity: [0.9, 1, 0.9] }
+              }
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             />
-            <motion.ellipse
-              cx="16"
-              cy="16"
-              rx="4.6"
-              ry="11"
-              fill="none"
-              stroke="#3EE8C8"
-              strokeWidth="1.25"
-              opacity="0.45"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={draw(0.15)}
-            />
-            <motion.line
-              x1="5"
-              y1="16"
-              x2="27"
-              y2="16"
-              stroke="#3EE8C8"
-              strokeWidth="1.25"
-              opacity="0.45"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={draw(0.25)}
-            />
-            <motion.circle
-              cx="21.2"
-              cy="10.4"
-              r="2.5"
-              fill="#3EE8C8"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={reduced ? { duration: 0 } : { duration: 0.35, delay: 0.45, ease: EASE }}
-              style={{ transformOrigin: '21.2px 10.4px' }}
-            />
-          </svg>
-          <span className="absolute -inset-2 rounded-full bg-aurora/10 blur-xl animate-pulse pointer-events-none" />
+          </div>
+
+          {/* Glowing Ambient Aura behind emblem */}
+          <span
+            className={`absolute -inset-4 rounded-full blur-2xl pointer-events-none ${
+              isDay ? 'bg-[#0A7A69]/15' : 'bg-[#3EE8C8]/15'
+            }`}
+          />
         </div>
 
-        <h1 className="mt-6 font-sans text-2xl font-semibold tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
-          Atlas<span className="text-[#3EE8C8]">Aura</span>
+        {/* Brand Title */}
+        <h1
+          className={`mt-6 font-sans text-2xl font-semibold tracking-tight ${
+            isDay
+              ? 'text-[#0B1020] drop-shadow-[0_1px_8px_rgba(0,0,0,0.06)]'
+              : 'text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]'
+          }`}
+        >
+          Atlas<span className={isDay ? 'text-[#0A7A69]' : 'text-[#3EE8C8]'}>Aura</span>
         </h1>
-        
-        <p className="font-mono text-xs text-white/60 tracking-[0.2em] uppercase mt-2.5">
-          {isReady ? 'Atlas Synchronized' : 'Buffering Chronicles...'}
-        </p>
 
-        {/* Hairline Progress Bar */}
-        <div className="mt-7 h-[2px] w-44 rounded-full overflow-hidden bg-white/10 backdrop-blur-sm border border-white/5">
+        {/* Dynamic Status Capsule */}
+        <div
+          className={`mt-3.5 inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-xs font-mono tracking-wider uppercase transition-all duration-300 ${
+            isDay
+              ? 'bg-[#0A7A69]/8 border border-[#0A7A69]/20 text-[#0A7A69]'
+              : 'bg-white/5 border border-white/10 text-white/70'
+          }`}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              isReady
+                ? isDay
+                  ? 'bg-[#0A7A69] animate-ping'
+                  : 'bg-[#3EE8C8] animate-ping'
+                : 'bg-current animate-pulse'
+            }`}
+          />
+          <span>{statusMessage}</span>
+        </div>
+
+        {/* Hairline Smart Progress Bar */}
+        <div
+          className={`mt-6 h-[2px] w-48 rounded-full overflow-hidden border ${
+            isDay
+              ? 'bg-[#0B1020]/10 border-[#0B1020]/5'
+              : 'bg-white/10 border-white/5 backdrop-blur-sm'
+          }`}
+        >
           <motion.span
-            className="block h-full w-full origin-left bg-gradient-to-r from-[#3EE8C8] via-[#2DD4BF] to-[#818CF8]"
+            className={`block h-full w-full origin-left ${
+              isDay
+                ? 'bg-gradient-to-r from-[#0A7A69] via-[#0D9488] to-[#D97706]'
+                : 'bg-gradient-to-r from-[#3EE8C8] via-[#2DD4BF] to-[#818CF8]'
+            }`}
             initial={{ scaleX: 0 }}
-            animate={{ scaleX: isReady ? 1 : 0.85 }}
+            animate={{ scaleX: progressScale }}
             transition={{
-              duration: isReady ? 0.3 : 1.6,
+              duration: isReady ? 0.35 : 0.8,
               ease: isReady ? 'easeOut' : 'easeInOut',
             }}
           />
         </div>
+
+        {/* Skip hint */}
+        <p
+          className={`mt-4 text-[10px] font-mono tracking-widest uppercase transition-opacity duration-300 ${
+            isDay ? 'text-[#55658A]/50' : 'text-white/30'
+          }`}
+        >
+          Press any key or click to enter
+        </p>
       </div>
     </motion.div>
   );

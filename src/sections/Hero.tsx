@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { ArrowRight, Compass, Map, BookOpen } from 'lucide-react';
 import { smoothScrollTo } from '@/lib/utils';
+import { useTheme } from '@/context/ThemeContext';
 import SeamlessHeroVideo from '@/components/SeamlessHeroVideo';
 
 const HERO_VIDEO_NIGHT =
@@ -33,6 +34,8 @@ interface HeroProps {
 
 export default function Hero({ onVideoReady }: HeroProps = {}) {
   const ref = useRef<HTMLElement>(null);
+  const { theme } = useTheme();
+  const isNight = theme !== 'light';
 
   /* Fallback triggers only if video fails or times out */
   const [useNightFallback, setUseNightFallback] = useState(false);
@@ -88,12 +91,14 @@ export default function Hero({ onVideoReady }: HeroProps = {}) {
           ) : (
             <SeamlessHeroVideo
               src={HERO_VIDEO_NIGHT}
-              crossfadeDuration={1.4}
               className="hero-media z-0"
-              onPlaying={onVideoReady}
+              isActive={isNight}
+              onPlaying={() => {
+                if (isNight) onVideoReady?.();
+              }}
               onError={() => {
                 setUseNightFallback(true);
-                onVideoReady?.();
+                if (isNight) onVideoReady?.();
               }}
             />
           )}
@@ -114,12 +119,14 @@ export default function Hero({ onVideoReady }: HeroProps = {}) {
           ) : (
             <SeamlessHeroVideo
               src={HERO_VIDEO_DAY}
-              crossfadeDuration={1.4}
               className="hero-media z-0"
-              onPlaying={onVideoReady}
+              isActive={!isNight}
+              onPlaying={() => {
+                if (!isNight) onVideoReady?.();
+              }}
               onError={() => {
                 setUseDayFallback(true);
-                onVideoReady?.();
+                if (!isNight) onVideoReady?.();
               }}
             />
           )}

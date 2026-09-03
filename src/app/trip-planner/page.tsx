@@ -7,7 +7,8 @@ import {
   Calendar, MapPin, IndianRupee, Plus, Trash2, CheckCircle2, 
   Circle, Luggage, ChevronLeft, Sparkles, Save, Compass, Clock, 
   Send, Share2, Check, Download, AlertCircle, ArrowRight, Tag,
-  Utensils, Bed, Plane, Camera, ShieldCheck, Printer
+  Utensils, Bed, Plane, Camera, ShieldCheck, Printer, X,
+  TrendingUp, Wallet, Target
 } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,25 @@ interface TripPlan {
   itineraryDays?: ItineraryDay[];
   checklist?: ChecklistItem[];
 }
+
+/* ── Category styling ────────────────────────────────────────────────── */
+const CATEGORY_CONFIG: Record<string, { icon: typeof Compass; bg: string; text: string; border: string }> = {
+  Stay:        { icon: Bed,      bg: 'bg-violet/10',      text: 'text-violet',      border: 'border-violet/20' },
+  Dining:      { icon: Utensils, bg: 'bg-rose/10',        text: 'text-rose',        border: 'border-rose/20' },
+  Transit:     { icon: Plane,    bg: 'bg-aurora/10',      text: 'text-aurora',      border: 'border-aurora/20' },
+  Relaxation:  { icon: Sparkles, bg: 'bg-amber-500/10',   text: 'text-amber-500',   border: 'border-amber-500/20' },
+  Sightseeing: { icon: Compass,  bg: 'bg-aurora/10',      text: 'text-aurora',      border: 'border-aurora/20' },
+};
+
+/* ── Checklist category colors ───────────────────────────────────────── */
+const CHECKLIST_COLORS: Record<string, string> = {
+  Documents:   'border-l-violet',
+  Health:      'border-l-emerald-500',
+  Wardrobe:    'border-l-rose',
+  Electronics: 'border-l-amber-500',
+  Money:       'border-l-aurora',
+  General:     'border-l-muted-foreground',
+};
 
 export default function TripPlannerPage() {
   const [tripPlans, setTripPlans] = useState<TripPlan[]>([]);
@@ -161,6 +181,14 @@ export default function TripPlannerPage() {
   const doneChecklist = activeTrip?.checklist?.filter((c) => c.done).length || 0;
   const checklistPercent = totalChecklist > 0 ? Math.round((doneChecklist / totalChecklist) * 100) : 0;
 
+  // Per-day cost totals
+  const getDayCost = (dayPlan: ItineraryDay) => {
+    return dayPlan.activities.reduce((sum, act) => {
+      if (typeof act === 'object' && act.costINR) return sum + act.costINR;
+      return sum;
+    }, 0);
+  };
+
   // Add Day
   const handleAddDay = () => {
     if (!activeTrip) return;
@@ -236,7 +264,6 @@ export default function TripPlannerPage() {
     setSaving(true);
     try {
       if (activeTrip.id || (activeTrip as any)._id) {
-        // Update
         await fetch('/api/trip-plans', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -252,7 +279,6 @@ export default function TripPlannerPage() {
           }),
         });
       } else {
-        // Create
         const res = await fetch('/api/trip-plans', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -350,27 +376,42 @@ export default function TripPlannerPage() {
     }
   };
 
-  const getCategoryIcon = (category?: string) => {
-    switch (category) {
-      case 'Stay':
-        return <Bed className="w-3.5 h-3.5 text-violet" />;
-      case 'Dining':
-        return <Utensils className="w-3.5 h-3.5 text-rose" />;
-      case 'Transit':
-        return <Plane className="w-3.5 h-3.5 text-aurora" />;
-      case 'Relaxation':
-        return <Sparkles className="w-3.5 h-3.5 text-yellow-500" />;
-      default:
-        return <Compass className="w-3.5 h-3.5 text-aurora" />;
-    }
+  const getCategoryConfig = (category?: string) => {
+    return CATEGORY_CONFIG[category || 'Sightseeing'] || CATEGORY_CONFIG.Sightseeing;
+  };
+
+  /* ── SVG Donut Chart for Budget ──────────────────────────────────────── */
+  const DonutChart = ({ percent, color }: { percent: number; color: string }) => {
+    const radius = 54;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (percent / 100) * circumference;
+
+    return (
+      <svg viewBox="0 0 128 128" className="w-full h-full -rotate-90">
+        <circle cx="64" cy="64" r={radius} fill="none" stroke="hsl(var(--border))" strokeWidth="10" opacity="0.3" />
+        <motion.circle
+          cx="64"
+          cy="64"
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset }}
+          transition={{ duration: 1.2, ease: EASE }}
+        />
+      </svg>
+    );
   };
 
   return (
     <div className="min-h-screen relative bg-background text-foreground overflow-x-hidden">
       {/* ── Ambient Background Glows ───────────────────────────────────────── */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="aurora-wash absolute inset-0 opacity-25" />
-        <div className="graticule absolute inset-0 opacity-15" />
+        <div className="absolute top-0 left-1/4 w-[500px] h-[300px] rounded-full bg-aurora/6 blur-[100px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[250px] rounded-full bg-violet/5 blur-[80px]" />
       </div>
 
       {/* ── Top Header ────────────────────────────────────────────────────── */}
@@ -429,115 +470,127 @@ export default function TripPlannerPage() {
 
       {/* ── Main Workspace ────────────────────────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* ── Active Trip Hero & Budget Overview ──────────────────────────── */}
+        {/* ── Active Trip Hero & Budget Dashboard ───────────────────────── */}
         {activeTrip ? (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: EASE }}
-            className="relative rounded-3xl p-6 sm:p-8 glass border border-border shadow-cast space-y-6"
+            className="relative rounded-3xl overflow-hidden"
           >
-            <BorderBeam
-              size={180}
-              duration={12}
-              colorFrom="hsl(var(--aurora))"
-              colorTo="hsl(var(--violet))"
-              borderWidth={1.5}
-            />
+            {/* Background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-card via-card to-aurora/5" />
+            <div className="absolute inset-0 border border-border/80 rounded-3xl" />
 
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
-              {/* Trip Title & Destination */}
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="t-label text-aurora text-xs flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" />
-                    {activeTrip.destination}
-                  </span>
-                  {activeTrip.startDate && (
-                    <span className="text-xs text-muted-foreground bg-card px-2 py-0.5 rounded-full border border-border">
-                      {activeTrip.startDate} {activeTrip.endDate ? `→ ${activeTrip.endDate}` : ''}
+            <div className="relative p-6 sm:p-8 space-y-6">
+              <BorderBeam
+                size={200}
+                duration={12}
+                colorFrom="hsl(var(--aurora))"
+                colorTo="hsl(var(--violet))"
+                borderWidth={1.5}
+              />
+
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+                {/* Trip Title & Destination */}
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aurora/15 border border-aurora/30 text-aurora text-xs font-bold">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {activeTrip.destination}
                     </span>
-                  )}
+                    {activeTrip.startDate && (
+                      <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full border border-border flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3" />
+                        {activeTrip.startDate} {activeTrip.endDate ? `→ ${activeTrip.endDate}` : ''}
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="font-serif text-3xl sm:text-4xl font-medium text-foreground tracking-tight">
+                    {activeTrip.title}
+                  </h2>
                 </div>
-                <h2 className="font-serif text-3xl sm:text-4xl font-normal text-foreground">
-                  {activeTrip.title}
-                </h2>
-              </div>
 
-              {/* Trip Switcher / Create Button */}
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => setShowCreateModal(true)}
-                  size="sm"
-                  className="rounded-full bg-aurora/15 border border-aurora/30 text-aurora hover:bg-aurora/25 text-xs font-semibold"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  New Trip Plan
-                </Button>
-              </div>
-            </div>
-
-            {/* ── Rupee Budget Health Meter ─────────────────────────────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border/70">
-              <div className="p-4 rounded-2xl bg-card/60 border border-border space-y-1">
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider flex items-center gap-1">
-                  <IndianRupee className="w-3.5 h-3.5 text-aurora" />
-                  Total Trip Budget
-                </span>
-                <div className="font-mono text-2xl font-bold text-foreground">
-                  ₹{tripBudgetINR.toLocaleString('en-IN')}
+                {/* Trip Switcher / Create Button */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setShowCreateModal(true)}
+                    size="sm"
+                    className="rounded-full bg-aurora/15 border border-aurora/30 text-aurora hover:bg-aurora/25 text-xs font-semibold"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    New Trip Plan
+                  </Button>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-card/60 border border-border space-y-1">
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-violet" />
-                  Planned Expenses
-                </span>
-                <div className="font-mono text-2xl font-bold text-foreground">
-                  ₹{totalSpentINR.toLocaleString('en-IN')}
+              {/* ── Budget Dashboard ────────────────────────────────────── */}
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 pt-4 border-t border-border/60 relative z-10">
+                {/* Donut Chart */}
+                <div className="lg:row-span-1 flex items-center justify-center">
+                  <div className="relative w-32 h-32">
+                    <DonutChart
+                      percent={budgetPercentage}
+                      color={budgetPercentage > 100 ? 'hsl(var(--destructive))' : 'hsl(var(--aurora))'}
+                    />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className={`text-2xl font-bold font-mono ${budgetPercentage > 100 ? 'text-destructive' : 'text-aurora'}`}>
+                        {budgetPercentage}%
+                      </span>
+                      <span className="text-[9px] uppercase text-muted-foreground font-bold tracking-wider">Used</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="p-4 rounded-2xl bg-card/60 border border-border space-y-1">
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider flex items-center gap-1">
-                  <ShieldCheck className={`w-3.5 h-3.5 ${remainingBudgetINR >= 0 ? 'text-aurora' : 'text-destructive'}`} />
-                  {remainingBudgetINR >= 0 ? 'Remaining Buffer' : 'Over Budget!'}
-                </span>
-                <div className={`font-mono text-2xl font-bold ${remainingBudgetINR >= 0 ? 'text-aurora' : 'text-destructive'}`}>
-                  ₹{Math.abs(remainingBudgetINR).toLocaleString('en-IN')}
-                </div>
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div>
-              <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-                <span>Budget Utilization ({budgetPercentage}%)</span>
-                <span>₹{totalSpentINR.toLocaleString('en-IN')} / ₹{tripBudgetINR.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${budgetPercentage}%` }}
-                  transition={{ duration: 0.8, ease: EASE }}
-                  className={`h-full rounded-full ${
-                    budgetPercentage > 100 ? 'bg-destructive' : 'bg-aurora'
-                  }`}
-                />
+                {/* Stat Cards */}
+                {[
+                  {
+                    icon: Wallet,
+                    label: 'Total Budget',
+                    value: `₹${tripBudgetINR.toLocaleString('en-IN')}`,
+                    color: 'text-foreground',
+                    iconColor: 'text-aurora bg-aurora/15',
+                  },
+                  {
+                    icon: TrendingUp,
+                    label: 'Planned Expenses',
+                    value: `₹${totalSpentINR.toLocaleString('en-IN')}`,
+                    color: 'text-foreground',
+                    iconColor: 'text-violet bg-violet/15',
+                  },
+                  {
+                    icon: remainingBudgetINR >= 0 ? Target : AlertCircle,
+                    label: remainingBudgetINR >= 0 ? 'Remaining Buffer' : 'Over Budget!',
+                    value: `₹${Math.abs(remainingBudgetINR).toLocaleString('en-IN')}`,
+                    color: remainingBudgetINR >= 0 ? 'text-aurora' : 'text-destructive',
+                    iconColor: remainingBudgetINR >= 0 ? 'text-aurora bg-aurora/15' : 'text-destructive bg-destructive/15',
+                  },
+                ].map((stat) => (
+                  <div key={stat.label} className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${stat.iconColor}`}>
+                        <stat.icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{stat.label}</span>
+                    </div>
+                    <div className={`font-mono text-2xl font-bold ${stat.color}`}>
+                      {stat.value}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </motion.div>
         ) : null}
 
-        {/* ── Two Column Workspace: Itinerary + Packing Checklist ──────────── */}
+        {/* ── Two Column Workspace ──────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* ── Left 2 Cols: Day-by-Day Timeline Itinerary ───────────────────── */}
+          {/* ── Left 2 Cols: Day-by-Day Timeline ───────────────────────── */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-serif text-2xl font-normal text-foreground">Day-by-Day Itinerary</h3>
-                <p className="text-xs text-muted-foreground">Detailed schedule with timeline slots and Rupee expense estimates</p>
+                <h3 className="font-serif text-2xl font-medium text-foreground">Day-by-Day Itinerary</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Detailed schedule with timeline slots and Rupee expense estimates</p>
               </div>
               <Button
                 onClick={handleAddDay}
@@ -549,149 +602,198 @@ export default function TripPlannerPage() {
               </Button>
             </div>
 
-            <div className="space-y-6">
-              {activeTrip?.itineraryDays?.map((dayPlan, dayIdx) => (
-                <div
-                  key={dayPlan.day}
-                  className="rounded-3xl p-6 glass border border-border shadow-cast space-y-4"
-                >
-                  <div className="flex items-center justify-between border-b border-border pb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-full bg-aurora/15 border border-aurora/30 text-aurora text-xs font-bold flex items-center justify-center">
-                        D{dayPlan.day}
-                      </span>
-                      <h4 className="text-base font-semibold text-foreground">{dayPlan.title}</h4>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {dayPlan.activities.length} activities
-                    </span>
-                  </div>
+            {/* ── Day Cards with Vertical Timeline ─────────────────────── */}
+            <div className="relative">
+              {/* Vertical connecting line */}
+              <div className="absolute left-[19px] top-8 bottom-8 w-0.5 bg-gradient-to-b from-aurora/30 via-violet/20 to-aurora/30 rounded-full hidden sm:block" />
 
-                  {/* Activities list */}
-                  <div className="space-y-2.5">
-                    {dayPlan.activities.map((activity, actIdx) => {
-                      const isObj = typeof activity === 'object';
-                      const title = isObj ? activity.title : activity;
-                      const time = isObj ? activity.time : '10:00 AM';
-                      const cost = isObj && activity.costINR ? activity.costINR : 0;
-                      const cat = isObj ? activity.category : 'Sightseeing';
+              <div className="space-y-6">
+                {activeTrip?.itineraryDays?.map((dayPlan, dayIdx) => {
+                  const dayCost = getDayCost(dayPlan);
+                  return (
+                    <motion.div
+                      key={dayPlan.day}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: dayIdx * 0.06, ease: EASE }}
+                      className="relative"
+                    >
+                      {/* Timeline dot */}
+                      <div className="absolute -left-0.5 top-6 w-10 h-10 rounded-full bg-card border-2 border-aurora shadow-md flex items-center justify-center z-10 hidden sm:flex">
+                        <span className="text-aurora font-bold text-xs font-mono">D{dayPlan.day}</span>
+                      </div>
 
-                      return (
-                        <div
-                          key={actIdx}
-                          className="flex items-center justify-between p-3 rounded-2xl bg-card/60 border border-border hover:border-aurora/40 transition-colors group"
-                        >
+                      <div className="sm:ml-14 rounded-3xl p-5 sm:p-6 bg-card border border-border/80 shadow-sm hover:shadow-md hover:border-aurora/30 transition-all space-y-4">
+                        <div className="flex items-center justify-between border-b border-border pb-3">
                           <div className="flex items-center gap-3">
-                            <span className="w-7 h-7 rounded-lg bg-card flex items-center justify-center shrink-0">
-                              {getCategoryIcon(cat)}
+                            <span className="w-8 h-8 rounded-full bg-aurora/15 border border-aurora/30 text-aurora text-xs font-bold flex items-center justify-center sm:hidden">
+                              D{dayPlan.day}
                             </span>
                             <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono text-[11px] text-aurora font-semibold">{time}</span>
-                                <span className="text-xs font-medium text-foreground">{title}</span>
-                              </div>
-                              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{cat}</span>
+                              <h4 className="text-base font-semibold text-foreground">{dayPlan.title}</h4>
+                              <span className="text-[10px] text-muted-foreground font-mono">
+                                {dayPlan.activities.length} activities
+                              </span>
                             </div>
                           </div>
-
-                          <div className="flex items-center gap-3">
-                            {cost > 0 && (
-                              <span className="font-mono text-xs font-semibold text-foreground bg-card px-2 py-0.5 rounded-full border border-border">
-                                ₹{cost.toLocaleString('en-IN')}
-                              </span>
-                            )}
-                            <button
-                              onClick={() => handleRemoveActivity(dayIdx, actIdx)}
-                              className="p-1 rounded-md text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Delete activity"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                          <span className="text-xs font-mono font-bold text-aurora bg-aurora/10 px-3 py-1 rounded-full border border-aurora/20">
+                            ₹{dayCost.toLocaleString('en-IN')}
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
 
-                  {/* Add Activity Input Bar */}
-                  <div className="pt-2 flex flex-col sm:flex-row gap-2">
-                    <Input
-                      placeholder="e.g. 02:00 PM · Temple visit"
-                      value={newActivityText[dayIdx] || ''}
-                      onChange={(e) =>
-                        setNewActivityText((prev) => ({ ...prev, [dayIdx]: e.target.value }))
-                      }
-                      className="text-xs h-9 bg-card/40 border-border text-foreground flex-1"
-                    />
-                    <Input
-                      placeholder="Cost (₹)"
-                      type="number"
-                      value={newActivityCost[dayIdx] || ''}
-                      onChange={(e) =>
-                        setNewActivityCost((prev) => ({ ...prev, [dayIdx]: e.target.value }))
-                      }
-                      className="text-xs h-9 bg-card/40 border-border text-foreground w-24"
-                    />
-                    <Button
-                      onClick={() => handleAddActivity(dayIdx)}
-                      size="sm"
-                      className="h-9 px-4 rounded-full bg-card hover:bg-card/80 border border-border text-foreground text-xs font-semibold shrink-0"
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                        {/* Activities list */}
+                        <div className="space-y-2">
+                          {dayPlan.activities.map((activity, actIdx) => {
+                            const isObj = typeof activity === 'object';
+                            const title = isObj ? activity.title : activity;
+                            const time = isObj ? activity.time : '10:00 AM';
+                            const cost = isObj && activity.costINR ? activity.costINR : 0;
+                            const cat = isObj ? activity.category : 'Sightseeing';
+                            const config = getCategoryConfig(cat);
+                            const Icon = config.icon;
+
+                            return (
+                              <div
+                                key={actIdx}
+                                className={`flex items-center justify-between p-3 rounded-xl ${config.bg} border ${config.border} group transition-all hover:shadow-sm`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-lg bg-card flex items-center justify-center shrink-0 border border-border/60`}>
+                                    <Icon className={`w-4 h-4 ${config.text}`} />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`font-mono text-[11px] ${config.text} font-bold`}>{time}</span>
+                                      <span className="text-xs font-medium text-foreground">{title}</span>
+                                    </div>
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{cat}</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  {cost > 0 && (
+                                    <span className="font-mono text-xs font-bold text-foreground bg-card px-2.5 py-1 rounded-full border border-border/60">
+                                      ₹{cost.toLocaleString('en-IN')}
+                                    </span>
+                                  )}
+                                  <button
+                                    onClick={() => handleRemoveActivity(dayIdx, actIdx)}
+                                    className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all"
+                                    title="Delete activity"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Add Activity Input Bar */}
+                        <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                          <Input
+                            placeholder="e.g. 02:00 PM · Temple visit"
+                            value={newActivityText[dayIdx] || ''}
+                            onChange={(e) =>
+                              setNewActivityText((prev) => ({ ...prev, [dayIdx]: e.target.value }))
+                            }
+                            className="text-xs h-9 bg-muted/40 border-border text-foreground flex-1 rounded-xl"
+                          />
+                          <Input
+                            placeholder="Cost (₹)"
+                            type="number"
+                            value={newActivityCost[dayIdx] || ''}
+                            onChange={(e) =>
+                              setNewActivityCost((prev) => ({ ...prev, [dayIdx]: e.target.value }))
+                            }
+                            className="text-xs h-9 bg-muted/40 border-border text-foreground w-24 rounded-xl"
+                          />
+                          <Button
+                            onClick={() => handleAddActivity(dayIdx)}
+                            size="sm"
+                            className="h-9 px-4 rounded-full bg-aurora/15 hover:bg-aurora/25 border border-aurora/30 text-aurora text-xs font-semibold shrink-0"
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* ── Right Col: Packing & Travel Checklist ───────────────────────── */}
+          {/* ── Right Col: Packing & Checklist ─────────────────────────── */}
           <div className="space-y-6">
-            <div className="rounded-3xl p-6 glass border border-border shadow-cast space-y-5">
+            <div className="rounded-3xl p-6 bg-card border border-border/80 shadow-sm space-y-5">
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-serif text-xl font-normal text-foreground">Packing &amp; Checklist</h3>
-                  <span className="font-mono text-xs text-aurora font-bold">{checklistPercent}% Ready</span>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-serif text-xl font-medium text-foreground">Packing & Checklist</h3>
+                  <span className="font-mono text-xs text-aurora font-bold">{checklistPercent}%</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Track essential documents, tech, and gear</p>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden mt-3">
-                  <motion.div
-                    animate={{ width: `${checklistPercent}%` }}
-                    className="h-full bg-aurora rounded-full"
-                  />
+                <p className="text-xs text-muted-foreground mb-3">Track essential documents, tech, and gear</p>
+                
+                {/* Progress Ring */}
+                <div className="flex items-center gap-4">
+                  <div className="relative w-14 h-14 shrink-0">
+                    <DonutChart
+                      percent={checklistPercent}
+                      color="hsl(var(--aurora))"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xs font-bold font-mono text-aurora">{doneChecklist}/{totalChecklist}</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    <strong className="text-foreground">{doneChecklist}</strong> of {totalChecklist} items packed.
+                    {checklistPercent === 100 && <span className="text-aurora ml-1 font-bold">All ready! ✓</span>}
+                  </div>
                 </div>
               </div>
 
               {/* Items */}
               <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-                {activeTrip?.checklist?.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => handleToggleChecklist(item.id)}
-                    className={`flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition-all ${
-                      item.done
-                        ? 'bg-card/30 border-border/50 text-muted-foreground line-through opacity-70'
-                        : 'bg-card/70 border-border text-foreground hover:border-aurora/50'
-                    }`}
-                  >
-                    <div className="mt-0.5 shrink-0">
-                      {item.done ? (
-                        <CheckCircle2 className="w-4 h-4 text-aurora" />
-                      ) : (
-                        <Circle className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-medium leading-tight">{item.item}</p>
-                      {item.category && (
-                        <span className="text-[10px] uppercase text-muted-foreground">
-                          {item.category}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                {activeTrip?.checklist?.map((item) => {
+                  const borderColor = CHECKLIST_COLORS[item.category || 'General'] || CHECKLIST_COLORS.General;
+                  return (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      onClick={() => handleToggleChecklist(item.id)}
+                      className={`flex items-start gap-3 p-3 rounded-xl border-l-[3px] ${borderColor} cursor-pointer transition-all ${
+                        item.done
+                          ? 'bg-muted/30 border border-border/40 opacity-60'
+                          : 'bg-card border border-border hover:border-aurora/40 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="mt-0.5 shrink-0">
+                        {item.done ? (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                          >
+                            <CheckCircle2 className="w-4 h-4 text-aurora" />
+                          </motion.div>
+                        ) : (
+                          <Circle className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-xs font-medium leading-tight ${item.done ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                          {item.item}
+                        </p>
+                        {item.category && (
+                          <span className="text-[10px] uppercase text-muted-foreground font-mono tracking-wider">
+                            {item.category}
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
 
               {/* Add checklist item */}
@@ -701,7 +803,7 @@ export default function TripPlannerPage() {
                   value={newChecklistText}
                   onChange={(e) => setNewChecklistText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddChecklistItem()}
-                  className="text-xs h-9 bg-card/40 border-border text-foreground"
+                  className="text-xs h-9 bg-muted/40 border-border text-foreground rounded-xl"
                 />
                 <Button
                   onClick={handleAddChecklistItem}
@@ -714,9 +816,11 @@ export default function TripPlannerPage() {
             </div>
 
             {/* Travel Advisory Card */}
-            <div className="rounded-3xl p-5 bg-aurora/10 border border-aurora/20 space-y-2">
+            <div className="rounded-3xl p-5 bg-aurora/5 border border-aurora/15 space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-aurora">
-                <ShieldCheck className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-aurora/15 flex items-center justify-center">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
                 <span>Smart Rupee Travel Tip</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -743,15 +847,21 @@ export default function TripPlannerPage() {
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
               transition={{ duration: 0.35, ease: EASE }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-lg rounded-3xl glass border border-border p-6 sm:p-8 shadow-2xl space-y-5"
+              className="relative w-full max-w-lg rounded-3xl bg-card border border-border p-6 sm:p-8 shadow-2xl space-y-5"
             >
               <div className="flex items-center justify-between border-b border-border pb-4">
-                <h2 className="font-serif text-xl text-foreground">Create New Trip Itinerary</h2>
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aurora/15 text-aurora text-[10px] uppercase font-bold mb-1.5">
+                    <Plus className="w-3 h-3" />
+                    <span>New Itinerary</span>
+                  </div>
+                  <h2 className="font-serif text-xl text-foreground">Create New Trip</h2>
+                </div>
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="p-1.5 rounded-full hover:bg-card text-muted-foreground hover:text-foreground"
+                  className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
@@ -764,7 +874,7 @@ export default function TripPlannerPage() {
                     placeholder="e.g. Kerala Backwaters & Spices"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    className="h-10 bg-card/60 border-border text-foreground"
+                    className="h-11 bg-muted/40 border-border text-foreground rounded-xl"
                     required
                   />
                 </div>
@@ -777,14 +887,14 @@ export default function TripPlannerPage() {
                     placeholder="e.g. Kochi & Alleppey, India"
                     value={newDestination}
                     onChange={(e) => setNewDestination(e.target.value)}
-                    className="h-10 bg-card/60 border-border text-foreground"
+                    className="h-11 bg-muted/40 border-border text-foreground rounded-xl"
                     required
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                    Total Estimated Budget (₹ INR)
+                    Total Budget (₹ INR)
                   </label>
                   <div className="relative">
                     <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -793,7 +903,7 @@ export default function TripPlannerPage() {
                       placeholder="65000"
                       value={newBudgetINR}
                       onChange={(e) => setNewBudgetINR(e.target.value)}
-                      className="pl-9 h-10 bg-card/60 border-border text-foreground"
+                      className="pl-9 h-11 bg-muted/40 border-border text-foreground rounded-xl"
                     />
                   </div>
                 </div>
@@ -807,7 +917,7 @@ export default function TripPlannerPage() {
                       type="date"
                       value={newStartDate}
                       onChange={(e) => setNewStartDate(e.target.value)}
-                      className="h-10 bg-card/60 border-border text-foreground"
+                      className="h-11 bg-muted/40 border-border text-foreground rounded-xl"
                     />
                   </div>
                   <div>
@@ -818,7 +928,7 @@ export default function TripPlannerPage() {
                       type="date"
                       value={newEndDate}
                       onChange={(e) => setNewEndDate(e.target.value)}
-                      className="h-10 bg-card/60 border-border text-foreground"
+                      className="h-11 bg-muted/40 border-border text-foreground rounded-xl"
                     />
                   </div>
                 </div>
