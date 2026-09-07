@@ -66,6 +66,7 @@ export default function Footer() {
       { name: 'Guidelines', href: '/guidelines' },
     ],
     about: [
+      { name: 'About AtlasAura', href: '/about' },
       { name: 'Our Story', href: '/story' },
       { name: 'Team', href: '/team' },
       { name: 'Settings', href: '/settings' },

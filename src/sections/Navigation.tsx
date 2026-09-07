@@ -28,13 +28,11 @@ interface NavigationProps {
   onLoginToggle?: () => void;
 }
 
-/* Four, not five. Curiosity lives on the home page and in the footer; putting
-   every section in the header is what made it feel crowded. */
 const NAV_LINKS = [
   { name: 'Destinations', href: '/destinations' },
   { name: '3D Globe', href: '/globe' },
-  { name: 'World map', href: '/#world-map' },
   { name: 'Trip planner', href: '/trip-planner' },
+  { name: 'About', href: '/about' },
 ];
 
 const PURPOSES = [
