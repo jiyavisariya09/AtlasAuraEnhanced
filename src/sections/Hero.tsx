@@ -139,7 +139,7 @@ export default function Hero({ onVideoReady }: HeroProps = {}) {
         className="shell flex flex-1 flex-col justify-center pb-8 pt-28 lg:pt-32"
         style={copyStyle}
       >
-        <div className="max-w-[46rem]">
+        <div className="max-w-[28rem] lg:max-w-[32rem]">
           <div className="animate-fade-rise flex items-center gap-4">
             <span className="t-label text-aurora font-bold drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
               A travel atlas with no star ratings
@@ -148,22 +148,18 @@ export default function Hero({ onVideoReady }: HeroProps = {}) {
           </div>
 
           <h1
-            className="t-display animate-fade-rise mt-7 text-balance text-foreground leading-[1.08] tracking-[-0.015em] drop-shadow-[0_4px_24px_rgba(0,0,0,0.18)]"
+            className="animate-fade-rise mt-5 font-serif text-3xl sm:text-4xl lg:text-[2.65rem] font-medium leading-[1.18] tracking-[-0.015em] text-foreground text-balance"
           >
-            <span className="font-serif italic font-normal text-[#0B4F52] dark:text-[#2DD4BF] drop-shadow-[0_2px_14px_rgba(11,79,82,0.35)]">
-              Somewhere
-            </span>{' '}
-            <span className="font-normal text-foreground/95">in here is the trip</span>{' '}
-            <span className="font-normal text-foreground/80">you&rsquo;ll still be describing</span>{' '}
-            <span className="font-serif italic font-medium text-[#0B4F52] dark:text-aurora">
+            The trip you&rsquo;ll still describe{' '}
+            <span className="italic font-normal text-primary dark:text-aurora">
               in ten years.
             </span>
           </h1>
 
           <p
-            className="t-lead animate-fade-rise-delay mt-6 max-w-xl text-foreground/90 font-normal leading-relaxed text-base sm:text-lg drop-shadow-[0_1px_8px_rgba(0,0,0,0.1)]"
+            className="animate-fade-rise-delay mt-4 max-w-sm text-sm sm:text-base text-foreground/80 font-normal leading-relaxed"
           >
-            First-hand accounts from <strong className="font-semibold text-foreground">120 countries</strong> — what people saw, what it cost, and what they&rsquo;d do differently.
+            First-hand accounts from <strong className="font-semibold text-foreground">120 countries</strong> — honest, unrated, and unfiltered.
           </p>
 
           <div
