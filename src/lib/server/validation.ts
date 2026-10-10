@@ -29,12 +29,23 @@ const password = z
 const shortText = (max: number) => z.string().trim().max(max)
 
 export const signupSchema = z.object({
-  name: z.string().trim().min(1, 'Enter your name.').max(80),
+  name: z.string().trim().min(2, 'Enter your name (at least 2 characters).').max(80),
   email,
-  phone: shortText(32).optional().nullable(),
+  phone: z.string().trim().min(7, 'Valid mobile phone number is required.').max(32),
   password,
-  otp: z.string().trim().min(6, 'Enter the 6-digit verification code.').max(6),
+  emailOtp: z.string().trim().min(6, 'Enter the 6-digit email verification code.').max(6).optional(),
+  phoneOtp: z.string().trim().min(6, 'Enter the 6-digit mobile verification code.').max(6).optional(),
+  otp: z.string().trim().max(6).optional(),
 })
+
+export const digitalSignatureSchema = z.object({
+  token: z.string().min(1, 'Token is required.'),
+  signatureData: z.string().min(10, 'Signature data is required.'),
+  signatureType: z.enum(['draw', 'type', 'upload']),
+  signerName: z.string().trim().min(2, 'Full legal name is required.').max(100),
+  agreedToTerms: z.boolean().refine((val) => val === true, 'You must accept the terms of the digital signature agreement.'),
+})
+
 
 export const loginSchema = z.object({
   email,

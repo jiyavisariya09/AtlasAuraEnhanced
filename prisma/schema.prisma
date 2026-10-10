@@ -42,8 +42,10 @@ model User {
   email             String   @unique
   passwordHash      String
   name              String
-  phone             String?
-  avatar            String   @default("/avatars/avatar-default.jpg")
+  phone                 String?
+  digitalSignature      String?
+  signatureRegisteredAt DateTime?
+  avatar                String   @default("/avatars/avatar-default.jpg")
   bio               String?
   travelStyle       String[]
   dreamDestinations String?

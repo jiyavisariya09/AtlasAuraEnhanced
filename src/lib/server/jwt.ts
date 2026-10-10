@@ -14,11 +14,13 @@ const RESET_EXPIRES_IN = '1h'
    was a valid session cookie: both were signed with the same secret and
    `verifyToken` never looked at the claim, so pasting a reset token into the
    `token` cookie logged you in as that user for an hour. */
-export type TokenPurpose = 'session' | 'reset'
+export type TokenPurpose = 'session' | 'reset' | 'digital_signature'
 
 interface AtlasTokenPayload extends jwt.JwtPayload {
   id: string
   purpose: TokenPurpose
+  email?: string
+  name?: string
 }
 
 /* Checked on first use rather than at import time. Both are real failures, but
@@ -54,6 +56,13 @@ export function signToken(payload: { id: string; name?: string; email?: string }
 export function signResetToken(payload: { id: string }) {
   return jwt.sign({ ...payload, purpose: 'reset' satisfies TokenPurpose }, secret(), {
     expiresIn: RESET_EXPIRES_IN,
+    algorithm: ALGORITHM,
+  })
+}
+
+export function signDigitalSignatureToken(payload: { id: string; email?: string; name?: string }) {
+  return jwt.sign({ ...payload, purpose: 'digital_signature' satisfies TokenPurpose }, secret(), {
+    expiresIn: '7d',
     algorithm: ALGORITHM,
   })
 }

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { createAndSendOtp } from '@/lib/server/otp'
+import { createAndSendOtp, createAndSendDualOtp } from '@/lib/server/otp'
 import { clientKey, rateLimit, tooManyRequests } from '@/lib/server/rate-limit'
 
-const REQUESTS_PER_IP = 6
+const REQUESTS_PER_IP = 10
 const WINDOW_MS = 15 * 60 * 1000 // 15 minutes
 
 export async function POST(req: NextRequest) {
@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     const email = body.email.toLowerCase().trim()
+    const phone = typeof body.phone === 'string' ? body.phone.trim() : undefined
     const name = typeof body.name === 'string' ? body.name.trim() : undefined
     const purpose = body.purpose === 'forgot_password' ? 'forgot_password' : 'signup'
 
@@ -49,6 +50,38 @@ export async function POST(req: NextRequest) {
 
     const recipientName = name || existingUser?.name || 'Traveler'
 
+    // For Sign up: Dual verification (Email + Phone number)
+    if (purpose === 'signup') {
+      if (!phone) {
+        return NextResponse.json(
+          { message: 'Mobile phone number is required for passport registration.' },
+          { status: 400 }
+        )
+      }
+
+      const dualResult = await createAndSendDualOtp({
+        email,
+        phone,
+        name: recipientName,
+        purpose: 'signup',
+      })
+
+      if (!dualResult.success) {
+        return NextResponse.json(
+          { message: dualResult.message || 'Failed to dispatch verification codes.' },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `6-digit verification codes sent to ${email} and ${phone}.`,
+        devPhoneOtp: dualResult.devPhoneOtp,
+        devEmailOtp: dualResult.devEmailOtp,
+      })
+    }
+
+    // For forgot-password: Email OTP
     const result = await createAndSendOtp({
       email,
       name: recipientName,

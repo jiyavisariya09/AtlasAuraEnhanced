@@ -260,3 +260,187 @@ export function welcomeHtml(name: string) {
 export function resetHtml(name: string, url: string) {
   return `<h2>Hi ${name},</h2><p>Click below to reset your password. This link expires in 1 hour.</p><a href="${url}" style="background:#0ea5e9;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:12px">Reset Password</a>`
 }
+
+export function generateDigitalSignatureEmail({
+  name,
+  signatureUrl,
+  email,
+  phone,
+}: {
+  name: string
+  signatureUrl: string
+  email: string
+  phone?: string
+}) {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Your Digital Signature - AtlasAura</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #f1f5f9;
+      padding: 40px 16px;
+    }
+    .container {
+      max-width: 560px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+    .header {
+      padding: 32px 32px 20px;
+      text-align: center;
+      background: #0f172a;
+      color: #ffffff;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #2dd4bf;
+      background: rgba(45, 212, 191, 0.15);
+      border: 1px solid rgba(45, 212, 191, 0.4);
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 8px 0;
+      color: #ffffff;
+    }
+    .content {
+      padding: 28px 32px;
+    }
+    .greeting {
+      font-size: 16px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 12px;
+    }
+    .description {
+      font-size: 14px;
+      line-height: 1.65;
+      color: #475569;
+      margin-bottom: 20px;
+    }
+    .details-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 13px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #edf2f7;
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    .detail-label {
+      color: #64748b;
+      font-weight: 500;
+    }
+    .detail-value {
+      color: #0f172a;
+      font-weight: 600;
+    }
+    .cta-container {
+      text-align: center;
+      margin: 28px 0;
+    }
+    .btn {
+      display: inline-block;
+      background: #0d9488;
+      color: #ffffff !important;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 14px 28px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);
+    }
+    .security-note {
+      font-size: 12px;
+      line-height: 1.55;
+      color: #64748b;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 20px;
+      margin-top: 24px;
+    }
+    .footer {
+      background: #f8fafc;
+      padding: 20px 32px;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+      font-size: 11px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="header">
+        <div class="badge">LEGAL COMPLIANCE & AUTHENTICATION</div>
+        <h1 class="title">Register Your Digital Signature</h1>
+      </div>
+      <div class="content">
+        <div class="greeting">Greetings Traveler, ${name}</div>
+        <p class="description">
+          Your dual-factor identity verification (Email & Mobile OTP) has been completed successfully. 
+          To complete your verified cartographer passport and enable cryptographically authenticated travel journals, please register your official digital signature.
+        </p>
+        <div class="details-box">
+          <div class="detail-row">
+            <span class="detail-label">Verified Email:</span>
+            <span class="detail-value">${email}</span>
+          </div>
+          ${phone ? `
+          <div class="detail-row">
+            <span class="detail-label">Verified Mobile:</span>
+            <span class="detail-value">${phone}</span>
+          </div>` : ''}
+          <div class="detail-row">
+            <span class="detail-label">Compliance Standard:</span>
+            <span class="detail-value">Digital E-Signature (IT Act / ISO 27001)</span>
+          </div>
+        </div>
+        <div class="cta-container">
+          <a href="${signatureUrl}" class="btn">Proceed to Register Digital Signature</a>
+        </div>
+        <div class="security-note">
+          <strong>Security Advisory:</strong> If you did not request this registration link or believe this was triggered in error, please immediately contact our security desk at <a href="mailto:security@atlasaura.com">security@atlasaura.com</a>.
+        </div>
+      </div>
+      <div class="footer">
+        &copy; ${new Date().getFullYear()} AtlasAura Cartography Systems. All rights reserved.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`
+}
+

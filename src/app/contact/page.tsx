@@ -45,9 +45,45 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string }>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const validateEmail = (val: string) => {
+    if (!val.trim()) return 'Email is required.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())) return 'Enter a valid email address.';
+    return '';
+  };
+
+  const validateName = (val: string) => {
+    if (!val.trim()) return 'Your name is required.';
+    if (val.trim().length < 2) return 'Name must be at least 2 characters.';
+    return '';
+  };
+
+  const validateMessage = (val: string) => {
+    if (!val.trim()) return 'Message cannot be empty.';
+    if (val.trim().length < 10) return 'Message must be at least 10 characters.';
+    return '';
+  };
+
+  const handleBlur = (field: 'name' | 'email' | 'message') => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    if (field === 'name') setErrors((prev) => ({ ...prev, name: validateName(name) }));
+    if (field === 'email') setErrors((prev) => ({ ...prev, email: validateEmail(email) }));
+    if (field === 'message') setErrors((prev) => ({ ...prev, message: validateMessage(message) }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !message) return;
+    const nameErr = validateName(name);
+    const emailErr = validateEmail(email);
+    const msgErr = validateMessage(message);
+
+    setTouched({ name: true, email: true, message: true });
+    setErrors({ name: nameErr, email: emailErr, message: msgErr });
+
+    if (nameErr || emailErr || msgErr) return;
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -173,9 +209,18 @@ export default function ContactPage() {
                             required
                             placeholder="Aria Montgomery"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full px-4 py-3 rounded-2xl bg-muted/40 border border-border/80 text-foreground placeholder:text-muted-foreground/60 text-sm focus:outline-none focus:border-aurora transition-colors"
+                            onChange={(e) => {
+                              setName(e.target.value);
+                              if (touched.name) setErrors((prev) => ({ ...prev, name: validateName(e.target.value) }));
+                            }}
+                            onBlur={() => handleBlur('name')}
+                            className={`w-full px-4 py-3 rounded-2xl bg-muted/40 border text-foreground placeholder:text-muted-foreground/60 text-sm focus:outline-none transition-colors ${
+                              touched.name && errors.name ? 'border-destructive ring-1 ring-destructive/30' : 'border-border/80 focus:border-aurora'
+                            }`}
                           />
+                          {touched.name && errors.name && (
+                            <p className="text-[11px] text-destructive mt-1">{errors.name}</p>
+                          )}
                         </div>
 
                         <div>
@@ -187,9 +232,18 @@ export default function ContactPage() {
                             required
                             placeholder="aria@wanderer.com"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3 rounded-2xl bg-muted/40 border border-border/80 text-foreground placeholder:text-muted-foreground/60 text-sm focus:outline-none focus:border-aurora transition-colors"
+                            onChange={(e) => {
+                              setEmail(e.target.value);
+                              if (touched.email) setErrors((prev) => ({ ...prev, email: validateEmail(e.target.value) }));
+                            }}
+                            onBlur={() => handleBlur('email')}
+                            className={`w-full px-4 py-3 rounded-2xl bg-muted/40 border text-foreground placeholder:text-muted-foreground/60 text-sm focus:outline-none transition-colors ${
+                              touched.email && errors.email ? 'border-destructive ring-1 ring-destructive/30' : 'border-border/80 focus:border-aurora'
+                            }`}
                           />
+                          {touched.email && errors.email && (
+                            <p className="text-[11px] text-destructive mt-1">{errors.email}</p>
+                          )}
                         </div>
                       </div>
 
@@ -203,9 +257,18 @@ export default function ContactPage() {
                           rows={5}
                           placeholder="Share the details of your inquiry, cultural notes, or route telemetry..."
                           value={message}
-                          onChange={(e) => setMessage(e.target.value)}
-                          className="w-full px-4 py-3 rounded-2xl bg-muted/40 border border-border/80 text-foreground placeholder:text-muted-foreground/60 text-sm focus:outline-none focus:border-aurora transition-colors resize-none"
+                          onChange={(e) => {
+                            setMessage(e.target.value);
+                            if (touched.message) setErrors((prev) => ({ ...prev, message: validateMessage(e.target.value) }));
+                          }}
+                          onBlur={() => handleBlur('message')}
+                          className={`w-full px-4 py-3 rounded-2xl bg-muted/40 border text-foreground placeholder:text-muted-foreground/60 text-sm focus:outline-none transition-colors resize-none ${
+                            touched.message && errors.message ? 'border-destructive ring-1 ring-destructive/30' : 'border-border/80 focus:border-aurora'
+                          }`}
                         />
+                        {touched.message && errors.message && (
+                          <p className="text-[11px] text-destructive mt-1">{errors.message}</p>
+                        )}
                       </div>
 
                       <button

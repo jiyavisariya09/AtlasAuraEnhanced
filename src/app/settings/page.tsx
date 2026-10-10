@@ -294,8 +294,16 @@ export default function SettingsPage() {
     e.preventDefault();
     setPwMessage(null);
 
-    if (newPassword.length < 6) {
-      setPwMessage({ text: 'New password must be at least 6 characters long.', type: 'error' });
+    if (!currentPassword) {
+      setPwMessage({ text: 'Current password is required.', type: 'error' });
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPwMessage({ text: 'New password must be at least 8 characters long.', type: 'error' });
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setPwMessage({ text: 'New password must include uppercase, lowercase, and numeric characters.', type: 'error' });
       return;
     }
     if (newPassword !== confirmPassword) {

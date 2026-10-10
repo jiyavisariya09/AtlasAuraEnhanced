@@ -58,6 +58,17 @@ function ForgotPasswordContent() {
   const [infoMessage, setInfoMessage] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
   const [successReset, setSuccessReset] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [newPasswordError, setNewPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+
+  const validateEmail = (val: string) => {
+    if (!val.trim()) return 'Email address is required.';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(val.trim())) return 'Please enter a valid email address (e.g. traveler@example.com).';
+    return '';
+  };
 
   // Sync initial email if query param is present
   useEffect(() => {
@@ -103,8 +114,12 @@ function ForgotPasswordContent() {
   // Request OTP
   const handleRequestOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!email || !email.includes('@')) {
-      setError('Please enter a valid email address.');
+    setEmailTouched(true);
+    const err = validateEmail(email);
+    setEmailError(err);
+
+    if (err) {
+      setError('Please provide a valid email address to receive recovery OTP.');
       return;
     }
 
@@ -112,7 +127,7 @@ function ForgotPasswordContent() {
     setIsLoading(true);
 
     const result = await sendOtp({
-      email,
+      email: email.trim().toLowerCase(),
       purpose: 'forgot_password',
     });
 
@@ -366,11 +381,28 @@ function ForgotPasswordContent() {
                         type="email"
                         placeholder="you@example.com"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-11 bg-card/60 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-aurora focus:ring-2 focus:ring-aurora/20 text-sm font-sans transition-all duration-200"
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (emailTouched) {
+                            setEmailError(validateEmail(e.target.value));
+                          }
+                        }}
+                        onBlur={() => {
+                          setEmailTouched(true);
+                          setEmailError(validateEmail(email));
+                        }}
+                        aria-invalid={!!emailError}
+                        className={`pl-10 h-11 bg-card/60 border text-foreground placeholder:text-muted-foreground/60 text-sm font-sans transition-all duration-200 ${
+                          emailTouched && emailError
+                            ? 'border-destructive ring-1 ring-destructive/30'
+                            : 'border-border focus:border-aurora focus:ring-2 focus:ring-aurora/20'
+                        }`}
                         required
                       />
                     </div>
+                    {emailTouched && emailError && (
+                      <p className="text-[11px] text-destructive mt-1 font-sans">{emailError}</p>
+                    )}
                   </div>
 
                   <motion.div

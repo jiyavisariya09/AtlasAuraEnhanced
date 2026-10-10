@@ -77,6 +77,30 @@ function SignInContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({ email: initialEmail, password: '' });
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const [touchedFields, setTouchedFields] = useState<{ email?: boolean; password?: boolean }>({});
+
+  const validateEmail = (val: string) => {
+    if (!val.trim()) return 'Email address is required.';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(val.trim())) return 'Please enter a valid email address (e.g. traveler@example.com).';
+    return '';
+  };
+
+  const validatePassword = (val: string) => {
+    if (!val) return 'Password is required.';
+    if (val.length < 8) return 'Password must be at least 8 characters.';
+    return '';
+  };
+
+  const handleBlur = (field: 'email' | 'password') => {
+    setTouchedFields((prev) => ({ ...prev, [field]: true }));
+    if (field === 'email') {
+      setFieldErrors((prev) => ({ ...prev, email: validateEmail(formData.email) }));
+    } else if (field === 'password') {
+      setFieldErrors((prev) => ({ ...prev, password: validatePassword(formData.password) }));
+    }
+  };
 
   // Sync email if query param changes
   useEffect(() => {
@@ -119,9 +143,24 @@ function SignInContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const emailErr = validateEmail(formData.email);
+    const passErr = validatePassword(formData.password);
+
+    setTouchedFields({ email: true, password: true });
+    setFieldErrors({ email: emailErr, password: passErr });
+
+    if (emailErr || passErr) {
+      setError('Please resolve the errors highlighted below.');
+      return;
+    }
+
     setIsLoading(true);
 
-    const result = await signIn({ email: formData.email, password: formData.password });
+    const result = await signIn({
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password,
+    });
 
     if (!result.success) {
       setError(result.error || 'Invalid email or password.');
@@ -252,7 +291,7 @@ function SignInContent() {
             </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4 my-auto font-sans">
+          <form onSubmit={handleSubmit} className="space-y-4 my-auto font-sans" noValidate>
             {/* Email */}
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
@@ -264,11 +303,25 @@ function SignInContent() {
                   type="email"
                   placeholder="traveler@example.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="pl-10 h-11 bg-card/60 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-aurora focus:ring-2 focus:ring-aurora/20 text-sm font-sans transition-all duration-200"
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    if (touchedFields.email) {
+                      setFieldErrors((prev) => ({ ...prev, email: validateEmail(e.target.value) }));
+                    }
+                  }}
+                  onBlur={() => handleBlur('email')}
+                  aria-invalid={!!fieldErrors.email}
+                  className={`pl-10 h-11 bg-card/60 border text-foreground placeholder:text-muted-foreground/60 text-sm font-sans transition-all duration-200 ${
+                    touchedFields.email && fieldErrors.email
+                      ? 'border-destructive ring-1 ring-destructive/30'
+                      : 'border-border focus:border-aurora focus:ring-2 focus:ring-aurora/20'
+                  }`}
                   required
                 />
               </div>
+              {touchedFields.email && fieldErrors.email && (
+                <p className="text-[11px] text-destructive mt-1 font-sans">{fieldErrors.email}</p>
+              )}
             </div>
 
             {/* Password */}
@@ -290,8 +343,19 @@ function SignInContent() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="pl-10 pr-10 h-11 bg-card/60 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-aurora focus:ring-2 focus:ring-aurora/20 text-sm font-sans transition-all duration-200"
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    if (touchedFields.password) {
+                      setFieldErrors((prev) => ({ ...prev, password: validatePassword(e.target.value) }));
+                    }
+                  }}
+                  onBlur={() => handleBlur('password')}
+                  aria-invalid={!!fieldErrors.password}
+                  className={`pl-10 pr-10 h-11 bg-card/60 border text-foreground placeholder:text-muted-foreground/60 text-sm font-sans transition-all duration-200 ${
+                    touchedFields.password && fieldErrors.password
+                      ? 'border-destructive ring-1 ring-destructive/30'
+                      : 'border-border focus:border-aurora focus:ring-2 focus:ring-aurora/20'
+                  }`}
                   required
                 />
                 <motion.button
@@ -305,6 +369,9 @@ function SignInContent() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </motion.button>
               </div>
+              {touchedFields.password && fieldErrors.password && (
+                <p className="text-[11px] text-destructive mt-1 font-sans">{fieldErrors.password}</p>
+              )}
             </div>
 
             {/* Keep Signed In */}

@@ -16,7 +16,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
   signIn: (data: { email: string; password: string }) => Promise<{ success: boolean; error?: string; user?: AuthUser }>;
-  signUp: (data: { name: string; email: string; phone?: string; password: string; otp: string }) => Promise<{ success: boolean; error?: string; user?: AuthUser }>;
+  signUp: (data: { name: string; email: string; phone?: string; password: string; emailOtp?: string; phoneOtp?: string; otp?: string }) => Promise<{ success: boolean; error?: string; user?: AuthUser; signatureToken?: string; signatureLink?: string }>;
   signOut: () => void;
   refreshSession: () => Promise<AuthUser | null>;
   updateUser: (data: Partial<AuthUser>) => void;
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res;
   };
 
-  const signUp = async (data: { name: string; email: string; phone?: string; password: string; otp: string }) => {
+  const signUp = async (data: { name: string; email: string; phone?: string; password: string; emailOtp?: string; phoneOtp?: string; otp?: string }) => {
     setIsLoading(true);
     const res = await authSignUp(data);
     if (res.success && res.user) {

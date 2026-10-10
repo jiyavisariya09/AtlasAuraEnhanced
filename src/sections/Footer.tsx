@@ -38,6 +38,7 @@ export default function Footer() {
   const [socialToast, setSocialToast] = useState<string | null>(null);
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterError, setNewsletterError] = useState('');
 
   const triggerSocialNotice = (name: string) => {
     setSocialToast(`${name} launching soon with AtlasAura v2.0`);
@@ -46,7 +47,16 @@ export default function Footer() {
 
   const handleNewsletter = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newsletterEmail) return;
+    setNewsletterError('');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!newsletterEmail.trim()) {
+      setNewsletterError('Please enter your email address.');
+      return;
+    }
+    if (!emailRegex.test(newsletterEmail.trim())) {
+      setNewsletterError('Please enter a valid email address.');
+      return;
+    }
     setNewsletterSubscribed(true);
     setNewsletterEmail('');
     setTimeout(() => setNewsletterSubscribed(false), 4000);
@@ -217,24 +227,34 @@ export default function Footer() {
                 One secret coordinate, three local stories, zero spam. Delivered weekly.
               </p>
             </div>
-            <form onSubmit={handleNewsletter} className="flex items-center gap-3">
-              <input
-                type="email"
-                required
-                id="newsletter-email"
-                name="email"
-                autoComplete="email"
-                value={newsletterEmail}
-                onChange={(e) => setNewsletterEmail(e.target.value)}
-                placeholder={newsletterSubscribed ? 'Subscribed!' : 'Enter your email'}
-                className="flex-1 md:w-64 px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground transition-colors focus:border-aurora"
-              />
-              <button
-                type="submit"
-                className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium transition-all duration-300 ease-smooth transform-gpu hover:bg-primary-hover hover:shadow-aurora active:scale-[0.97]"
-              >
-                {newsletterSubscribed ? 'Done!' : 'Subscribe'}
-              </button>
+            <form onSubmit={handleNewsletter} className="flex flex-col gap-1.5" noValidate>
+              <div className="flex items-center gap-3">
+                <input
+                  type="email"
+                  required
+                  id="newsletter-email"
+                  name="email"
+                  autoComplete="email"
+                  value={newsletterEmail}
+                  onChange={(e) => {
+                    setNewsletterEmail(e.target.value);
+                    if (newsletterError) setNewsletterError('');
+                  }}
+                  placeholder={newsletterSubscribed ? 'Subscribed!' : 'Enter your email'}
+                  className={`flex-1 md:w-64 px-4 py-3 rounded-xl border bg-card text-foreground placeholder:text-muted-foreground transition-colors ${
+                    newsletterError ? 'border-destructive ring-1 ring-destructive/30' : 'border-border focus:border-aurora'
+                  }`}
+                />
+                <button
+                  type="submit"
+                  className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium transition-all duration-300 ease-smooth transform-gpu hover:bg-primary-hover hover:shadow-aurora active:scale-[0.97] cursor-pointer"
+                >
+                  {newsletterSubscribed ? 'Done!' : 'Subscribe'}
+                </button>
+              </div>
+              {newsletterError && (
+                <p className="text-[11px] text-destructive pl-1">{newsletterError}</p>
+              )}
             </form>
           </div>
         </motion.div>

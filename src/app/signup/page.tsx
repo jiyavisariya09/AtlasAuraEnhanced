@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { 
   Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, 
   Phone, Check, X, AlertCircle, MapPin, KeyRound, RotateCcw,
-  CheckCircle2
+  CheckCircle2, Copy, ShieldCheck, FileSignature, Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,9 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from '@/components/ThemeToggle';
 import { sendOtp } from '@/lib/auth';
+import { CountryPhoneInput } from '@/components/ui/phone-input';
+import { validatePhone } from '@/lib/phone-validation';
+import { DEFAULT_COUNTRY } from '@/data/countries';
 
 const CINEMATIC_STORIES = [
   {
@@ -114,7 +117,7 @@ function SignUpContent() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [prevIndex, setPrevIndex] = useState(0);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -123,13 +126,42 @@ function SignUpContent() {
   const [infoMessage, setInfoMessage] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
 
+  // Form input fields
   const [formData, setFormData] = useState({
     name: '',
     email: initialEmail,
     phone: '',
+    fullPhone: '',
+    countryCode: 'IN',
     password: '',
     confirmPassword: '',
   });
+
+  // Inline Validation Touch & Error states
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+
+  // 6-digit OTP states for Email and Mobile SMS
+  const [emailOtpDigits, setEmailOtpDigits] = useState(['', '', '', '', '', '']);
+  const [phoneOtpDigits, setPhoneOtpDigits] = useState(['', '', '', '', '', '']);
+  const emailOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const phoneOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Signature link dispatch state after step 3
+  const [signatureData, setSignatureData] = useState<{
+    signatureLink: string;
+    signatureToken: string;
+    userEmail: string;
+    userPhone: string;
+  } | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [devSmsNotice, setDevSmsNotice] = useState<string | null>(null);
 
   // Sync initial email
   useEffect(() => {
@@ -137,10 +169,6 @@ function SignUpContent() {
       setFormData((prev) => (prev.email ? prev : { ...prev, email: initialEmail }));
     }
   }, [initialEmail]);
-
-  // 6-digit OTP state
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Preload background images
   useEffect(() => {
@@ -176,9 +204,69 @@ function SignUpContent() {
 
   const activeStory = CINEMATIC_STORIES[currentIndex];
   const prevStory = CINEMATIC_STORIES[prevIndex];
-
   const currentImage = isDark ? activeStory.imageNight : activeStory.imageDay;
   const prevImage = isDark ? prevStory.imageNight : prevStory.imageDay;
+
+  // Validation helpers
+  const validateField = (fieldName: string, value: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    switch (fieldName) {
+      case 'name':
+        if (!value.trim()) return 'Full legal name is required.';
+        if (value.trim().length < 2) return 'Name must be at least 2 characters.';
+        return '';
+
+      case 'email':
+        if (!value.trim()) return 'Email address is required.';
+        if (!emailRegex.test(value.trim())) return 'Please enter a valid email address (e.g. traveler@domain.com).';
+        return '';
+
+      case 'phone': {
+        if (!value.trim()) return 'Mobile phone number is required.';
+        const res = validatePhone(value, formData.countryCode);
+        if (!res.isValid) return res.error || 'Please enter a valid phone number.';
+        return '';
+      }
+
+      case 'password': {
+        if (!value) return 'Password is required.';
+        if (value.length < 8) return 'Password must be at least 8 characters.';
+        if (!/[A-Z]/.test(value)) return 'Must include at least 1 uppercase letter.';
+        if (!/[a-z]/.test(value)) return 'Must include at least 1 lowercase letter.';
+        if (!/\d/.test(value)) return 'Must include at least 1 number.';
+        return '';
+      }
+
+      case 'confirmPassword':
+        if (!value) return 'Please confirm your password.';
+        if (value !== formData.password) return 'Passwords do not match.';
+        return '';
+
+      default:
+        return '';
+    }
+  };
+
+  const handleBlur = (fieldName: string) => {
+    setTouchedFields((prev) => ({ ...prev, [fieldName]: true }));
+    const errorMsg = validateField(fieldName, (formData as any)[fieldName]);
+    setFieldErrors((prev) => ({ ...prev, [fieldName]: errorMsg }));
+  };
+
+  const handlePhoneChange = (val: string, fullE164: string, country: any, isValid: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      phone: val,
+      fullPhone: fullE164,
+      countryCode: country.code,
+    }));
+
+    if (touchedFields.phone) {
+      const res = validatePhone(val, country.code);
+      setFieldErrors((prev) => ({ ...prev, phone: res.isValid ? '' : res.error }));
+    }
+  };
 
   const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword !== '';
   const passwordScore = [
@@ -189,19 +277,48 @@ function SignUpContent() {
     /[!@#$%^&*(),.?":{}|<>]/.test(formData.password),
   ].filter(Boolean).length;
 
-  const canProceedStep1 = formData.name.trim().length >= 2 && formData.email.includes('@');
-  const canProceedStep2 = passwordScore >= 3 && passwordsMatch;
+  const phoneValidation = validatePhone(formData.phone, formData.countryCode);
+  const isStep1Valid = 
+    formData.name.trim().length >= 2 && 
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()) && 
+    phoneValidation.isValid;
 
-  // Handle Requesting OTP
-  const handleRequestOtp = async (e?: React.FormEvent) => {
+  const isStep2Valid = passwordScore >= 3 && passwordsMatch;
+
+  // Step 1 Proceed
+  const handleProceedToStep2 = () => {
+    const nameErr = validateField('name', formData.name);
+    const emailErr = validateField('email', formData.email);
+    const phoneErr = validateField('phone', formData.phone);
+
+    setTouchedFields({ name: true, email: true, phone: true });
+    setFieldErrors({ name: nameErr, email: emailErr, phone: phoneErr });
+
+    if (nameErr || emailErr || phoneErr) {
+      setError('Please resolve all highlighted fields before continuing.');
+      return;
+    }
+
+    setError('');
+    setStep(2);
+  };
+
+  // Step 2: Request Dual OTP (Email + Mobile)
+  const handleRequestDualOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!canProceedStep2) return;
+    if (!isStep2Valid) {
+      setError('Please ensure your master password meets the security requirements.');
+      return;
+    }
 
     setError('');
     setIsSendingOtp(true);
 
+    const fullPhone = formData.fullPhone || phoneValidation.e164 || `${DEFAULT_COUNTRY.dialCode}${formData.phone.replace(/\D/g, '')}`;
+
     const result = await sendOtp({
       email: formData.email,
+      phone: fullPhone,
       name: formData.name,
       purpose: 'signup',
     });
@@ -213,72 +330,141 @@ function SignUpContent() {
       return;
     }
 
-    setInfoMessage(result.message);
+    if (result.devPhoneOtp) {
+      setDevSmsNotice(result.devPhoneOtp);
+    }
+
+    setInfoMessage(result.message || `Verification codes dispatched to ${formData.email} and ${fullPhone}`);
     setResendTimer(60);
     setStep(3);
     setTimeout(() => {
-      otpRefs.current[0]?.focus();
+      emailOtpRefs.current[0]?.focus();
     }, 200);
   };
 
-  // Handle OTP digit changes
-  const handleOtpChange = (index: number, val: string) => {
+  // Digit Input Handlers for Email OTP
+  const handleEmailOtpChange = (index: number, val: string) => {
     const sanitized = val.replace(/\D/g, '').slice(-1);
-    const newDigits = [...otpDigits];
+    const newDigits = [...emailOtpDigits];
     newDigits[index] = sanitized;
-    setOtpDigits(newDigits);
+    setEmailOtpDigits(newDigits);
 
     if (sanitized && index < 5) {
-      otpRefs.current[index + 1]?.focus();
+      emailOtpRefs.current[index + 1]?.focus();
+    } else if (sanitized && index === 5) {
+      // auto-focus first phone OTP field if empty
+      if (!phoneOtpDigits[0]) {
+        phoneOtpRefs.current[0]?.focus();
+      }
     }
   };
 
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
+  const handleEmailOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !emailOtpDigits[index] && index > 0) {
+      emailOtpRefs.current[index - 1]?.focus();
     }
   };
 
-  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  const handleEmailOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
     if (!pasted) return;
 
-    const newDigits = [...otpDigits];
+    const newDigits = [...emailOtpDigits];
     for (let i = 0; i < pasted.length; i++) {
       newDigits[i] = pasted[i];
     }
-    setOtpDigits(newDigits);
+    setEmailOtpDigits(newDigits);
     const nextFocus = Math.min(pasted.length, 5);
-    otpRefs.current[nextFocus]?.focus();
+    emailOtpRefs.current[nextFocus]?.focus();
   };
 
-  const otpCode = otpDigits.join('');
-  const isOtpComplete = otpCode.length === 6;
+  // Digit Input Handlers for Phone OTP
+  const handlePhoneOtpChange = (index: number, val: string) => {
+    const sanitized = val.replace(/\D/g, '').slice(-1);
+    const newDigits = [...phoneOtpDigits];
+    newDigits[index] = sanitized;
+    setPhoneOtpDigits(newDigits);
 
-  // Final Registration Submission
+    if (sanitized && index < 5) {
+      phoneOtpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePhoneOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !phoneOtpDigits[index] && index > 0) {
+      phoneOtpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePhoneOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+
+    const newDigits = [...phoneOtpDigits];
+    for (let i = 0; i < pasted.length; i++) {
+      newDigits[i] = pasted[i];
+    }
+    setPhoneOtpDigits(newDigits);
+    const nextFocus = Math.min(pasted.length, 5);
+    phoneOtpRefs.current[nextFocus]?.focus();
+  };
+
+  const emailOtpCode = emailOtpDigits.join('');
+  const phoneOtpCode = phoneOtpDigits.join('');
+  const isBothOtpsComplete = emailOtpCode.length === 6 && phoneOtpCode.length === 6;
+
+  // Final Dual Verification Submission
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isOtpComplete) return;
+    if (!isBothOtpsComplete) {
+      setError('Please enter both the 6-digit Email code and the 6-digit Mobile SMS code.');
+      return;
+    }
 
     setError('');
     setIsLoading(true);
 
+    const fullPhone = formData.fullPhone || phoneValidation.e164 || `${DEFAULT_COUNTRY.dialCode}${formData.phone.replace(/\D/g, '')}`;
+
     const result = await signUp({
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
+      name: formData.name.trim(),
+      email: formData.email.trim().toLowerCase(),
+      phone: fullPhone,
       password: formData.password,
-      otp: otpCode,
+      emailOtp: emailOtpCode,
+      phoneOtp: phoneOtpCode,
+      otp: emailOtpCode,
     });
 
+    setIsLoading(false);
+
     if (!result.success) {
-      setError(result.error || 'Failed to verify passcode. Please try again.');
-      setIsLoading(false);
+      setError(result.error || 'Dual verification failed. Please check both passcodes.');
       return;
     }
 
-    router.push('/welcome');
+    // Success! Store digital signature link and transition to Step 4
+    if (result.signatureLink && result.signatureToken) {
+      setSignatureData({
+        signatureLink: result.signatureLink,
+        signatureToken: result.signatureToken,
+        userEmail: formData.email,
+        userPhone: fullPhone,
+      });
+      setStep(4);
+    } else {
+      router.push('/welcome');
+    }
+  };
+
+  const handleCopySignatureLink = () => {
+    if (signatureData?.signatureLink) {
+      navigator.clipboard.writeText(signatureData.signatureLink);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    }
   };
 
   const signinHref = formData.email ? `/signin?email=${encodeURIComponent(formData.email)}` : '/signin';
@@ -287,7 +473,6 @@ function SignUpContent() {
     <div className="min-h-screen w-full relative overflow-hidden flex items-center justify-center bg-background text-foreground transition-colors duration-300">
       {/* ── Seamless Full-Screen Photography ──────────────────────────────── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        {/* Base Layer */}
         <div className="absolute inset-0 z-0">
           <img
             src={prevImage}
@@ -296,7 +481,6 @@ function SignUpContent() {
           />
         </div>
 
-        {/* Top Active Layer */}
         <AnimatePresence>
           <motion.div
             key={`${currentImage}-${isDark}`}
@@ -313,9 +497,8 @@ function SignUpContent() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Natural Full-Width Cinematic Scrim */}
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/80 via-black/25 to-black/40" />
-        <div className="absolute inset-0 z-10 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.4)_100%)]" />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/85 via-black/35 to-black/45" />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.5)_100%)]" />
       </div>
 
       {/* ── Top Header Controls ───────────────────────────────────────────── */}
@@ -340,10 +523,9 @@ function SignUpContent() {
         </div>
       </header>
 
-      {/* ── CENTER: Fixed-Size Auth Card with Animated BorderBeam ─────────── */}
-      <main className="relative z-20 w-full max-w-[440px] px-4 sm:px-0 my-auto py-12">
-        <div className="relative overflow-hidden w-full min-h-[580px] flex flex-col justify-between rounded-3xl p-8 sm:p-9 bg-card/95 dark:bg-card/90 backdrop-blur-md border border-black/10 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.45)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.75)]">
-          {/* Animated Glowing Border Beam */}
+      {/* ── CENTER: Fixed-Size Auth Card with BorderBeam ──────────────────── */}
+      <main className="relative z-20 w-full max-w-[460px] px-4 sm:px-0 my-auto py-10">
+        <div className="relative overflow-hidden w-full min-h-[590px] flex flex-col justify-between rounded-3xl p-7 sm:p-8 bg-card/95 dark:bg-card/90 backdrop-blur-md border border-black/10 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)]">
           <BorderBeam
             size={180}
             duration={7}
@@ -352,60 +534,64 @@ function SignUpContent() {
             borderWidth={2}
           />
 
-          {/* Step Progress Header & Brand Logo */}
+          {/* Header Progress & Identity */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <Link href="/" className="inline-flex items-center gap-2.5 group">
-                <motion.div
-                  whileHover={{ rotate: 15, scale: 1.08 }}
-                  whileTap={{ scale: 0.92 }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 15 }}
-                >
-                  <svg viewBox="0 0 32 32" className="h-6 w-6 text-aurora" aria-hidden="true">
-                    <circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.8" />
-                    <ellipse cx="16" cy="16" rx="4.6" ry="11" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
-                    <line x1="5" y1="16" x2="27" y2="16" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
-                    <circle cx="21.2" cy="10.4" r="2.5" fill="currentColor" />
-                  </svg>
-                </motion.div>
+              <Link href="/" className="inline-flex items-center gap-2 group">
+                <svg viewBox="0 0 32 32" className="h-6 w-6 text-aurora" aria-hidden="true">
+                  <circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.8" />
+                  <ellipse cx="16" cy="16" rx="4.6" ry="11" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
+                  <line x1="5" y1="16" x2="27" y2="16" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
+                  <circle cx="21.2" cy="10.4" r="2.5" fill="currentColor" />
+                </svg>
                 <span className="font-sans text-lg font-bold tracking-tight text-foreground transition-colors group-hover:text-aurora">
                   Atlas<span className="text-aurora">Aura</span>
                 </span>
               </Link>
 
               <div className="flex items-center gap-1.5 bg-card/60 px-2.5 py-1 rounded-full border border-border">
-                <span className={`w-2 h-2 rounded-full transition-all duration-300 ${step >= 1 ? 'bg-aurora shadow-aurora scale-110' : 'bg-muted-foreground/30'}`} />
-                <span className={`w-2 h-2 rounded-full transition-all duration-300 ${step >= 2 ? 'bg-aurora shadow-aurora scale-110' : 'bg-muted-foreground/30'}`} />
-                <span className={`w-2 h-2 rounded-full transition-all duration-300 ${step === 3 ? 'bg-aurora shadow-aurora scale-110' : 'bg-muted-foreground/30'}`} />
+                {[1, 2, 3, 4].map((s) => (
+                  <span
+                    key={s}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      step >= s ? 'bg-aurora shadow-aurora scale-110' : 'bg-muted-foreground/30'
+                    }`}
+                  />
+                ))}
                 <span className="text-[10px] text-muted-foreground ml-1">
-                  {step}/3
+                  {step}/4
                 </span>
               </div>
             </div>
 
             <div>
               <span className="text-aurora font-sans text-[11px] font-bold tracking-wider uppercase block">
-                {step === 3 ? 'EMAIL VERIFICATION' : 'PASSPORT APPLICATION'}
+                {step === 1 && 'STEP 1 · TRAVELER IDENTITY'}
+                {step === 2 && 'STEP 2 · MASTER CREDENTIALS'}
+                {step === 3 && 'STEP 3 · DUAL OTP VERIFICATION'}
+                {step === 4 && 'STEP 4 · DIGITAL SIGNATURE DISPATCH'}
               </span>
               <h1 className="font-serif text-2xl sm:text-3xl font-normal text-foreground mt-0.5 tracking-normal">
-                {step === 1 && 'Create your account'}
+                {step === 1 && 'Create your passport'}
                 {step === 2 && 'Set master credentials'}
-                {step === 3 && 'Verify your email'}
+                {step === 3 && 'Dual-Channel Verification'}
+                {step === 4 && 'Identity Authenticated'}
               </h1>
               <p className="text-xs font-sans text-muted-foreground mt-1 leading-relaxed">
-                {step === 1 && 'Step 1 of 3 · Traveler identity'}
-                {step === 2 && 'Step 2 of 3 · Master password'}
-                {step === 3 && `Step 3 of 3 · 6-digit code sent to ${formData.email}`}
+                {step === 1 && 'Enter your full name, verified email, and phone with country code.'}
+                {step === 2 && 'Create your cryptographic master password for journal access.'}
+                {step === 3 && 'Verify Email and Mobile SMS passcodes simultaneously at once.'}
+                {step === 4 && 'Your official Digital Signature link has been dispatched.'}
               </p>
             </div>
           </div>
 
-          {/* Error & Info Banners */}
+          {/* Error and Alert Banners */}
           {error && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-2.5 p-3 rounded-2xl bg-destructive/15 text-destructive text-xs sm:text-sm my-2 font-sans"
+              className="flex items-center gap-2.5 p-3 rounded-2xl bg-destructive/15 text-destructive text-xs my-2 font-sans"
             >
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
@@ -423,12 +609,23 @@ function SignUpContent() {
             </motion.div>
           )}
 
-          {/* ── STEP 1: Traveler Details ──────────────────────────────────── */}
+          {/* Sandbox SMS Simulator Notice (for painless QA without live telco billing) */}
+          {devSmsNotice && step === 3 && (
+            <div className="p-2.5 rounded-xl bg-muted/60 border border-border text-[11px] text-muted-foreground font-mono flex items-center justify-between">
+              <span>SMS Gateway Sandbox Code:</span>
+              <span className="font-bold text-aurora bg-card px-2 py-0.5 rounded border border-aurora/30">
+                {devSmsNotice}
+              </span>
+            </div>
+          )}
+
+          {/* ── STEP 1: Traveler Details with Country Phone Code ──────────── */}
           {step === 1 && (
             <div className="space-y-3.5 my-auto font-sans">
+              {/* Full Name */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                  Full Name
+                  Full Legal Name
                 </label>
                 <div className="relative group">
                   <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-aurora" />
@@ -436,13 +633,27 @@ function SignUpContent() {
                     type="text"
                     placeholder="Marco Polo"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="pl-10 h-11 bg-card/60 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-aurora focus:ring-2 focus:ring-aurora/20 text-sm font-sans transition-all duration-200"
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      if (touchedFields.name) {
+                        setFieldErrors((prev) => ({ ...prev, name: validateField('name', e.target.value) }));
+                      }
+                    }}
+                    onBlur={() => handleBlur('name')}
+                    className={`pl-10 h-11 bg-card/60 border text-foreground placeholder:text-muted-foreground/60 text-sm font-sans transition-all duration-200 ${
+                      fieldErrors.name
+                        ? 'border-destructive ring-1 ring-destructive/30'
+                        : 'border-border focus:border-aurora focus:ring-2 focus:ring-aurora/20'
+                    }`}
                     required
                   />
                 </div>
+                {fieldErrors.name && (
+                  <p className="text-[11px] text-destructive mt-1 font-sans">{fieldErrors.name}</p>
+                )}
               </div>
 
+              {/* Email Address */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
                   Email Address
@@ -453,27 +664,38 @@ function SignUpContent() {
                     type="email"
                     placeholder="wanderer@example.com"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="pl-10 h-11 bg-card/60 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-aurora focus:ring-2 focus:ring-aurora/20 text-sm font-sans transition-all duration-200"
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      if (touchedFields.email) {
+                        setFieldErrors((prev) => ({ ...prev, email: validateField('email', e.target.value) }));
+                      }
+                    }}
+                    onBlur={() => handleBlur('email')}
+                    className={`pl-10 h-11 bg-card/60 border text-foreground placeholder:text-muted-foreground/60 text-sm font-sans transition-all duration-200 ${
+                      fieldErrors.email
+                        ? 'border-destructive ring-1 ring-destructive/30'
+                        : 'border-border focus:border-aurora focus:ring-2 focus:ring-aurora/20'
+                    }`}
                     required
                   />
                 </div>
+                {fieldErrors.email && (
+                  <p className="text-[11px] text-destructive mt-1 font-sans">{fieldErrors.email}</p>
+                )}
               </div>
 
+              {/* Country-wise Phone Input (Default India +91) */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                  Phone <span className="text-[10px] text-muted-foreground font-normal">(optional)</span>
+                  Mobile Phone Number <span className="text-[10px] text-aurora font-bold">(REQUIRED FOR DUAL OTP)</span>
                 </label>
-                <div className="relative group">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-aurora" />
-                  <Input
-                    type="tel"
-                    placeholder="+91 98765 43210"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="pl-10 h-11 bg-card/60 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-aurora focus:ring-2 focus:ring-aurora/20 text-sm font-sans transition-all duration-200"
-                  />
-                </div>
+                <CountryPhoneInput
+                  value={formData.phone}
+                  countryCode={formData.countryCode}
+                  onChange={handlePhoneChange}
+                  error={touchedFields.phone ? fieldErrors.phone : undefined}
+                  required
+                />
               </div>
 
               <motion.div
@@ -483,8 +705,8 @@ function SignUpContent() {
               >
                 <Button
                   type="button"
-                  disabled={!canProceedStep1}
-                  onClick={() => setStep(2)}
+                  disabled={!isStep1Valid}
+                  onClick={handleProceedToStep2}
                   className="w-full h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-sans font-semibold rounded-full shadow-cast text-xs sm:text-sm mt-2 transition-all hover:shadow-[0_0_24px_-4px_rgba(45,212,191,0.5)] group cursor-pointer"
                 >
                   Continue to Password Setup
@@ -499,7 +721,7 @@ function SignUpContent() {
             <div className="space-y-3.5 my-auto font-sans">
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                  Create Password
+                  Create Master Password
                 </label>
                 <div className="relative group">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-aurora" />
@@ -507,7 +729,13 @@ function SignUpContent() {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Create strong password"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, password: e.target.value });
+                      if (touchedFields.password) {
+                        setFieldErrors((prev) => ({ ...prev, password: validateField('password', e.target.value) }));
+                      }
+                    }}
+                    onBlur={() => handleBlur('password')}
                     className="pl-10 pr-10 h-11 bg-card/60 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-aurora focus:ring-2 focus:ring-aurora/20 text-sm font-sans transition-all duration-200"
                     required
                   />
@@ -526,7 +754,7 @@ function SignUpContent() {
 
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                  Confirm Password
+                  Confirm Master Password
                 </label>
                 <div className="relative group">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-aurora" />
@@ -534,7 +762,13 @@ function SignUpContent() {
                     type={showConfirm ? 'text' : 'password'}
                     placeholder="Repeat your password"
                     value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, confirmPassword: e.target.value });
+                      if (touchedFields.confirmPassword) {
+                        setFieldErrors((prev) => ({ ...prev, confirmPassword: validateField('confirmPassword', e.target.value) }));
+                      }
+                    }}
+                    onBlur={() => handleBlur('confirmPassword')}
                     className="pl-10 pr-10 h-11 bg-card/60 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-aurora focus:ring-2 focus:ring-aurora/20 text-sm font-sans transition-all duration-200"
                     required
                   />
@@ -554,161 +788,224 @@ function SignUpContent() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <motion.div
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-1/3"
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  className="w-1/3 h-11 rounded-full border-border hover:border-aurora/50 hover:bg-aurora/5 text-xs font-sans font-semibold cursor-pointer"
                 >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                    className="w-full h-11 rounded-full border-border hover:border-aurora/50 hover:bg-aurora/5 text-xs font-sans font-semibold cursor-pointer"
-                  >
-                    Back
-                  </Button>
-                </motion.div>
+                  Back
+                </Button>
 
-                <motion.div
-                  whileHover={{ scale: 1.02, y: -1 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-                  className="w-2/3"
+                <Button
+                  type="button"
+                  disabled={!isStep2Valid || isSendingOtp}
+                  onClick={() => handleRequestDualOtp()}
+                  className="w-2/3 h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-sans font-semibold rounded-full shadow-cast text-xs sm:text-sm transition-all hover:shadow-[0_0_24px_-4px_rgba(45,212,191,0.5)] group cursor-pointer"
                 >
-                  <Button
-                    type="button"
-                    disabled={!canProceedStep2 || isSendingOtp}
-                    onClick={() => handleRequestOtp()}
-                    className="w-full h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-sans font-semibold rounded-full shadow-cast text-xs sm:text-sm transition-all hover:shadow-[0_0_24px_-4px_rgba(45,212,191,0.5)] group cursor-pointer"
-                  >
-                    {isSendingOtp ? 'Sending Code...' : 'Send Verification OTP'}
-                    <KeyRound className="w-4 h-4 ml-1.5 transition-transform duration-200 group-hover:rotate-12" />
-                  </Button>
-                </motion.div>
+                  {isSendingOtp ? 'Sending Dual OTPs...' : 'Send Dual Verification OTPs'}
+                  <KeyRound className="w-4 h-4 ml-1.5" />
+                </Button>
               </div>
             </div>
           )}
 
-          {/* ── STEP 3: 6-Digit OTP Verification ──────────────────────────── */}
+          {/* ── STEP 3: Dual OTP Verification (Email + Mobile at Once) ─────── */}
           {step === 3 && (
             <form onSubmit={handleFinalSubmit} className="space-y-4 my-auto font-sans">
               <div className="text-center">
-                <motion.div
-                  animate={{ scale: [1, 1.08, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                  className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-aurora/15 text-aurora mb-2 shadow-[0_0_20px_rgba(45,212,191,0.3)]"
-                >
-                  <KeyRound className="w-6 h-6" />
-                </motion.div>
-                <p className="text-xs text-muted-foreground">
-                  Enter the 6-digit passcode sent to <span className="font-semibold text-foreground">{formData.email}</span>
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-aurora/15 text-aurora mb-1 shadow-[0_0_20px_rgba(45,212,191,0.3)]">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <h3 className="text-sm font-semibold text-foreground">Dual Endpoint Authorization</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  Enter both passcodes to complete verification simultaneously.
                 </p>
               </div>
 
-              {/* 6 Digit Input Grid */}
-              <div className="flex justify-center gap-2 sm:gap-2.5 my-3">
-                {otpDigits.map((digit, i) => (
-                  <input
-                    key={i}
-                    ref={(el) => { otpRefs.current[i] = el; }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(i, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                    onPaste={handleOtpPaste}
-                    className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold rounded-xl bg-card/80 border border-border text-foreground focus:border-aurora focus:ring-2 focus:ring-aurora/20 focus:scale-105 outline-none transition-all duration-200"
-                  />
-                ))}
+              {/* Panel A: Email OTP */}
+              <div className="p-3.5 rounded-2xl bg-card border border-border/80 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                    <Mail className="w-3.5 h-3.5 text-aurora" />
+                    <span>Email Code</span>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground truncate max-w-[170px]">
+                    {formData.email}
+                  </span>
+                </div>
+
+                <div className="flex justify-center gap-1.5 sm:gap-2">
+                  {emailOtpDigits.map((digit, i) => (
+                    <input
+                      key={`email-${i}`}
+                      ref={(el) => { emailOtpRefs.current[i] = el; }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleEmailOtpChange(i, e.target.value)}
+                      onKeyDown={(e) => handleEmailOtpKeyDown(i, e)}
+                      onPaste={handleEmailOtpPaste}
+                      className="w-9 h-11 sm:w-11 sm:h-12 text-center text-lg sm:text-xl font-bold rounded-xl bg-card border border-border text-foreground focus:border-aurora focus:ring-2 focus:ring-aurora/20 outline-none transition-all duration-150"
+                    />
+                  ))}
+                </div>
               </div>
 
-              {/* Resend Action & Back Link */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setStep(1)}
-                  className="hover:text-aurora hover:underline transition-colors"
-                >
-                  Change email
-                </motion.button>
+              {/* Panel B: Mobile SMS OTP */}
+              <div className="p-3.5 rounded-2xl bg-card border border-border/80 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                    <Smartphone className="w-3.5 h-3.5 text-aurora" />
+                    <span>Mobile SMS Code</span>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground font-mono">
+                    {formData.fullPhone || formData.phone}
+                  </span>
+                </div>
 
-                <motion.button
+                <div className="flex justify-center gap-1.5 sm:gap-2">
+                  {phoneOtpDigits.map((digit, i) => (
+                    <input
+                      key={`phone-${i}`}
+                      ref={(el) => { phoneOtpRefs.current[i] = el; }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handlePhoneOtpChange(i, e.target.value)}
+                      onKeyDown={(e) => handlePhoneOtpKeyDown(i, e)}
+                      onPaste={handlePhoneOtpPaste}
+                      className="w-9 h-11 sm:w-11 sm:h-12 text-center text-lg sm:text-xl font-bold rounded-xl bg-card border border-border text-foreground focus:border-aurora focus:ring-2 focus:ring-aurora/20 outline-none transition-all duration-150"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Resend and Edit Actions */}
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-0.5">
+                <button
                   type="button"
-                  whileHover={{ scale: resendTimer === 0 ? 1.05 : 1 }}
-                  whileTap={{ scale: resendTimer === 0 ? 0.95 : 1 }}
+                  onClick={() => setStep(1)}
+                  className="hover:text-aurora hover:underline cursor-pointer"
+                >
+                  Edit details
+                </button>
+
+                <button
+                  type="button"
                   disabled={resendTimer > 0 || isSendingOtp}
-                  onClick={() => handleRequestOtp()}
+                  onClick={() => handleRequestDualOtp()}
                   className="flex items-center gap-1 text-aurora hover:underline font-medium disabled:opacity-50 disabled:no-underline cursor-pointer"
                 >
                   <RotateCcw className={`w-3 h-3 ${isSendingOtp ? 'animate-spin' : ''}`} />
-                  {resendTimer > 0 ? `Resend code in ${resendTimer}s` : 'Resend OTP'}
-                </motion.button>
+                  {resendTimer > 0 ? `Resend codes in ${resendTimer}s` : 'Resend both OTPs'}
+                </button>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <motion.div
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-1/3"
+              <div className="flex gap-3 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(2)}
+                  className="w-1/3 h-11 rounded-full border-border text-xs cursor-pointer"
                 >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(2)}
-                    className="w-full h-11 rounded-full border-border hover:border-aurora/50 hover:bg-aurora/5 text-xs font-sans font-semibold cursor-pointer"
-                  >
-                    Back
-                  </Button>
-                </motion.div>
+                  Back
+                </Button>
 
-                <motion.div
-                  whileHover={{ scale: 1.02, y: -1 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-                  className="w-2/3"
+                <Button
+                  type="submit"
+                  disabled={!isBothOtpsComplete || isLoading}
+                  className="w-2/3 h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-full shadow-cast text-xs sm:text-sm cursor-pointer"
                 >
-                  <Button
-                    type="submit"
-                    disabled={!isOtpComplete || isLoading}
-                    className="w-full h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-sans font-semibold rounded-full shadow-cast text-xs sm:text-sm transition-all hover:shadow-[0_0_24px_-4px_rgba(45,212,191,0.5)] cursor-pointer"
-                  >
-                    {isLoading ? 'Verifying Passport...' : 'Verify & Launch Journal'}
-                  </Button>
-                </motion.div>
+                  {isLoading ? 'Verifying Credentials...' : 'Verify Both & Register'}
+                </Button>
               </div>
             </form>
           )}
 
-          {/* Footer Card Navigation */}
-          <div className="pt-2">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex-1 h-px bg-border/80" />
-              <span className="text-[11px] text-muted-foreground">ALREADY REGISTERED?</span>
-              <div className="flex-1 h-px bg-border/80" />
-            </div>
+          {/* ── STEP 4: Digital Signature Registration Dispatch Screen ──────── */}
+          {step === 4 && signatureData && (
+            <div className="space-y-4 my-auto font-sans">
+              <div className="text-center space-y-2">
+                <div className="w-14 h-14 rounded-full bg-aurora/15 text-aurora flex items-center justify-center mx-auto shadow-[0_0_24px_rgba(45,212,191,0.25)]">
+                  <FileSignature className="w-7 h-7" />
+                </div>
+                <div className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-aurora/10 text-aurora text-[11px] font-bold uppercase tracking-wider">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>Dual Verification Complete</span>
+                </div>
+                <h2 className="font-serif text-xl sm:text-2xl font-normal text-foreground">
+                  Register Your Digital Signature
+                </h2>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  In compliance with electronic authentication regulations, an official Digital Signature Registration link has been generated and dispatched to your verified email and mobile number.
+                </p>
+              </div>
 
-            <Link href={signinHref} className="block w-full">
-              <motion.div
-                whileHover={{ scale: 1.02, y: -1 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-              >
+              {/* Secure Link Box */}
+              <div className="p-3.5 rounded-2xl bg-muted/40 border border-border space-y-2 text-xs">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span className="font-medium text-foreground">Your Signature Registration Link:</span>
+                  <button
+                    type="button"
+                    onClick={handleCopySignatureLink}
+                    className="flex items-center gap-1 text-aurora hover:underline cursor-pointer font-medium"
+                  >
+                    {copiedLink ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedLink ? 'Copied' : 'Copy link'}</span>
+                  </button>
+                </div>
+                <div className="p-2.5 rounded-xl bg-card border border-border/80 font-mono text-[11px] text-foreground truncate select-all">
+                  {signatureData.signatureLink}
+                </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="space-y-2 pt-2">
+                <Link href={`/register-signature?token=${signatureData.signatureToken}`} className="block w-full">
+                  <Button className="w-full h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-full shadow-cast text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer">
+                    <span>Proceed to Register Digital Signature</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+
+                <Link href="/dashboard" className="block w-full">
+                  <Button
+                    variant="ghost"
+                    className="w-full h-10 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    Skip and continue to Dashboard
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Footer Card Navigation */}
+          {step !== 4 && (
+            <div className="pt-2">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex-1 h-px bg-border/80" />
+                <span className="text-[11px] text-muted-foreground">ALREADY REGISTERED?</span>
+                <div className="flex-1 h-px bg-border/80" />
+              </div>
+
+              <Link href={signinHref} className="block w-full">
                 <Button
                   variant="outline"
                   className="w-full h-11 rounded-full border-border hover:border-aurora hover:bg-aurora/5 hover:text-aurora text-xs sm:text-sm font-sans font-semibold transition-all duration-200 cursor-pointer"
                 >
                   Sign In to Existing Journal
                 </Button>
-              </motion.div>
-            </Link>
-          </div>
+              </Link>
+            </div>
+          )}
         </div>
       </main>
 
-      {/* ── BOTTOM LEFT: Pure Floating Typography ─────────────────────────── */}
+      {/* ── BOTTOM LEFT: Floating Photography Location ────────────────────── */}
       <div className="absolute bottom-8 left-8 sm:bottom-10 sm:left-10 z-30 pointer-events-auto max-w-sm sm:max-w-md hidden md:block">
         <AnimatePresence mode="wait">
           <motion.div
@@ -719,7 +1016,6 @@ function SignUpContent() {
             transition={{ duration: 0.5, ease: 'easeInOut' }}
             className="space-y-2 font-sans"
           >
-            {/* Header: Location & Full Coordinates */}
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-aurora shrink-0" />
@@ -732,27 +1028,22 @@ function SignUpContent() {
               </span>
             </div>
 
-            {/* Title */}
             <h2 className="text-base sm:text-lg font-sans font-semibold text-white tracking-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
               {activeStory.highlight}
             </h2>
 
-            {/* Story */}
             <p className="text-xs sm:text-sm font-sans text-white/90 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
               {activeStory.story}
             </p>
 
-            {/* Footer Navigation Dots */}
             <div className="flex items-center gap-4 pt-1">
               <span className="text-xs text-white/75 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Explore Destination
               </span>
               <div className="flex items-center gap-1.5">
                 {CINEMATIC_STORIES.map((story, i) => (
-                  <motion.button
+                  <button
                     key={story.country}
-                    whileHover={{ scale: 1.4 }}
-                    whileTap={{ scale: 0.8 }}
                     onClick={() => switchSlide(i)}
                     aria-label={`View ${story.country}`}
                     className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
